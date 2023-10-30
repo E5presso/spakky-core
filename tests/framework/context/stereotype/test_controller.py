@@ -3,11 +3,11 @@ from spakky.framework.context.stereotype.controller import Controller, IControll
 from spakky.framework.web import get
 
 
-@Controller("/test")
+@Controller("/dummy")
 class A:
     @get("")
-    async def get_test(self) -> str:
-        return "test"
+    async def get_dummy(self) -> str:
+        return "dummy"
 
 
 class B:

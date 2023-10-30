@@ -79,12 +79,12 @@ class SpakkyApplication(FastAPI):
             router: APIRouter = APIRouter(prefix=controller.__prefix__, tags=controller.__tags__)
             for endpoint in controller.__endpoints__:
                 router.add_api_route(
-                    endpoint=partial(endpoint.method, self=Depends(controller)),
+                    endpoint=partial(endpoint.method, self=self.__context.retrieve(controller)),
                     **dataclasses.asdict(endpoint.args),
                 )
             for websocket in controller.__websockets__:
                 router.add_api_websocket_route(
-                    endpoint=partial(websocket.method, self=Depends(controller)),
+                    endpoint=partial(websocket.method, self=self.__context.retrieve(controller)),
                     **dataclasses.asdict(websocket.args),
                 )
             try:

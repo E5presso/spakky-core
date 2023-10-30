@@ -8,7 +8,9 @@ from spakky.framework import (
     ApplicationContext,
     Autowired,
     Component,
+    Controller,
 )
+from spakky.framework.web import get
 
 
 class IA(ABC):
@@ -55,6 +57,19 @@ class C(IC):
         return self.__a.a() + self.__b.b()
 
 
+@Controller("/test")
+class ForTestController:
+    __c: IC
+
+    @Autowired()
+    def __init__(self, c: IC) -> None:
+        self.__c = c
+
+    @get("")
+    async def get_test(self) -> str:
+        return self.__c.c()
+
+
 @SpakkyBootApplication()
 class Program(ISpakkyBootApplication):
     __context__: ApplicationContext
@@ -82,4 +97,4 @@ def test_application_inject_via_constructor() -> None:
 def test_application_controller() -> None:
     app: SpakkyApplication = Program.main()
     client: TestClient = TestClient(app=app)
-    assert client.get("/test").json() == "test"
+    assert client.get("/test").json() == "AB"
