@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "spakky-core"
+version = "0.1.0"
+description = "AOP 스타일로 도메인 중심의 MSA 개발을 도와주는 공용 커널"
+authors = ["Spakky <sejong418@icloud.com>"]
+packages = [{include = "spakky"}]
+
+[tool.poetry.dependencies]
+python = "~3.11"
+pycryptodome = "^3.19.0"
+fastapi = "^0.104.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.21.1"
+httpx = "^0.25.0"
+
+[tool.pytest.ini_options]
+pythonpath = "spakky"
+asyncio_mode = "auto"
+python_files = ["test_*.py"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
