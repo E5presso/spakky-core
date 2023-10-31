@@ -10,7 +10,6 @@ from spakky.framework.context.stereotype.args import (
     EndpointRouteArgs,
     WebsocketRouteArgs,
 )
-from spakky.framework.context.stereotype.controller import Controller
 
 DictIntStrAny: TypeAlias = dict[int | str, Any]
 SetIntStr: TypeAlias = set[int | str]

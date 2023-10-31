@@ -1,11 +1,11 @@
-from dataclasses import dataclass, field
-from enum import Enum
 import inspect
+from enum import Enum
+from dataclasses import dataclass, field
 from types import FunctionType, MethodType
-from typing import Any, Callable, Protocol, TypeAlias, runtime_checkable
+from typing import Any, Callable, TypeAlias
 from fastapi.exceptions import FastAPIError
 from fastapi.utils import create_response_field
-from spakky.framework.core.generic import T_CLASS, T_OBJ
+from spakky.framework.core.generic import T_OBJ
 from .args import EndpointDefinition, EndpointRouteArgs, WebsocketRouteArgs, WebSocketDefinition
 from .component import Component
 
