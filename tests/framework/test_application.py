@@ -1,6 +1,6 @@
+import time
 from abc import ABC, abstractmethod
 from threading import Event as ThreadEvent
-import time
 
 from fastapi.testclient import TestClient
 from spakky.framework import (
