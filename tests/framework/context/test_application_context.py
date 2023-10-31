@@ -7,7 +7,7 @@ from spakky.framework.context.application_context import (
     NoUniqueComponentDefinitionException,
 )
 
-from spakky.framework.context.stereotype.component import Component, IComponent
+from spakky.framework.context.stereotype.component import Component
 
 
 class IA(ABC):
@@ -53,9 +53,10 @@ class B(IB, IC):
 
 
 def test_register_and_retrieve_from_application_context() -> None:
-    assert isinstance(A, IComponent)
-    assert isinstance(B, IComponent)
-
+    a_annotation: Component | None = Component.get_annotation(A)
+    b_annotation: Component | None = Component.get_annotation(A)
+    assert a_annotation is not None
+    assert b_annotation is not None
     context: ApplicationContext = ApplicationContext()
     context.register(A)
     context.register(B)

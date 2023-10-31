@@ -1,68 +1,30 @@
+from dataclasses import dataclass, field
 from enum import Enum
 import inspect
 from types import FunctionType, MethodType
 from typing import Any, Callable, Protocol, TypeAlias, runtime_checkable
 from fastapi.exceptions import FastAPIError
 from fastapi.utils import create_response_field
-from spakky.framework.core.generic import T_CLASS
+from spakky.framework.core.generic import T_CLASS, T_OBJ
 from .args import EndpointDefinition, EndpointRouteArgs, WebsocketRouteArgs, WebSocketDefinition
-from .component import Component, IComponent
+from .component import Component
 
 
 AnyCallable: TypeAlias = Callable[..., Any]
 
 
-@runtime_checkable
-class IController(IComponent, Protocol):
-    __controller__: bool
-    __prefix__: str
-    __tags__: list[str | Enum] | None
-    __endpoints__: list[EndpointDefinition]
-    __websockets__: list[WebSocketDefinition]
-
-    def __instancecheck__(self, __instance: Any) -> bool:
-        return (
-            super().__instancecheck__(__instance)
-            and hasattr(__instance, "__controller__")
-            and hasattr(__instance, "__prefix__")
-            and hasattr(__instance, "__tags__")
-            and hasattr(__instance, "__endpoints__")
-            and hasattr(__instance, "__websockets__")
-        )
-
-    @classmethod
-    def __subclasshook__(cls, __subclass: type) -> bool:
-        return (
-            super().__subclasshook__(__subclass)
-            and hasattr(__subclass, "__controller__")
-            and hasattr(__subclass, "__prefix__")
-            and hasattr(__subclass, "__tags__")
-            and hasattr(__subclass, "__endpoints__")
-            and hasattr(__subclass, "__websockets__")
-        )
-
-
+@dataclass
 class Controller(Component):
-    _prefix: str
-    _tags: list[str | Enum] | None
+    prefix: str
+    tags: list[str | Enum] | None = field(default=None)
+    endpoints: list[EndpointDefinition] = field(init=False, default_factory=list)
+    websockets: list[WebSocketDefinition] = field(init=False, default_factory=list)
 
-    def __init__(
-        self,
-        prefix: str,
-        tags: list[str | Enum] | str | Enum | None = None,
-    ) -> None:
-        super().__init__()
-        self._prefix = prefix
-        if isinstance(tags, str) or isinstance(tags, Enum):
-            tags = [tags]
-        self._tags = tags
-
-    def __call__(self, cls: T_CLASS) -> T_CLASS:
-        cls = super().__call__(cls)
+    def __call__(self, obj: T_OBJ) -> T_OBJ:
         endpoints: list[EndpointDefinition] = []
         websockets: list[WebSocketDefinition] = []
         methods: list[MethodType] = list(
-            dict(inspect.getmembers(cls, predicate=lambda v: isinstance(v, FunctionType))).values()
+            dict(inspect.getmembers(obj, predicate=lambda v: isinstance(v, FunctionType))).values()
         )
         for method in methods:
             if hasattr(method, "_endpoint"):
@@ -89,9 +51,7 @@ class Controller(Component):
                 if websocket.args.name is None:
                     websocket.args.name = " ".join([x.capitalize() for x in websocket.method.__name__.split("_")])
                 websockets.append(WebSocketDefinition(method=websocket_method, args=websocket_args))
-        setattr(cls, "__controller__", True)
-        setattr(cls, "__prefix__", self._prefix)
-        setattr(cls, "__tags__", self._tags)
-        setattr(cls, "__endpoints__", endpoints)
-        setattr(cls, "__websockets__", websockets)
-        return cls
+
+        self.endpoints = endpoints
+        self.websockets = websockets
+        return super().__call__(obj)

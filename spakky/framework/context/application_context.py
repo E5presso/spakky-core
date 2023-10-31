@@ -3,11 +3,10 @@ from typing import Any, TypeVar
 
 from spakky.framework.core.importing import get_full_class_path, get_module
 
-from .stereotype.component import IComponent
+from .stereotype.component import Component
 
 
 T = TypeVar("T", bound=Any)
-T_COMPONENT = TypeVar("T_COMPONENT", bound=IComponent)
 
 
 class NoSuchComponentDefinitionException(Exception):
@@ -31,50 +30,47 @@ class NoUniqueComponentDefinitionException(Exception):
 
 
 class ApplicationContext:
-    _types_map: dict[str, set[type[IComponent]]]
-    _class_container: dict[str, type[IComponent]]
-    _singleton_cache: dict[str, Any]
-    _modules: set[ModuleType]
+    type_map: dict[str, set[type]]
+    class_container: dict[str, type]
+    singleton_cache: dict[str, Any]
 
     def __init__(self) -> None:
-        self._types_map = {}
-        self._class_container = {}
-        self._singleton_cache = {}
-        self._modules = set()
+        self.type_map = {}
+        self.class_container = {}
+        self.singleton_cache = {}
 
     @property
     def components(self) -> list[str]:
-        return list(self._class_container.keys())
+        return list(self.class_container.keys())
 
-    def register(self, component: type[T_COMPONENT]) -> None:
+    def register(self, component: type) -> None:
         bases: tuple[type, ...] = component.__bases__
         for base in bases:
-            if get_full_class_path(base) not in self._types_map:
-                self._types_map[get_full_class_path(base)] = set()
-            self._types_map[get_full_class_path(base)].add(component)
-        if get_full_class_path(component) not in self._types_map:
-            self._types_map[get_full_class_path(component)] = {component}
-        self._modules.add(get_module(component))
-        self._class_container[get_full_class_path(component)] = component
-
-    def wire(self, module: ModuleType) -> None:
-        self._modules.add(module)
+            if get_full_class_path(base) not in self.type_map:
+                self.type_map[get_full_class_path(base)] = set()
+            self.type_map[get_full_class_path(base)].add(component)
+        if get_full_class_path(component) not in self.type_map:
+            self.type_map[get_full_class_path(component)] = {component}
+        self.class_container[get_full_class_path(component)] = component
 
     def retrieve(self, _type: type[T]) -> T:
         type_key: str = get_full_class_path(_type)
-        if type_key not in self._types_map:
+        if type_key not in self.type_map:
             raise NoSuchComponentDefinitionException(_type)
-        derived: set[type] = self._types_map[type_key]
+        derived: set[type] = self.type_map[type_key]
         if len(derived) == 0:
             raise NoSuchComponentDefinitionException(_type)
         if len(derived) > 1:
             raise NoUniqueComponentDefinitionException(_type)
         target: type = list(derived)[0]
         target_key: str = get_full_class_path(target)
-        if target_key not in self._singleton_cache:
-            if target_key not in self._class_container:
+        if target_key not in self.singleton_cache:
+            if target_key not in self.class_container:
                 raise NoSuchComponentDefinitionException(target)
-            component: type[IComponent] = self._class_container[target_key]
-            autowired: dict[str, type] = component.__autowired__
-            self._singleton_cache[target_key] = component(**{k: self.retrieve(t) for k, t in autowired.items()})
-        return self._singleton_cache[target_key]
+            component: type = self.class_container[target_key]
+            annotation: Component | None = Component.get_annotation(component)
+            if annotation is None:
+                raise NoSuchComponentDefinitionException(component)
+            autowired: dict[str, type] = annotation.autowired
+            self.singleton_cache[target_key] = component(**{k: self.retrieve(t) for k, t in autowired.items()})
+        return self.singleton_cache[target_key]

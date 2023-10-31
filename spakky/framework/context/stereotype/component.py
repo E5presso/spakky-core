@@ -1,23 +1,15 @@
-from typing import Any, Callable, Protocol, runtime_checkable
-
-from spakky.framework.core.generic import T_CLASS
-
-
-@runtime_checkable
-class IComponent(Protocol):
-    __autowired__: dict[str, type]
-
-    def __instancecheck__(self, __instance: Any) -> bool:
-        return hasattr(__instance, "__autowired__")
-
-    @classmethod
-    def __subclasshook__(cls, __subclass: type) -> bool:
-        return hasattr(__subclass, "__autowired__")
+from dataclasses import dataclass, field
+from spakky.framework.context.autowired import Autowired
+from spakky.framework.core.generic import T_OBJ
+from spakky.framework.core.annotation import Annotation
 
 
-class Component:
-    def __call__(self, cls: T_CLASS) -> T_CLASS:
-        constructor: Callable[..., None] = cls.__init__
-        autowired: dict[str, type] = getattr(constructor, "__autowired__", {})
-        setattr(cls, "__autowired__", autowired)
-        return cls
+@dataclass
+class Component(Annotation):
+    autowired: dict[str, type] = field(init=False, default_factory=dict)
+
+    def __call__(self, obj: T_OBJ) -> T_OBJ:
+        autowired: Autowired | None = Autowired.get_annotation(obj.__init__)
+        if autowired is not None:
+            self.autowired = autowired.dependencies
+        return self.set_annotation(obj)

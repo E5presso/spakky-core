@@ -1,5 +1,5 @@
-from spakky.framework.context.stereotype.component import Component, IComponent
-from spakky.framework.context.stereotype.service import Service, IService
+from spakky.framework.context.stereotype.component import Component
+from spakky.framework.context.stereotype.service import Service
 
 
 @Service()
@@ -17,16 +17,10 @@ class C:
 
 
 def test_service_type_checking() -> None:
-    assert issubclass(A, IService)
-    assert issubclass(A, IComponent)
-    assert isinstance(A(), IService)
-    assert isinstance(A(), IComponent)
-    assert not issubclass(B, IService)
-    assert not issubclass(B, IComponent)
-    assert not isinstance(B(), IService)
-    assert not isinstance(B(), IComponent)
+    assert Component.has_annotation(A)
+    assert Service.has_annotation(A)
+    assert not Component.has_annotation(B)
+    assert not Service.has_annotation(B)
 
-    assert issubclass(C, IComponent)
-    assert not issubclass(C, IService)
-    assert isinstance(C(), IComponent)
-    assert not isinstance(C(), IService)
+    assert Component.has_annotation(C)
+    assert not Service.has_annotation(C)

@@ -1,5 +1,5 @@
-from spakky.framework.context.stereotype.component import Component, IComponent
-from spakky.framework.context.stereotype.configuration import Configuration, IConfiguration
+from spakky.framework.context.stereotype.component import Component
+from spakky.framework.context.stereotype.configuration import Configuration
 
 
 @Configuration()
@@ -17,16 +17,11 @@ class C:
 
 
 def test_configuration_type_checking() -> None:
-    assert issubclass(A, IConfiguration)
-    assert issubclass(A, IComponent)
-    assert isinstance(A(), IConfiguration)
-    assert isinstance(A(), IComponent)
-    assert not issubclass(B, IConfiguration)
-    assert not issubclass(B, IComponent)
-    assert not isinstance(B(), IConfiguration)
-    assert not isinstance(B(), IComponent)
+    assert Component.has_annotation(A)
+    assert Configuration.has_annotation(A)
 
-    assert issubclass(C, IComponent)
-    assert not issubclass(C, IConfiguration)
-    assert isinstance(C(), IComponent)
-    assert not isinstance(C(), IConfiguration)
+    assert not Component.has_annotation(B)
+    assert not Configuration.has_annotation(B)
+
+    assert Component.has_annotation(C)
+    assert not Configuration.has_annotation(C)

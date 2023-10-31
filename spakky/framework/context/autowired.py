@@ -1,17 +1,21 @@
 import inspect
+from dataclasses import dataclass, field
 from inspect import Parameter, Signature, _empty
+from spakky.framework.core.annotation import Annotation
+from spakky.framework.core.generic import T_OBJ
 
-from spakky.framework.core.generic import T_FUNC
 
+@dataclass
+class Autowired(Annotation):
+    dependencies: dict[str, type] = field(init=False, default_factory=dict)
 
-class Autowired:
-    def __call__(self, function: T_FUNC) -> T_FUNC:
-        signature: Signature = inspect.signature(function)
+    def __call__(self, obj: T_OBJ) -> T_OBJ:
+        signature: Signature = inspect.signature(obj)
         parameters: list[Parameter] = list(signature.parameters.values())
-        autowired: dict[str, type] = {}
+        dependencies: dict[str, type] = {}
         for parameter in parameters:
             parameter_type: type = parameter.annotation
             if parameter_type != _empty:
-                autowired[parameter.name] = parameter_type
-        setattr(function, "__autowired__", autowired)
-        return function
+                dependencies[parameter.name] = parameter_type
+        self.dependencies = dependencies
+        return self.set_annotation(obj)

@@ -1,4 +1,4 @@
-from spakky.framework.context.component_scan import ComponentScan, IComponentScan
+from spakky.framework.context.component_scan import ComponentScan
 
 
 def test_component_scan_with_default_path() -> None:
@@ -6,5 +6,4 @@ def test_component_scan_with_default_path() -> None:
     class A:
         ...
 
-    assert issubclass(A, IComponentScan)
-    assert isinstance(A(), IComponentScan)
+    assert ComponentScan.has_annotation(A)

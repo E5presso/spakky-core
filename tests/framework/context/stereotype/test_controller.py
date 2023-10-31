@@ -1,5 +1,5 @@
-from spakky.framework.context.stereotype.component import Component, IComponent
-from spakky.framework.context.stereotype.controller import Controller, IController
+from spakky.framework.context.stereotype.component import Component
+from spakky.framework.context.stereotype.controller import Controller
 from spakky.framework.web import get
 
 
@@ -20,16 +20,10 @@ class C:
 
 
 def test_controller_type_checking() -> None:
-    assert issubclass(A, IController)
-    assert issubclass(A, IComponent)
-    assert isinstance(A(), IController)
-    assert isinstance(A(), IComponent)
-    assert not issubclass(B, IController)
-    assert not issubclass(B, IComponent)
-    assert not isinstance(B(), IController)
-    assert not isinstance(B(), IComponent)
+    assert Component.has_annotation(A)
+    assert Controller.has_annotation(A)
+    assert not Component.has_annotation(B)
+    assert not Controller.has_annotation(B)
 
-    assert issubclass(C, IComponent)
-    assert not issubclass(C, IController)
-    assert isinstance(C(), IComponent)
-    assert not isinstance(C(), IController)
+    assert Component.has_annotation(C)
+    assert not Controller.has_annotation(C)

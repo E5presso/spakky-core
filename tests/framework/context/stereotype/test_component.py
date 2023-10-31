@@ -1,4 +1,4 @@
-from spakky.framework.context.stereotype.component import Component, IComponent
+from spakky.framework.context.stereotype.component import Component
 
 
 @Component()
@@ -25,10 +25,8 @@ class E(D, B):
 
 
 def test_component_type_checking() -> None:
-    assert issubclass(A, IComponent)
-    assert isinstance(A(), IComponent)
-    assert not issubclass(B, IComponent)
-    assert not isinstance(B(), IComponent)
-
-    assert issubclass(C, IComponent)
-    assert issubclass(E, IComponent)
+    assert Component.has_annotation(A)
+    assert not Component.has_annotation(B)
+    assert Component.has_annotation(C)
+    assert not Component.has_annotation(D)
+    assert Component.has_annotation(E)

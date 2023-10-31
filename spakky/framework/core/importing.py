@@ -22,9 +22,9 @@ def get_full_class_path(cls: type) -> str:
     return f"{cls.__module__}.{cls.__name__}"
 
 
-def full_scan_modules(path: list[str]) -> set[ModuleType]:
+def full_scan_modules(paths: list[str]) -> set[ModuleType]:
     module_paths: set[ModuleType] = set()
-    for base_package in path:
+    for base_package in paths:
         package: str = base_package
         directory, extension = os.path.splitext(package)
         package = directory.replace(".", os.path.sep) + extension
@@ -63,6 +63,7 @@ def list_classes(module: ModuleType, selector: Callable[[type], bool] | None = N
             continue
         if selector(member):
             classes.append(member)
+            continue
     return classes
 
 

@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
+from threading import Event as ThreadEvent
+import time
 
 from fastapi.testclient import TestClient
 from spakky.framework import (
-    ISpakkyBootApplication,
     SpakkyApplication,
     SpakkyBootApplication,
     ApplicationContext,
@@ -10,6 +11,7 @@ from spakky.framework import (
     Component,
     Controller,
 )
+from spakky.framework.context.stereotype.task import ISyncTask, SyncTask
 from spakky.framework.web import get
 
 
@@ -70,8 +72,23 @@ class ForTestController:
         return self.__c.c()
 
 
+@SyncTask()
+class ForTestTask(ISyncTask):
+    __c: IC
+
+    @Autowired()
+    def __init__(self, c: IC) -> None:
+        self.__c = c
+
+    def start(self, signal: ThreadEvent) -> None:
+        while not signal.is_set():
+            print(f"Sync Loop is still running! {self.__c.c()}")
+            time.sleep(0.1)
+        print("Sync Loop is done!")
+
+
 @SpakkyBootApplication()
-class Program(ISpakkyBootApplication):
+class Program:
     __context__: ApplicationContext
 
     @classmethod
@@ -98,3 +115,9 @@ def test_application_controller() -> None:
     app: SpakkyApplication = Program.main()
     client: TestClient = TestClient(app=app)
     assert client.get("/test").json() == "AB"
+
+
+def test_application_task() -> None:
+    app: SpakkyApplication = Program.main()
+    with TestClient(app=app, base_url="http://test") as _:
+        time.sleep(1)
