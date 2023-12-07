@@ -1,26 +1,84 @@
 [tool.poetry]
 name = "spakky-core"
 version = "0.1.0"
-description = "AOP 스타일로 도메인 중심의 MSA 개발을 도와주는 공용 커널"
+description = "Highly abstracted Framework core to use DI/IoC & AOP"
 authors = ["Spakky <sejong418@icloud.com>"]
 packages = [{include = "spakky"}]
-
-[tool.poetry.dependencies]
-python = "~3.11"
-pycryptodome = "^3.19.0"
-fastapi = "^0.104.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.2"
-pytest-cov = "^4.1.0"
-pytest-asyncio = "^0.21.1"
-httpx = "^0.25.0"
-
-[tool.pytest.ini_options]
-pythonpath = "spakky"
-asyncio_mode = "auto"
-python_files = ["test_*.py"]
+readme = "README.md"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "3.10.*"
+pycryptodome = "^3.19.0"
+
+[tool.poetry.group.dev.dependencies]
+pylint = "^3.0.2"
+black = "^23.11.0"
+isort = "^5.12.0"
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.21.1"
+
+[tool.poetry.group.ci.dependencies]
+pylint = "^3.0.2"
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+
+[tool.pytest.ini_options]
+pythonpath = "spakky"
+testpaths = "tests"
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
+addopts = """
+    --cov
+    --no-cov-on-fail
+    --strict-markers
+    -p no:warnings
+"""
+
+[tool.black]
+line-length = 90
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.isort]
+py_version = 310
+src_paths = ["spakky", "tests"]
+skip = [".gitignore", ".dockerignore"]
+extend_skip = [".md", ".json", ".txt"]
+profile = "black"
+combine_as_imports = true
+remove_redundant_aliases = true
+length_sort_sections = ["future", "stdlib"]
+
+[tool.pylint.'MESSAGES CONTROL']
+max-line-length = 90
+disable = """
+    too-many-arguments,
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    unnecessary-ellipsis
+"""
+
+[tool.coverage.run]
+omit = ["tests/*"]
+traceback = "short"
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+fail_under = 90
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "@(abc\\.)?abstractmethod"
+]
