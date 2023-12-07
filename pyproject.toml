@@ -12,7 +12,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = "3.10.*"
-pycryptodome = "^3.19.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.2"
