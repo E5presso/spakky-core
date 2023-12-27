@@ -11,7 +11,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-python = "3.10.*"
+python = "3.11.*"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.2"
@@ -26,25 +26,13 @@ pylint = "^3.0.2"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 
-[tool.pytest.ini_options]
-pythonpath = "spakky"
-testpaths = "tests"
-python_files = ["test_*.py"]
-asyncio_mode = "auto"
-addopts = """
-    --cov
-    --no-cov-on-fail
-    --strict-markers
-    -p no:warnings
-"""
-
 [tool.black]
 line-length = 90
-target-version = ['py310']
+target-version = ["py311"]
 include = '\.pyi?$'
 
 [tool.isort]
-py_version = 310
+py_version = 311
 src_paths = ["spakky", "tests"]
 skip = [".gitignore", ".dockerignore"]
 extend_skip = [".md", ".json", ".txt"]
@@ -64,6 +52,17 @@ disable = """
     unnecessary-ellipsis
 """
 
+[tool.pytest.ini_options]
+pythonpath = "classy_chalice"
+testpaths = "tests"
+python_files = ["test_*.py"]
+addopts = """
+    --cov
+    --no-cov-on-fail
+    --strict-markers
+    -p no:warnings
+"""
+
 [tool.coverage.run]
 omit = ["tests/*"]
 traceback = "short"
@@ -79,5 +78,6 @@ exclude_lines = [
     "def __repr__",
     "raise AssertionError",
     "raise NotImplementedError",
-    "@(abc\\.)?abstractmethod"
+    "@(abc\\.)?abstractmethod",
+    "@(typing\\.)?overload"
 ]
