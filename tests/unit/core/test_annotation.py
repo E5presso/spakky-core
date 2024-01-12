@@ -1,3 +1,4 @@
+import inspect
 from uuid import UUID, uuid4
 from dataclasses import dataclass
 
@@ -80,8 +81,11 @@ def test_function_passing_type_hint() -> None:
     def func(name: str, age: int) -> tuple[str, int]:
         return name, age
 
+    old_signature: inspect.Signature = inspect.signature(func)
+
     func = CustomAnnotation()(func)
 
+    assert inspect.signature(func) == old_signature
     assert func(name="John", age=30) == ("John", 30)
 
 
