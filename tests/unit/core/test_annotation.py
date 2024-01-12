@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import pytest
 
 from spakky.core.annotation import (
+    Annotation,
     AnnotationNotFoundError,
     ClassAnnotation,
     FunctionAnnotation,
@@ -97,6 +98,22 @@ def test_function_annotation_expect_success() -> None:
     assert FunctionAnnotation.exists(function)
     assert FunctionAnnotation.single_or_none(function) is not None
     assert FunctionAnnotation.single(function)
+
+    @dataclass
+    class CustomAnnotation(Annotation):
+        name: str
+        age: int
+
+    @CustomAnnotation(name="John", age=30)
+    @CustomAnnotation(name="Sarah", age=28)
+    def sample() -> None:
+        ...
+
+    annotations: list[CustomAnnotation] = CustomAnnotation.all(sample)
+    assert annotations == [
+        CustomAnnotation(name="Sarah", age=28),
+        CustomAnnotation(name="John", age=30),
+    ]
 
 
 def test_function_annotation_expect_fail() -> None:
