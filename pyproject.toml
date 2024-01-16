@@ -12,6 +12,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = ">=3.10"
+typing-extensions = "^4.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.2"
@@ -29,7 +30,7 @@ pytest-asyncio = "^0.21.1"
 
 [tool.black]
 line-length = 90
-target-version = ["py311"]
+target-version = ["py310"]
 include = '\.pyi?$'
 
 [tool.isort]
@@ -57,11 +58,13 @@ disable = """
 pythonpath = "spakky"
 testpaths = "tests"
 python_files = ["test_*.py"]
+asyncio_mode = "auto"
 addopts = """
     --cov
     --no-cov-on-fail
     --strict-markers
     -p no:warnings
+    -vv
 """
 
 [tool.coverage.run]
