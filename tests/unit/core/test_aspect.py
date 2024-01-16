@@ -10,7 +10,6 @@ from spakky.core.aspect import Aspect, AsyncAspect, P, R
 
 
 def test_aspect_is_callable() -> None:
-    @dataclass
     class DummyAspect(Aspect):
         ...
 
@@ -23,7 +22,6 @@ def test_aspect_is_callable() -> None:
 
 
 def test_aspect_type_attribute() -> None:
-    @dataclass
     class DummyAspect(Aspect):
         ...
 
@@ -47,7 +45,6 @@ def test_aspect_before_expect_success() -> None:
 
     aspect_called: bool = False
 
-    @dataclass
     class BeforeAspect(Aspect):
         def before(self, *_args: Any, **_kwargs: Any) -> None:
             nonlocal aspect_called
@@ -73,7 +70,6 @@ def test_aspect_after_returning_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    @dataclass
     class AfterReturningAspect(Aspect):
         def after_returning(self, _result: Any) -> None:
             nonlocal aspect_returned
@@ -116,7 +112,6 @@ def test_aspect_after_raising_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    @dataclass
     class AfterRaisingAspect(Aspect):
         def after_returning(self, _result: Any) -> None:
             nonlocal aspect_returned
@@ -160,7 +155,6 @@ def test_aspect_after_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    @dataclass
     class AfterAspect(Aspect):
         def after_returning(self, _result: Any) -> None:
             nonlocal aspect_returned
@@ -194,7 +188,6 @@ def test_aspect_after_expect_success() -> None:
 
 
 def test_aspect_around_expect_success() -> None:
-    @dataclass
     class AroundAspect(Aspect):
         def around(self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
             assert not args
@@ -261,7 +254,6 @@ def test_log_aspect() -> None:
 
 @pytest.mark.asyncio
 async def test_async_aspect_is_coroutine_callable() -> None:
-    @dataclass
     class DummyAspect(AsyncAspect):
         ...
 
@@ -276,7 +268,6 @@ async def test_async_aspect_is_coroutine_callable() -> None:
 
 @pytest.mark.asyncio
 async def test_async_aspect_type_attribute() -> None:
-    @dataclass
     class DummyAspect(AsyncAspect):
         ...
 
@@ -301,7 +292,6 @@ async def test_async_aspect_before_expect_success() -> None:
 
     aspect_called: bool = False
 
-    @dataclass
     class BeforeAspect(AsyncAspect):
         async def before(self, *_args: Any, **_kwargs: Any) -> None:
             nonlocal aspect_called
@@ -328,7 +318,6 @@ async def test_async_aspect_after_returning_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    @dataclass
     class AfterReturningAspect(AsyncAspect):
         async def after_returning(self, _result: Any) -> None:
             nonlocal aspect_returned
@@ -372,7 +361,6 @@ async def test_async_aspect_after_raising_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    @dataclass
     class AfterRaisingAspect(AsyncAspect):
         async def after_returning(self, _result: Any) -> None:
             nonlocal aspect_returned
@@ -417,7 +405,6 @@ async def test_async_aspect_after_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    @dataclass
     class AfterAspect(AsyncAspect):
         async def after_returning(self, _result: Any) -> None:
             nonlocal aspect_returned
@@ -452,7 +439,6 @@ async def test_async_aspect_after_expect_success() -> None:
 
 @pytest.mark.asyncio
 async def test_async_aspect_around_expect_success() -> None:
-    @dataclass
     class AroundAspect(AsyncAspect):
         async def around(
             self, func: Callable[P, Awaitable[R]], *args: P.args, **kwargs: P.kwargs

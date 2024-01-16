@@ -1,13 +1,11 @@
 from typing import Any, TypeVar, Callable, Awaitable, ParamSpec
 from functools import wraps
 
-from spakky.core.annotation import Annotation
-
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
-class Aspect(Annotation):
+class Aspect:
     """`Aspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
     [`before`, `after_returning`, `after_raising`, `after`, `around`]\n
@@ -39,7 +37,6 @@ class Aspect(Annotation):
         Returns:
             Callable[P, R]: Wrapped function
         """
-        obj = super().__call__(obj)
 
         @wraps(obj)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -72,7 +69,7 @@ class Aspect(Annotation):
         return func(*args, **kwargs)
 
 
-class AsyncAspect(Annotation):
+class AsyncAspect:
     """`AsyncAspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
     [`before`, `after_returning`, `after_raising`, `after`, `around`]\n
@@ -108,7 +105,6 @@ class AsyncAspect(Annotation):
         Returns:
             Callable[P, Awaitable[R]]: Wrapped async function
         """
-        obj = super().__call__(obj)
 
         @wraps(obj)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
