@@ -1,7 +1,6 @@
 from abc import ABC
 from typing import Any, Self, final
 from itertools import chain
-from dataclasses import dataclass
 
 from spakky.core.generics import ClassT, FuncT, ObjectT
 
@@ -9,7 +8,6 @@ __ANNOTATION_METADATA__ = "__SPAKKY_ANNOTATION_METADATA__"
 __ANNOTATION_TYPEMAP__ = "__SPAKKY_ANNOTATION_TYPEMAP__"
 
 
-@dataclass
 class Annotation(ABC):
     """`Annotation` is a class-based decorator to write custom metadata to Any objects.\n
     It is pretty much same with Java's Annotation.\n
@@ -228,7 +226,6 @@ class Annotation(ABC):
         return metadata
 
 
-@dataclass
 class ClassAnnotation(Annotation, ABC):
     """`ClassAnnotation` is a class-based decorator to write\n
     custom metadata to `type` objects.\n
@@ -263,7 +260,6 @@ class ClassAnnotation(Annotation, ABC):
         return super().__call__(obj)
 
 
-@dataclass
 class FunctionAnnotation(Annotation, ABC):
     """`FunctionAnnotation` is a class-based decorator to write\n
     custom metadata to `Callable` objects.\n

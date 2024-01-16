@@ -2,7 +2,7 @@ import inspect
 from uuid import UUID, uuid4
 from typing import Any, Callable, Awaitable, cast
 from datetime import datetime
-from dataclasses import field, dataclass
+from dataclasses import dataclass
 
 import pytest
 
@@ -217,12 +217,17 @@ def test_aspect_around_expect_success() -> None:
 def test_log_aspect() -> None:
     logs: list[str] = []
 
-    @dataclass
     class LogAspect(Aspect):
-        request_id: UUID | None = field(init=False, default=None)
-        timestamp: datetime = field(init=False)
-        arguments: tuple[Any, ...] = field(init=False, default_factory=tuple[Any, ...])
-        keywords: dict[str, Any] = field(init=False, default_factory=dict[str, Any])
+        request_id: UUID | None
+        timestamp: datetime | None
+        arguments: tuple[Any, ...] | None
+        keywords: dict[str, Any] | None
+
+        def __init__(self) -> None:
+            self.request_id = None
+            self.timestamp = None
+            self.arguments = None
+            self.keywords = None
 
         def before(self, *_args: Any, **_kwargs: Any) -> None:
             self.request_id = _kwargs.get("request_id", None)
@@ -473,12 +478,17 @@ async def test_async_aspect_around_expect_success() -> None:
 async def test_async_log_aspect() -> None:
     logs: list[str] = []
 
-    @dataclass
-    class LogAspect(AsyncAspect):
-        request_id: UUID | None = field(init=False, default=None)
-        timestamp: datetime = field(init=False)
-        arguments: tuple[Any, ...] = field(init=False, default_factory=tuple[Any, ...])
-        keywords: dict[str, Any] = field(init=False, default_factory=dict[str, Any])
+    class AsyncLogAspect(AsyncAspect):
+        request_id: UUID | None
+        timestamp: datetime | None
+        arguments: tuple[Any, ...] | None
+        keywords: dict[str, Any] | None
+
+        def __init__(self) -> None:
+            self.request_id = None
+            self.timestamp = None
+            self.arguments = None
+            self.keywords = None
 
         async def before(self, *_args: Any, **_kwargs: Any) -> None:
             self.request_id = _kwargs.get("request_id", None)
@@ -494,7 +504,7 @@ async def test_async_log_aspect() -> None:
             )
             return await super().after()
 
-    @LogAspect()
+    @AsyncLogAspect()
     async def execute(request_id: UUID, name: str, age: int) -> tuple[UUID, str, int]:
         return request_id, name, age
 

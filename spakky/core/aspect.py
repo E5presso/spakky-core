@@ -1,6 +1,5 @@
 from typing import Any, TypeVar, Callable, Awaitable, ParamSpec
 from functools import wraps
-from dataclasses import dataclass
 
 from spakky.core.annotation import Annotation
 
@@ -8,7 +7,6 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-@dataclass
 class Aspect(Annotation):
     """`Aspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
@@ -74,7 +72,6 @@ class Aspect(Annotation):
         return func(*args, **kwargs)
 
 
-@dataclass
 class AsyncAspect(Annotation):
     """`AsyncAspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
