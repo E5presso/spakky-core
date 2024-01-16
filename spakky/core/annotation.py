@@ -1,9 +1,7 @@
 from abc import ABC
-from typing import Any, final
+from typing import Any, Self, final
 from itertools import chain
 from dataclasses import dataclass
-
-from typing_extensions import Self
 
 from spakky.core.generics import ClassT, FuncT, ObjectT
 
