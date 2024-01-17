@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Callable, Sequence
 
 from spakky.core.generics import ObjectT
-from spakky.dependency.dependency import Dependency
 
 
 class IDependencyContainer(ABC):
@@ -19,7 +18,7 @@ class IDependencyContainer(ABC):
         ...
 
     @abstractmethod
-    def query(self, annotation: type[Dependency]) -> Sequence[type]:
+    def query(self, selector: Callable[[type], bool]) -> Sequence[type]:
         ...
 
     @abstractmethod
