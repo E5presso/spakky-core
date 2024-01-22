@@ -12,10 +12,11 @@ class Autowired(FunctionAnnotation):
 
     def __call__(self, obj: FuncT) -> FuncT:
         signature: Signature = inspect.signature(obj)
-        for name, parameter in signature.parameters.items():
-            if parameter.annotation == Parameter.empty:
-                raise ValueError(f"Cannot auto-wire '{name}'. Type annotation required.")
-            self.dependencies[name] = parameter.annotation
+        self.dependencies = {
+            name: parameter.annotation
+            for name, parameter in signature.parameters.items()
+            if parameter.annotation != Parameter.empty
+        }
         return super().__call__(obj)
 
 

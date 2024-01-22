@@ -59,11 +59,11 @@ testpaths = "tests"
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
 addopts = """
+    -vv
     --cov
     --no-cov-on-fail
     --strict-markers
     -p no:warnings
-    -vv
 """
 
 [tool.coverage.run]
