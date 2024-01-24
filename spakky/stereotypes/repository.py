@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from spakky.stereotypes.component import Component
+from spakky.component.component import Component
 
 
 @dataclass
