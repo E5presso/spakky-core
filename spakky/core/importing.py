@@ -4,8 +4,10 @@ import importlib
 from types import ModuleType
 from typing import Callable
 
+from spakky.core.error import SpakkyCoreError
 
-class CannotScanNonPackageModuleError(Exception):
+
+class CannotScanNonPackageModuleError(SpakkyCoreError):
     __module: ModuleType
 
     def __init__(self, module: ModuleType) -> None:

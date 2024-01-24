@@ -3,6 +3,7 @@ from typing import Any, Self, final
 from itertools import chain
 from dataclasses import dataclass
 
+from spakky.core.error import SpakkyCoreError
 from spakky.core.generics import ClassT, FuncT, ObjectT
 
 __ANNOTATION_METADATA__ = "__SPAKKY_ANNOTATION_METADATA__"
@@ -228,6 +229,33 @@ class Annotation(ABC):
         return metadata
 
 
+class AnnotationNotFoundError(SpakkyCoreError):
+    __annotation: type[Annotation]
+    __obj: Any
+
+    def __init__(self, annotation: type[Annotation], obj: Any) -> None:
+        self.__annotation = annotation
+        self.__obj = obj
+
+    def __repr__(self) -> str:
+        return f"'{self.__obj.__name__}' has no annotation '{self.__annotation.__name__}'"
+
+
+class MultipleAnnotationFoundError(SpakkyCoreError):
+    __annotation: type[Annotation]
+    __obj: Any
+
+    def __init__(self, annotation: type[Annotation], obj: Any) -> None:
+        self.__annotation = annotation
+        self.__obj = obj
+
+    def __repr__(self) -> str:
+        return (
+            f"Multiple '{self.__annotation.__name__}' "
+            + f"annotation found in '{self.__obj.__name__}'."
+        )
+
+
 @dataclass
 class ClassAnnotation(Annotation, ABC):
     """`ClassAnnotation` is a class-based decorator to write\n
@@ -296,30 +324,3 @@ class FunctionAnnotation(Annotation, ABC):
             FuncT: Annotated function
         """
         return super().__call__(obj)
-
-
-class AnnotationNotFoundError(Exception):
-    __annotation: type[Annotation]
-    __obj: Any
-
-    def __init__(self, annotation: type[Annotation], obj: Any) -> None:
-        self.__annotation = annotation
-        self.__obj = obj
-
-    def __repr__(self) -> str:
-        return f"'{self.__obj.__name__}' has no annotation '{self.__annotation.__name__}'"
-
-
-class MultipleAnnotationFoundError(Exception):
-    __annotation: type[Annotation]
-    __obj: Any
-
-    def __init__(self, annotation: type[Annotation], obj: Any) -> None:
-        self.__annotation = annotation
-        self.__obj = obj
-
-    def __repr__(self) -> str:
-        return (
-            f"Multiple '{self.__annotation.__name__}' "
-            + f"annotation found in '{self.__obj.__name__}'."
-        )
