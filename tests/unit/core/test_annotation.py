@@ -18,7 +18,7 @@ def test_class_annotation_expect_success() -> None:
     class Dummy:
         ...
 
-    assert ClassAnnotation.exists(Dummy)
+    assert ClassAnnotation.contains(Dummy)
     assert ClassAnnotation.single_or_none(Dummy) is not None
     assert ClassAnnotation.single(Dummy)
 
@@ -28,7 +28,7 @@ def test_class_annotation_expect_fail() -> None:
         ...
 
     with pytest.raises(AssertionError):
-        assert ClassAnnotation.exists(Dummy)
+        assert ClassAnnotation.contains(Dummy)
     with pytest.raises(AssertionError):
         assert ClassAnnotation.single_or_none(Dummy) is not None
     with pytest.raises(AnnotationNotFoundError):
@@ -49,8 +49,8 @@ def test_multiple_class_annotation_expect_success() -> None:
     class Dummy:
         ...
 
-    assert DummyAnnotation.exists(Dummy)
-    assert AnotherAnnotation.exists(Dummy)
+    assert DummyAnnotation.contains(Dummy)
+    assert AnotherAnnotation.contains(Dummy)
 
 
 def test_same_class_annotation_multiple_times_expect_error() -> None:
@@ -95,7 +95,7 @@ def test_function_annotation_expect_success() -> None:
     def function() -> None:
         ...
 
-    assert FunctionAnnotation.exists(function)
+    assert FunctionAnnotation.contains(function)
     assert FunctionAnnotation.single_or_none(function) is not None
     assert FunctionAnnotation.single(function)
 
@@ -121,7 +121,7 @@ def test_function_annotation_expect_fail() -> None:
         ...
 
     with pytest.raises(AssertionError):
-        assert FunctionAnnotation.exists(function)
+        assert FunctionAnnotation.contains(function)
     with pytest.raises(AssertionError):
         assert FunctionAnnotation.single_or_none(function) is not None
     with pytest.raises(AnnotationNotFoundError):
@@ -142,8 +142,8 @@ def test_multiple_function_annotation_expect_success() -> None:
     def function() -> None:
         ...
 
-    assert DummyAnnotation.exists(function)
-    assert AnotherAnnotation.exists(function)
+    assert DummyAnnotation.contains(function)
+    assert AnotherAnnotation.contains(function)
 
 
 def test_same_function_annotation_multiple_times_expect_error() -> None:
@@ -186,9 +186,9 @@ def test_class_annotation_inheritance() -> None:
     class Dummy:
         ...
 
-    assert Baz.exists(Dummy)
-    assert Bar.exists(Dummy)
-    assert Foo.exists(Dummy)
+    assert Baz.contains(Dummy)
+    assert Bar.contains(Dummy)
+    assert Foo.contains(Dummy)
 
     assert Baz.single(Dummy).uid == uid
     assert Baz.single(Dummy).name == "John"
@@ -214,7 +214,7 @@ def test_class_annotation_inheritance_expect_fail() -> None:
     class Dummy2:
         ...
 
-    assert Bar.exists(Dummy2)
-    assert Foo.exists(Dummy2)
+    assert Bar.contains(Dummy2)
+    assert Foo.contains(Dummy2)
     with pytest.raises(AssertionError):
-        assert Baz.exists(Dummy2)
+        assert Baz.contains(Dummy2)

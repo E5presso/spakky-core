@@ -36,5 +36,5 @@ def test_list_classes_with_selector_expect_success() -> None:
         module_c.DummyC,
     }
     assert set(
-        chain(*(list_classes(module, ClassAnnotation.exists) for module in modules))
+        chain(*(list_classes(module, ClassAnnotation.contains) for module in modules))
     ) == {module_b.DummyB}

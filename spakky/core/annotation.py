@@ -171,7 +171,7 @@ class Annotation(ABC):
 
     @final
     @classmethod
-    def exists(cls, obj: Any) -> bool:
+    def contains(cls, obj: Any) -> bool:
         """Check if annotation exists in object
         ```python
         @dataclass
