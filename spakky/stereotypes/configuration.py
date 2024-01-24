@@ -4,5 +4,5 @@ from spakky.component.component import Component
 
 
 @dataclass
-class Environment(Component):
+class Configuration(Component):
     ...
