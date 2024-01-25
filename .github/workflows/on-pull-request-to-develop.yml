@@ -1,4 +1,4 @@
-name: Test Automation
+name: (PR -> 'develop') Test Automation
 on:
   pull_request:
     branches:
