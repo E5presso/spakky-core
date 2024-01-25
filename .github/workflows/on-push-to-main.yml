@@ -1,4 +1,4 @@
-name: (Push -> 'main') Test Automation
+name: (Push -> 'main') Test CI
 on:
   push:
     branches:

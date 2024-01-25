@@ -1,4 +1,4 @@
-name: (PR -> 'develop') Test Automation
+name: (PR -> 'develop') Test CI
 on:
   pull_request:
     branches:
