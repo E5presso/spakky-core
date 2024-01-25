@@ -1,5 +1,5 @@
-from spakky.component.autowired import autowired
-from spakky.component.component import Component
+from spakky.dependency.autowired import autowired
+from spakky.dependency.component import Component
 
 
 def test_component_with_autowired() -> None:

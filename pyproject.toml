@@ -45,6 +45,8 @@ length_sort_sections = ["future", "stdlib"]
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length = 90
 disable = """
+    no-member,
+    invalid-field-call,
     too-many-arguments,
     missing-module-docstring,
     missing-class-docstring,

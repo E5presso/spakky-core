@@ -1,7 +1,7 @@
 from typing import Callable
 from dataclasses import field, dataclass
 
-from spakky.component.autowired import Autowired
+from spakky.dependency.autowired import Autowired
 from spakky.core.annotation import ClassAnnotation
 from spakky.core.generics import ClassT
 from spakky.utils.casing import pascal_to_snake
