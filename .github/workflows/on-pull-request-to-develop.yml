@@ -9,7 +9,7 @@ jobs:
     env:
       OS: ubuntu-latest
       PYTHON: "3.11"
-      POETRY: "1.4.2"
+      POETRY: "1.7.1"
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
     - name: Checkout Branch
