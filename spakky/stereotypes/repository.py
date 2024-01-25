@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from spakky.component.component import Component
+from spakky.dependency.component import Component
 
 
 @dataclass

@@ -1,22 +1,22 @@
 from typing import Any, Callable, Sequence, overload
 
-from spakky.component.autowired import Unknown
-from spakky.component.component import Component
-from spakky.component.primary import Primary
-from spakky.component.provider import Provider, ProvidingType
-from spakky.core.error import SpakkyCoreError
+from spakky.dependency.autowired import Unknown
+from spakky.dependency.component import Component
+from spakky.dependency.error import SpakkyComponentError
+from spakky.dependency.primary import Primary
+from spakky.dependency.provider import Provider, ProvidingType
 from spakky.core.generics import ObjectT
 
 
-class CannotRegisterNonComponentError(SpakkyCoreError):
+class CannotRegisterNonComponentError(SpakkyComponentError):
     ...
 
 
-class NoSuchComponentError(SpakkyCoreError):
+class NoSuchComponentError(SpakkyComponentError):
     ...
 
 
-class NoUniqueComponentError(SpakkyCoreError):
+class NoUniqueComponentError(SpakkyComponentError):
     ...
 
 

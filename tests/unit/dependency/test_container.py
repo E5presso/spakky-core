@@ -4,16 +4,16 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.component.autowired import autowired
-from spakky.component.component import Component
-from spakky.component.container import (
+from spakky.dependency.autowired import autowired
+from spakky.dependency.component import Component
+from spakky.dependency.container import (
     CannotRegisterNonComponentError,
     ComponentContainer,
     NoSuchComponentError,
     NoUniqueComponentError,
 )
-from spakky.component.primary import Primary
-from spakky.component.provider import Provider, ProvidingType
+from spakky.dependency.primary import Primary
+from spakky.dependency.provider import Provider, ProvidingType
 from spakky.core.annotation import ClassAnnotation
 
 

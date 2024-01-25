@@ -2,8 +2,8 @@ import inspect
 from inspect import Parameter, Signature
 from dataclasses import field, dataclass
 
+from spakky.dependency.error import SpakkyComponentError
 from spakky.core.annotation import FunctionAnnotation
-from spakky.core.error import SpakkyCoreError
 from spakky.core.generics import FuncT
 
 
@@ -11,7 +11,7 @@ class Unknown:
     ...
 
 
-class CannotAutowiringNonConstructorMethodError(SpakkyCoreError):
+class CannotAutowiringNonConstructorMethodError(SpakkyComponentError):
     ...
 
 
