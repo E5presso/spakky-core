@@ -34,8 +34,5 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
             return False
         return self.id == other.id
 
-    def __ne__(self, __value: object) -> bool:
-        return not self == __value
-
     def __hash__(self) -> int:
         return hash(self.id)

@@ -24,9 +24,6 @@ def test_mutable_is_dataclass() -> None:
                 return False
             return self.name == __value.name
 
-        def __ne__(self, __value: object) -> bool:
-            return not self == __value
-
         def __hash__(self) -> int:
             return hash(self.name)
 
@@ -54,9 +51,6 @@ def test_immutable_is_dataclass() -> None:
             if not isinstance(__value, type(self)):
                 return False
             return self.name == __value.name
-
-        def __ne__(self, __value: object) -> bool:
-            return not self == __value
 
         def __hash__(self) -> int:
             return hash(self.name)

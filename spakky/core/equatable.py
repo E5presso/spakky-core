@@ -9,9 +9,5 @@ class IEquatable(Protocol):
         ...
 
     @abstractmethod
-    def __ne__(self, __value: object) -> bool:
-        ...
-
-    @abstractmethod
     def __hash__(self) -> int:
         ...
