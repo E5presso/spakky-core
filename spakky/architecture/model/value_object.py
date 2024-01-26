@@ -1,21 +1,23 @@
 from abc import ABC
-from typing import Hashable
+from copy import deepcopy
+from typing import Self, Hashable
 from functools import reduce
 from dataclasses import astuple
 
-from spakky.architecture.model.decorator import immutable
+from spakky.core.cloneable import ICloneable
 from spakky.core.equatable import IEquatable
+from spakky.core.mutability import immutable
 
 
 @immutable
-class ValueObject(IEquatable, ABC):
+class ValueObject(IEquatable, ICloneable, ABC):
+    def clone(self) -> Self:
+        return deepcopy(self)
+
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, type(self)):
             return False
         return astuple(self) == astuple(__value)
-
-    def __ne__(self, __value: object) -> bool:
-        return not self == __value
 
     def __hash__(self) -> int:
         return reduce(

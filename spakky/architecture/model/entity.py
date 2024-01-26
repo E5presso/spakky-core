@@ -3,10 +3,10 @@ from copy import deepcopy
 from typing import Generic, Sequence
 from dataclasses import field
 
-from spakky.architecture.model.decorator import mutable
 from spakky.architecture.model.domain_event import DomainEvent
 from spakky.core.equatable import IEquatable
 from spakky.core.generics import EquatableT
+from spakky.core.mutability import mutable
 
 
 @mutable
@@ -33,9 +33,6 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
         if not isinstance(other, type(self)):
             return False
         return self.id == other.id
-
-    def __ne__(self, __value: object) -> bool:
-        return not self == __value
 
     def __hash__(self) -> int:
         return hash(self.id)
