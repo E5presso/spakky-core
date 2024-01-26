@@ -21,6 +21,22 @@ def test_domain_event_equals() -> None:
     assert event1 == event2
 
 
+def test_domain_event_not_equals() -> None:
+    @immutable
+    class SampleEvent(DomainEvent):
+        ...
+
+    event1: SampleEvent = SampleEvent(
+        id=UUID("12345678-1234-5678-1234-567812345678"),
+        timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
+    )
+    event2: SampleEvent = SampleEvent(
+        id=UUID("12345678-1234-5678-1234-567812345678"),
+        timestamp=datetime.fromisoformat("2024-01-26T11:31:00.000000+09:00"),
+    )
+    assert event1 != event2
+
+
 def test_domain_event_not_equals_with_wrong_type() -> None:
     @immutable
     class SampleEvent(DomainEvent):
@@ -41,7 +57,7 @@ def test_domain_event_not_equals_with_wrong_type() -> None:
     assert event1 != event2
 
 
-def test_domain_event_copy() -> None:
+def test_domain_event_clone() -> None:
     @immutable
     class SampleEvent(DomainEvent):
         ...
@@ -50,7 +66,7 @@ def test_domain_event_copy() -> None:
         id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
-    event2: SampleEvent = event1.copy()
+    event2: SampleEvent = event1.clone()
     assert event1 == event2
 
 

@@ -15,7 +15,7 @@ class DomainEvent(IEquatable, ICloneable, ABC):
     id: UUID = field(default_factory=uuid4)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def copy(self) -> Self:
+    def clone(self) -> Self:
         return deepcopy(self)
 
     def __eq__(self, other: object) -> bool:

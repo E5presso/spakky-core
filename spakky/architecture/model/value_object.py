@@ -11,7 +11,7 @@ from spakky.core.mutability import immutable
 
 @immutable
 class ValueObject(IEquatable, ICloneable, ABC):
-    def copy(self) -> Self:
+    def clone(self) -> Self:
         return deepcopy(self)
 
     def __eq__(self, __value: object) -> bool:
