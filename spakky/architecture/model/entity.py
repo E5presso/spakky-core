@@ -3,10 +3,10 @@ from copy import deepcopy
 from typing import Generic, Sequence
 from dataclasses import field
 
-from spakky.architecture.model.decorator import mutable
 from spakky.architecture.model.domain_event import DomainEvent
 from spakky.core.equatable import IEquatable
 from spakky.core.generics import EquatableT
+from spakky.core.mutability import mutable
 
 
 @mutable

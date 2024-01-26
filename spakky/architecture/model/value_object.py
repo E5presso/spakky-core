@@ -3,8 +3,8 @@ from typing import Hashable
 from functools import reduce
 from dataclasses import astuple
 
-from spakky.architecture.model.decorator import immutable
 from spakky.core.equatable import IEquatable
+from spakky.core.mutability import immutable
 
 
 @immutable

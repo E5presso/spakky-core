@@ -1,9 +1,9 @@
 from uuid import UUID, uuid4
 from typing import Self
 
-from spakky.architecture.model.decorator import immutable, mutable
 from spakky.architecture.model.domain_event import DomainEvent
 from spakky.architecture.model.entity import Entity
+from spakky.core.mutability import immutable, mutable
 
 
 def test_entity_equals() -> None:

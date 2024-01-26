@@ -3,8 +3,8 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from dataclasses import field
 
-from spakky.architecture.model.decorator import immutable
 from spakky.core.equatable import IEquatable
+from spakky.core.mutability import immutable
 
 
 @immutable
