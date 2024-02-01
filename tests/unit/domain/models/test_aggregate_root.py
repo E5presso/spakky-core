@@ -1,14 +1,14 @@
 from uuid import UUID, uuid4
 from typing import Self
 
-from spakky.architecture.model.aggregate_root import IAggregateRoot
-from spakky.architecture.model.domain_event import DomainEvent
 from spakky.core.mutability import immutable, mutable
+from spakky.domain.models.aggregate_root import AggregateRoot
+from spakky.domain.models.domain_event import DomainEvent
 
 
 def test_aggregate_root_add_event() -> None:
     @mutable
-    class User(IAggregateRoot[UUID]):
+    class User(AggregateRoot[UUID]):
         name: str
 
         @immutable
@@ -28,7 +28,7 @@ def test_aggregate_root_add_event() -> None:
 
 def test_aggregate_root_remove_event() -> None:
     @mutable
-    class User(IAggregateRoot[UUID]):
+    class User(AggregateRoot[UUID]):
         name: str
 
         @immutable
@@ -50,7 +50,7 @@ def test_aggregate_root_remove_event() -> None:
 
 def test_aggregate_root_clear_events() -> None:
     @mutable
-    class User(IAggregateRoot[UUID]):
+    class User(AggregateRoot[UUID]):
         name: str
 
         @immutable

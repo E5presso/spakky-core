@@ -5,13 +5,14 @@ from typing import Self
 from datetime import datetime
 from dataclasses import field
 
-from spakky.core.cloneable import ICloneable
-from spakky.core.equatable import IEquatable
+from spakky.core.interfaces.cloneable import ICloneable
+from spakky.core.interfaces.comparable import IComparable
+from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.mutability import immutable
 
 
 @immutable
-class DomainEvent(IEquatable, ICloneable, ABC):
+class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
     id: UUID = field(default_factory=uuid4)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
@@ -25,3 +26,15 @@ class DomainEvent(IEquatable, ICloneable, ABC):
 
     def __hash__(self) -> int:
         return hash(self.id) ^ hash(self.timestamp)
+
+    def __lt__(self, __value: Self) -> bool:
+        return self.timestamp < __value.timestamp
+
+    def __le__(self, __value: Self) -> bool:
+        return self.timestamp <= __value.timestamp
+
+    def __gt__(self, __value: Self) -> bool:
+        return self.timestamp > __value.timestamp
+
+    def __ge__(self, __value: Self) -> bool:
+        return self.timestamp >= __value.timestamp

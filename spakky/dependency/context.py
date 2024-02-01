@@ -1,34 +1,33 @@
 from typing import Any, Callable, Sequence, overload
 
+from spakky.core.generics import ObjectT
 from spakky.dependency.autowired import Unknown
 from spakky.dependency.component import Component
-from spakky.dependency.error import SpakkyComponentError
+from spakky.dependency.error import SpakkyDependencyError
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
-from spakky.core.generics import ObjectT
 
 
-class CannotRegisterNonComponentError(SpakkyComponentError):
+class CannotRegisterNonComponentError(SpakkyDependencyError):
     ...
 
 
-class NoSuchComponentError(SpakkyComponentError):
+class NoSuchComponentError(SpakkyDependencyError):
     ...
 
 
-class NoUniqueComponentError(SpakkyComponentError):
+class NoUniqueComponentError(SpakkyDependencyError):
     ...
 
 
-class ComponentContainer:
+class Context:
+    __components: list[type]
     __type_map: dict[type, set[type]]
     __components_type_map: dict[type, type]
     __components_name_map: dict[str, type]
-    __components: list[type]
     __singleton_cache: dict[type, Any]
 
     def __init__(self) -> None:
-        super().__init__()
         self.__type_map = {}
         self.__components_type_map = {}
         self.__components_name_map = {}
@@ -111,6 +110,8 @@ class ComponentContainer:
                 else ProvidingType.SINGLETON
             )
             return self.__get_instance(component=component, providing_type=providing_type)
+        if name is None:  # pragma: no cover
+            raise ValueError("'required_type' and 'name' both cannot be None")
         if name not in self.__components_name_map:
             raise NoSuchComponentError(name)
         component: type = self.__components_name_map[name]

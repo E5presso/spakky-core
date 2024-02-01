@@ -2,16 +2,16 @@ import inspect
 from inspect import Parameter, Signature
 from dataclasses import field, dataclass
 
-from spakky.dependency.error import SpakkyComponentError
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.generics import FuncT
+from spakky.dependency.error import SpakkyDependencyError
 
 
 class Unknown:
     ...
 
 
-class CannotAutowiringNonConstructorMethodError(SpakkyComponentError):
+class CannotAutowiringNonConstructorMethodError(SpakkyDependencyError):
     ...
 
 

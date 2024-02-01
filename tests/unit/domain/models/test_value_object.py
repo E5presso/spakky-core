@@ -1,4 +1,4 @@
-from spakky.architecture.model.value_object import ValueObject
+from spakky.domain.models.value_object import ValueObject
 from spakky.core.mutability import immutable
 
 

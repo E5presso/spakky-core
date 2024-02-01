@@ -230,6 +230,12 @@ class Annotation(ABC):
 
 
 class AnnotationNotFoundError(SpakkyCoreError):
+    """Annotation not found in specified object.
+
+    Args:
+        SpakkyCoreError (_type_): Core error
+    """
+
     __annotation: type[Annotation]
     __obj: Any
 
@@ -242,6 +248,12 @@ class AnnotationNotFoundError(SpakkyCoreError):
 
 
 class MultipleAnnotationFoundError(SpakkyCoreError):
+    """Multiple annotation found in specified object.
+
+    Args:
+        SpakkyCoreError (_type_): Core error
+    """
+
     __annotation: type[Annotation]
     __obj: Any
 

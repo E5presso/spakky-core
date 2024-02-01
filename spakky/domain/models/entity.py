@@ -1,8 +1,7 @@
 from abc import ABC
 from typing import Generic
 
-from spakky.core.equatable import IEquatable
-from spakky.core.generics import EquatableT
+from spakky.core.interfaces.equatable import EquatableT, IEquatable
 from spakky.core.mutability import mutable
 
 

@@ -4,20 +4,20 @@ from dataclasses import dataclass
 
 import pytest
 
+from spakky.core.annotation import ClassAnnotation
 from spakky.dependency.autowired import autowired
 from spakky.dependency.component import Component
-from spakky.dependency.container import (
+from spakky.dependency.context import (
     CannotRegisterNonComponentError,
-    ComponentContainer,
+    Context,
     NoSuchComponentError,
     NoUniqueComponentError,
 )
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
-from spakky.core.annotation import ClassAnnotation
 
 
-def test_container_register_expect_success() -> None:
+def test_context_register_expect_success() -> None:
     @Component()
     class FirstSampleComponent:
         id: UUID
@@ -33,24 +33,24 @@ def test_container_register_expect_success() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
-    container.register(SecondSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
+    context.register(SecondSampleComponent)
 
 
-def test_container_register_expect_error() -> None:
+def test_context_register_expect_error() -> None:
     class NonComponent:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
+    context: Context = Context()
     with pytest.raises(CannotRegisterNonComponentError):
-        container.register(NonComponent)
+        context.register(NonComponent)
 
 
-def test_container_get_by_type_singleton_expect_success() -> None:
+def test_context_get_by_type_singleton_expect_success() -> None:
     @Component()
     class FirstSampleComponent:
         id: UUID
@@ -66,21 +66,21 @@ def test_container_get_by_type_singleton_expect_success() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
-    container.register(SecondSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
+    context.register(SecondSampleComponent)
 
     assert (
-        container.get(required_type=FirstSampleComponent).id
-        == container.get(required_type=FirstSampleComponent).id
+        context.get(required_type=FirstSampleComponent).id
+        == context.get(required_type=FirstSampleComponent).id
     )
     assert (
-        container.get(required_type=SecondSampleComponent).id
-        == container.get(required_type=SecondSampleComponent).id
+        context.get(required_type=SecondSampleComponent).id
+        == context.get(required_type=SecondSampleComponent).id
     )
 
 
-def test_container_get_by_type_expect_no_such_error() -> None:
+def test_context_get_by_type_expect_no_such_error() -> None:
     @Component()
     class FirstSampleComponent:
         id: UUID
@@ -94,21 +94,21 @@ def test_container_get_by_type_expect_no_such_error() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
 
     assert (
-        container.get(required_type=FirstSampleComponent).id
-        == container.get(required_type=FirstSampleComponent).id
+        context.get(required_type=FirstSampleComponent).id
+        == context.get(required_type=FirstSampleComponent).id
     )
     with pytest.raises(NoSuchComponentError):
         assert (
-            container.get(required_type=SecondSampleComponent).id
-            == container.get(required_type=SecondSampleComponent).id
+            context.get(required_type=SecondSampleComponent).id
+            == context.get(required_type=SecondSampleComponent).id
         )
 
 
-def test_container_get_by_type_factory_expect_success() -> None:
+def test_context_get_by_type_factory_expect_success() -> None:
     @Component()
     @Provider(ProvidingType.FACTORY)
     class SampleComponent:
@@ -117,16 +117,16 @@ def test_container_get_by_type_factory_expect_success() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(SampleComponent)
+    context: Context = Context()
+    context.register(SampleComponent)
 
     assert (
-        container.get(required_type=SampleComponent).id
-        != container.get(required_type=SampleComponent).id
+        context.get(required_type=SampleComponent).id
+        != context.get(required_type=SampleComponent).id
     )
 
 
-def test_container_get_by_name_expect_success() -> None:
+def test_context_get_by_name_expect_success() -> None:
     @Component()
     class SampleComponent:
         id: UUID
@@ -134,13 +134,13 @@ def test_container_get_by_name_expect_success() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(SampleComponent)
+    context: Context = Context()
+    context.register(SampleComponent)
 
-    assert isinstance(container.get(name="sample_component"), SampleComponent)
+    assert isinstance(context.get(name="sample_component"), SampleComponent)
 
 
-def test_container_get_by_name_expect_no_such_error() -> None:
+def test_context_get_by_name_expect_no_such_error() -> None:
     @Component()
     class SampleComponent:
         id: UUID
@@ -148,14 +148,14 @@ def test_container_get_by_name_expect_no_such_error() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(SampleComponent)
+    context: Context = Context()
+    context.register(SampleComponent)
 
     with pytest.raises(NoSuchComponentError):
-        container.get(name="wrong_component")
+        context.get(name="wrong_component")
 
 
-def test_container_contains_by_type_expect_true() -> None:
+def test_context_contains_by_type_expect_true() -> None:
     @Component()
     class SampleComponent:
         id: UUID
@@ -163,13 +163,13 @@ def test_container_contains_by_type_expect_true() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(SampleComponent)
+    context: Context = Context()
+    context.register(SampleComponent)
 
-    assert container.contains(required_type=SampleComponent) is True
+    assert context.contains(required_type=SampleComponent) is True
 
 
-def test_container_contains_by_type_expect_false() -> None:
+def test_context_contains_by_type_expect_false() -> None:
     @Component()
     class FirstSampleComponent:
         id: UUID
@@ -184,14 +184,14 @@ def test_container_contains_by_type_expect_false() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
 
-    assert container.contains(required_type=FirstSampleComponent) is True
-    assert container.contains(required_type=SecondSampleComponent) is False
+    assert context.contains(required_type=FirstSampleComponent) is True
+    assert context.contains(required_type=SecondSampleComponent) is False
 
 
-def test_container_contains_by_name_expect_true() -> None:
+def test_context_contains_by_name_expect_true() -> None:
     @Component()
     class FirstSampleComponent:
         id: UUID
@@ -199,13 +199,13 @@ def test_container_contains_by_name_expect_true() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
 
-    assert container.contains(name="first_sample_component") is True
+    assert context.contains(name="first_sample_component") is True
 
 
-def test_container_contains_by_name_expect_false() -> None:
+def test_context_contains_by_name_expect_false() -> None:
     @Component()
     class FirstSampleComponent:
         id: UUID
@@ -213,14 +213,14 @@ def test_container_contains_by_name_expect_false() -> None:
         def __init__(self) -> None:
             self.id = uuid4()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
 
-    assert container.contains(name="first_sample_component") is True
-    assert container.contains(name="wrong_sample_component") is False
+    assert context.contains(name="first_sample_component") is True
+    assert context.contains(name="wrong_sample_component") is False
 
 
-def test_container_get_primary_expect_success() -> None:
+def test_context_get_primary_expect_success() -> None:
     class ISampleComponent(ABC):
         @abstractmethod
         def do(self) -> None:
@@ -237,14 +237,14 @@ def test_container_get_primary_expect_success() -> None:
         def do(self) -> None:
             return
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
-    container.register(SecondSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
+    context.register(SecondSampleComponent)
 
-    assert isinstance(container.get(required_type=ISampleComponent), FirstSampleComponent)
+    assert isinstance(context.get(required_type=ISampleComponent), FirstSampleComponent)
 
 
-def test_container_get_primary_expect_no_unique_error() -> None:
+def test_context_get_primary_expect_no_unique_error() -> None:
     class ISampleComponent(ABC):
         @abstractmethod
         def do(self) -> None:
@@ -262,15 +262,15 @@ def test_container_get_primary_expect_no_unique_error() -> None:
         def do(self) -> None:
             return
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleComponent)
-    container.register(SecondSampleComponent)
+    context: Context = Context()
+    context.register(FirstSampleComponent)
+    context.register(SecondSampleComponent)
 
     with pytest.raises(NoUniqueComponentError):
-        container.get(required_type=ISampleComponent)
+        context.get(required_type=ISampleComponent)
 
 
-def test_container_get_dependency_recursive_by_name() -> None:
+def test_context_get_dependency_recursive_by_name() -> None:
     @Component()
     class A:
         def a(self) -> str:
@@ -294,15 +294,15 @@ def test_container_get_dependency_recursive_by_name() -> None:
         def c(self) -> str:
             return self.__a.a() + self.__b.b()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(A)
-    container.register(B)
-    container.register(C)
+    context: Context = Context()
+    context.register(A)
+    context.register(B)
+    context.register(C)
 
-    assert container.get(required_type=C).c() == "ab"
+    assert context.get(required_type=C).c() == "ab"
 
 
-def test_container_get_dependency_recursive_by_type() -> None:
+def test_context_get_dependency_recursive_by_type() -> None:
     @Component()
     class A:
         def a(self) -> str:
@@ -326,15 +326,15 @@ def test_container_get_dependency_recursive_by_type() -> None:
         def c(self) -> str:
             return self.__a.a() + self.__b.b()
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(A)
-    container.register(B)
-    container.register(C)
+    context: Context = Context()
+    context.register(A)
+    context.register(B)
+    context.register(C)
 
-    assert container.get(required_type=C).c() == "ab"
+    assert context.get(required_type=C).c() == "ab"
 
 
-def test_container_where() -> None:
+def test_context_where() -> None:
     @dataclass
     class Customized(ClassAnnotation):
         ...
@@ -353,15 +353,15 @@ def test_container_where() -> None:
     class ThirdSampleClassMarked:
         ...
 
-    container: ComponentContainer = ComponentContainer()
-    container.register(FirstSampleClassMarked)
-    container.register(SecondSampleClass)
-    container.register(ThirdSampleClassMarked)
+    context: Context = Context()
+    context.register(FirstSampleClassMarked)
+    context.register(SecondSampleClass)
+    context.register(ThirdSampleClassMarked)
 
-    queried: list[object] = list(container.where(lambda x: x.__name__.endswith("Marked")))
+    queried: list[object] = list(context.where(lambda x: x.__name__.endswith("Marked")))
     assert isinstance(queried[0], FirstSampleClassMarked)
     assert isinstance(queried[1], ThirdSampleClassMarked)
 
-    queried = list(container.where(Customized.contains))
+    queried = list(context.where(Customized.contains))
     assert isinstance(queried[0], SecondSampleClass)
     assert isinstance(queried[1], ThirdSampleClassMarked)

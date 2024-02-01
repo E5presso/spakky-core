@@ -4,8 +4,8 @@ from typing import Self, Hashable
 from functools import reduce
 from dataclasses import astuple
 
-from spakky.core.cloneable import ICloneable
-from spakky.core.equatable import IEquatable
+from spakky.core.interfaces.cloneable import ICloneable
+from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.mutability import immutable
 
 
