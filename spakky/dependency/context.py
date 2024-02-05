@@ -1,6 +1,8 @@
+from types import ModuleType
 from typing import Any, Callable, Sequence, overload
 
 from spakky.core.generics import ObjectT
+from spakky.core.importing import list_classes, list_modules
 from spakky.dependency.autowired import Unknown
 from spakky.dependency.component import Component
 from spakky.dependency.error import SpakkyDependencyError
@@ -27,12 +29,14 @@ class Context:
     __components_name_map: dict[str, type]
     __singleton_cache: dict[type, Any]
 
-    def __init__(self) -> None:
+    def __init__(self, package: ModuleType | None = None) -> None:
         self.__type_map = {}
         self.__components_type_map = {}
         self.__components_name_map = {}
         self.__components = []
         self.__singleton_cache = {}
+        if package is not None:
+            self.scan(package)
 
     def register(self, component: type) -> None:
         if not Component.contains(component):
@@ -45,6 +49,13 @@ class Context:
         self.__components_type_map[component] = component
         self.__components_name_map[component_annotation.name] = component
         self.__components.append(component)
+
+    def scan(self, package: ModuleType) -> None:
+        modules: set[ModuleType] = list_modules(package)
+        for module in modules:
+            classes: set[type] = list_classes(module, Component.contains)
+            for clazz in classes:
+                self.register(clazz)
 
     @overload
     def contains(self, *, required_type: type) -> bool:

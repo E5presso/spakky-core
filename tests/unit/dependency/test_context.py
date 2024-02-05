@@ -15,6 +15,10 @@ from spakky.dependency.context import (
 )
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
+from tests.unit import dummy_package
+from tests.unit.dummy_package.module_a import ComponentA, DummyA
+from tests.unit.dummy_package.module_b import ComponentB, DummyB
+from tests.unit.dummy_package.module_c import ComponentC, DummyC
 
 
 def test_context_register_expect_success() -> None:
@@ -365,3 +369,26 @@ def test_context_where() -> None:
     queried = list(context.where(Customized.contains))
     assert isinstance(queried[0], SecondSampleClass)
     assert isinstance(queried[1], ThirdSampleClassMarked)
+
+
+def test_context_scan() -> None:
+    context: Context = Context()
+    context.scan(dummy_package)
+
+    assert context.contains(required_type=ComponentA) is True
+    assert context.contains(required_type=ComponentB) is True
+    assert context.contains(required_type=ComponentC) is True
+    assert context.contains(required_type=DummyA) is False
+    assert context.contains(required_type=DummyB) is False
+    assert context.contains(required_type=DummyC) is False
+
+
+def test_context_initialize_with_pacakge() -> None:
+    context: Context = Context(package=dummy_package)
+
+    assert context.contains(required_type=ComponentA) is True
+    assert context.contains(required_type=ComponentB) is True
+    assert context.contains(required_type=ComponentC) is True
+    assert context.contains(required_type=DummyA) is False
+    assert context.contains(required_type=DummyB) is False
+    assert context.contains(required_type=DummyC) is False
