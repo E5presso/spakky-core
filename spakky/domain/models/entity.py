@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Generic, final
+from typing import Any, Generic
 from dataclasses import field
 
 from spakky.core.interfaces.equatable import EquatableT, IEquatable
@@ -37,7 +37,6 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
         self.validate()
         self.__is_setted = True
 
-    @final
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name not in self.__dataclass_fields__:
             raise MonkeyPatchIsNotAcceptableError
