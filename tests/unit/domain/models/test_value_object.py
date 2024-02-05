@@ -1,5 +1,5 @@
-from spakky.domain.models.value_object import ValueObject
 from spakky.core.mutability import immutable
+from spakky.domain.models.value_object import ValueObject
 
 
 def test_value_object_equals() -> None:

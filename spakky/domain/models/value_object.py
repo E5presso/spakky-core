@@ -25,3 +25,9 @@ class ValueObject(IEquatable, ICloneable, ABC):
             (hash(x) for x in astuple(self) if isinstance(x, Hashable)),
             0,
         )
+
+    def validate(self) -> None:
+        return
+
+    def __post_init__(self) -> None:
+        self.validate()

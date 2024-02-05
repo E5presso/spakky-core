@@ -52,8 +52,12 @@ disable = """
     invalid-field-call,
     too-many-arguments,
     missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-many-instance-attributes,
     too-few-public-methods,
-    unnecessary-ellipsis
+    unnecessary-ellipsis,
+    redefined-builtin
 """
 
 [tool.pytest.ini_options]
