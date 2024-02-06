@@ -7,7 +7,7 @@ from spakky.core.mutability import mutable
 from spakky.domain.error import SpakkyDomainError
 
 
-class MonkeyPatchIsNotAcceptableError(SpakkyDomainError):
+class CannotMonkeyPatchEntityError(SpakkyDomainError):
     ...
 
 
@@ -30,16 +30,16 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
     def __hash__(self) -> int:
         return hash(self.id)
 
-    def validate(self) -> None:
-        return
-
     def __post_init__(self) -> None:
         self.validate()
         self.__is_setted = True
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name not in self.__dataclass_fields__:
-            raise MonkeyPatchIsNotAcceptableError
+            raise CannotMonkeyPatchEntityError
         super().__setattr__(__name, __value)
         if self.__is_setted:
             self.validate()
+
+    def validate(self) -> None:
+        return

@@ -5,7 +5,7 @@ import pytest
 
 from spakky.core.mutability import mutable
 from spakky.domain.error import ValidationFailedError
-from spakky.domain.models.entity import Entity, MonkeyPatchIsNotAcceptableError
+from spakky.domain.models.entity import CannotMonkeyPatchEntityError, Entity
 
 
 def test_entity_equals() -> None:
@@ -105,7 +105,7 @@ def test_entity_prevent_monkey_patching() -> None:
     user.update_name("Sarah")
 
     assert user.name == "Sarah"
-    with pytest.raises(MonkeyPatchIsNotAcceptableError):
+    with pytest.raises(CannotMonkeyPatchEntityError):
         user.update_name = lambda name: print(name)
 
 

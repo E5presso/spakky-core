@@ -11,18 +11,39 @@ from spakky.dependency.provider import Provider, ProvidingType
 
 
 class CannotRegisterNonComponentError(SpakkyDependencyError):
+    """Cannot register non-component class.\n
+    The component class must be decorated by `@Component()`
+    """
+
     ...
 
 
 class NoSuchComponentError(SpakkyDependencyError):
+    """Cannot find component from context by given condition"""
+
     ...
 
 
 class NoUniqueComponentError(SpakkyDependencyError):
+    """Multiple component found by given condition\n
+    You can mark component as `@Primary()` to uniquify component
+    """
+
     ...
 
 
 class Context:
+    """Component context manager for DI/IoC\n
+    You can manually register component or auto-scanning\n
+    components that decorated by `@Component` or children from it\n
+    The component provided by singleton or factory.
+
+    Raises:
+        CannotRegisterNonComponentError: Cannot register non-component class
+        NoSuchComponentError: Cannot find component by given condition
+        NoUniqueComponentError: Multiple component found by given condition
+    """
+
     __components: list[type]
     __type_map: dict[type, set[type]]
     __components_type_map: dict[type, type]
@@ -30,6 +51,12 @@ class Context:
     __singleton_cache: dict[type, Any]
 
     def __init__(self, package: ModuleType | None = None) -> None:
+        """Initialize context
+
+        Args:
+            package (ModuleType | None, optional): package to start full-scan.
+            Defaults to None.
+        """
         self.__type_map = {}
         self.__components_type_map = {}
         self.__components_name_map = {}
@@ -39,6 +66,14 @@ class Context:
             self.scan(package)
 
     def register(self, component: type) -> None:
+        """Manually register component to context
+
+        Args:
+            component (type): Component class to register
+
+        Raises:
+            CannotRegisterNonComponentError: Cannot register non-component class
+        """
         if not Component.contains(component):
             raise CannotRegisterNonComponentError
         component_annotation: Component = Component.single(component)
@@ -51,6 +86,11 @@ class Context:
         self.__components.append(component)
 
     def scan(self, package: ModuleType) -> None:
+        """Auto-scan from given package-module
+
+        Args:
+            package (ModuleType): package-module to start full-scan components
+        """
         modules: set[ModuleType] = list_modules(package)
         for module in modules:
             classes: set[type] = list_classes(module, Component.contains)
@@ -59,15 +99,44 @@ class Context:
 
     @overload
     def contains(self, *, required_type: type) -> bool:
+        """Check existance of component by given condition
+
+        Args:
+            required_type (type | None, optional): Required type to check existance.
+            Defaults to None.
+
+        Returns:
+            bool: True if component found in context
+        """
         ...
 
     @overload
     def contains(self, *, name: str) -> bool:
+        """Check existance of component by given condition
+
+        Args:
+            name (str | None, optional): Name to check existance.
+            Defaults to None.
+
+        Returns:
+            bool: True if component found in context
+        """
         ...
 
     def contains(
         self, required_type: type | None = None, name: str | None = None
     ) -> bool:
+        """Check existance of component by given condition
+
+        Args:
+            required_type (type | None, optional): Required type to check existance.
+            Defaults to None.
+            name (str | None, optional): Name to check existance.
+            Defaults to None.
+
+        Returns:
+            bool: True if component found in context
+        """
         if required_type is not None:
             return required_type in self.__components_type_map
         return name in self.__components_name_map
@@ -102,15 +171,52 @@ class Context:
 
     @overload
     def get(self, *, required_type: type[ObjectT]) -> ObjectT:
+        """Retrieve component by given condition
+
+        Args:
+            required_type (type[ObjectT] | None, optional): Required type to
+            get component. Defaults to None.
+
+        Raises:
+            NoSuchComponentError: Cannot find component from context by given condition
+
+        Returns:
+            ObjectT: Retrieved component by given condition
+        """
         ...
 
     @overload
     def get(self, *, name: str) -> object:
-        ...
+        """Retrieve component by given condition
+
+        Args:
+            name (str | None, optional): Name to get component.
+            Defaults to None.
+
+        Raises:
+            NoSuchComponentError: Cannot find component from context by given condition
+
+        Returns:
+            object: Retrieved component by given condition
+        """
 
     def get(
         self, required_type: type[ObjectT] | None = None, name: str | None = None
     ) -> ObjectT | object:
+        """Retrieve component by given condition
+
+        Args:
+            required_type (type[ObjectT] | None, optional): Required type to
+            get component. Defaults to None.
+            name (str | None, optional): Name to get component.
+            Defaults to None.
+
+        Raises:
+            NoSuchComponentError: Cannot find component from context by given condition
+
+        Returns:
+            ObjectT | object: Retrieved component by given condition
+        """
         if required_type is not None:
             target: type = self.__get_target_type(required_type)
             component: type = self.__components_type_map[target]
@@ -135,6 +241,14 @@ class Context:
         return self.__get_instance(component=component, providing_type=providing_type)
 
     def where(self, clause: Callable[[type], bool]) -> Sequence[object]:
+        """Query components from context by given clause
+
+        Args:
+            clause (Callable[[type], bool]): Given clause to query components
+
+        Returns:
+            Sequence[object]: Queried components by given clause
+        """
         return [
             self.__get_instance(
                 x,

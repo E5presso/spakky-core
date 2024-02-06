@@ -13,6 +13,12 @@ from spakky.core.mutability import immutable
 
 @immutable
 class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
+    """`DomainEvent` is a building block for DDD (Domain Driven Design)\n
+    You can inherit this to some custom domain event\n
+    `DomainEvent` has unique event id and timestamp\n
+    This is immutable(frozen) object. So you cannot modify them.
+    """
+
     id: UUID = field(default_factory=uuid4)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
