@@ -3,7 +3,7 @@ from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
-class IManagedRegistry(Protocol):
+class IManagedDependencyRegistry(Protocol):
     @abstractmethod
     def register_managed_component(self, component: type) -> None:
         """Manually register component to context

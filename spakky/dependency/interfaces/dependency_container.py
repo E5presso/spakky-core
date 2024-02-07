@@ -5,7 +5,7 @@ from spakky.core.generics import ObjectT
 
 
 @runtime_checkable
-class IManagedContainer(Protocol):
+class IDependencyContainer(Protocol):
     @overload
     @abstractmethod
     def contains(self, *, required_type: type) -> bool:

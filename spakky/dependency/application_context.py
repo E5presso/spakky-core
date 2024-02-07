@@ -6,10 +6,16 @@ from spakky.core.importing import list_classes, list_modules
 from spakky.dependency.autowired import Unknown
 from spakky.dependency.component import Component
 from spakky.dependency.error import SpakkyDependencyError
-from spakky.dependency.interfaces.managed_container import IManagedContainer
-from spakky.dependency.interfaces.managed_registry import IManagedRegistry
-from spakky.dependency.interfaces.scanner import IComponentScanner
-from spakky.dependency.interfaces.unmanaged_registry import IUnmanagedRegistry
+from spakky.dependency.interfaces.dependency_container import IDependencyContainer
+from spakky.dependency.interfaces.managed_dependency_registry import (
+    IManagedDependencyRegistry,
+)
+from spakky.dependency.interfaces.managed_dependency_scanner import (
+    IManagedDependencyScanner,
+)
+from spakky.dependency.interfaces.unmanaged_dependency_registry import (
+    IUnmanagedDependencyRegistry,
+)
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
 
@@ -37,7 +43,10 @@ class NoUniqueComponentError(SpakkyDependencyError):
 
 
 class ApplicationContext(
-    IManagedContainer, IManagedRegistry, IUnmanagedRegistry, IComponentScanner
+    IDependencyContainer,
+    IManagedDependencyRegistry,
+    IUnmanagedDependencyRegistry,
+    IManagedDependencyScanner,
 ):
     """Component context manager for DI/IoC\n
     You can manually register component or auto-scanning\n

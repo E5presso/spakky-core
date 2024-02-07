@@ -5,7 +5,7 @@ from spakky.core.generics import ObjectT
 
 
 @runtime_checkable
-class IUnmanagedRegistry(Protocol):
+class IUnmanagedDependencyRegistry(Protocol):
     @abstractmethod
     def register_factory(self, name: str, factory: Callable[[], ObjectT]) -> None:
         ...
