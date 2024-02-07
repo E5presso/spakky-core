@@ -28,7 +28,7 @@ class Aspect:
     ```
     """
 
-    def __call__(self, obj: Callable[P, R]) -> Callable[P, R]:
+    def __call__(self, function: Callable[P, R]) -> Callable[P, R]:
         """Annotate origin function to a Aspect wrapper.
 
         Args:
@@ -38,34 +38,66 @@ class Aspect:
             Callable[P, R]: Wrapped function
         """
 
-        @wraps(obj)
+        @wraps(function)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             self.before(*args, **kwargs)
             try:
-                result: R = self.around(obj, *args, **kwargs)
+                result: R = self.around(function, *args, **kwargs)
                 self.after_returning(result)
                 return result
             except Exception as e:
                 self.after_raising(e)
-                raise e from e
+                raise
             finally:
                 self.after()
 
         return wrapper
 
     def before(self, *_args: Any, **_kwargs: Any) -> None:
+        """This pointcut is called before target function\n
+        You can reference positional argument (`_args`) and keyword argument (`_kwargs`)\n
+        But you cannot modify them.
+        """
         return
 
     def after_returning(self, _result: Any) -> None:
+        """This pointcut is called after target function returned\n
+        You can reference result of target function (`_result`)\n
+        But you cannot modify them.
+
+        Args:
+            _result (Any): Result of target function
+        """
         return
 
     def after_raising(self, _error: Exception) -> None:
+        """This pointcut is called after target function raised Error\n
+        You can reference error from target function (`_error`)\n
+        But you cannot re-raise from them.
+
+        Args:
+            _error (Exception): Raised error from target function
+        """
         return
 
     def after(self) -> None:
+        """This pointcut is always called regardless of error occurrence\n
+        or result return after the execution of the target function."""
         return
 
     def around(self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+        """This pointcut is called before target function is called.\n
+        You can reference input arguments and also the target funcion\n
+        You need to call target function manualy to get the result from target\n
+        You can modify input or even result of target function\n
+        But you should be careful when you modify them.
+
+        Args:
+            func (Callable[P, R]): Target function
+
+        Returns:
+            R: Result of target function (can be modified by you)
+        """
         return func(*args, **kwargs)
 
 
@@ -96,7 +128,7 @@ class AsyncAspect:
     ```
     """
 
-    def __call__(self, obj: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+    def __call__(self, function: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         """Annotate origin function to a Aspect wrapper.
 
         Args:
@@ -106,34 +138,66 @@ class AsyncAspect:
             Callable[P, Awaitable[R]]: Wrapped async function
         """
 
-        @wraps(obj)
+        @wraps(function)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             await self.before(*args, **kwargs)
             try:
-                result: R = await self.around(obj, *args, **kwargs)
+                result: R = await self.around(function, *args, **kwargs)
                 await self.after_returning(result)
                 return result
             except Exception as e:
                 await self.after_raising(e)
-                raise e from e
+                raise e
             finally:
                 await self.after()
 
         return wrapper
 
     async def before(self, *_args: Any, **_kwargs: Any) -> None:
+        """This pointcut is called before target function\n
+        You can reference positional argument (`_args`) and keyword argument (`_kwargs`)\n
+        But you cannot modify them.
+        """
         return
 
     async def after_returning(self, _result: Any) -> None:
+        """This pointcut is called after target function returned\n
+        You can reference result of target function (`_result`)\n
+        But you cannot modify them.
+
+        Args:
+            _result (Any): Result of target function
+        """
         return
 
     async def after_raising(self, _error: Exception) -> None:
+        """This pointcut is called after target function raised Error\n
+        You can reference error from target function (`_error`)\n
+        But you cannot re-raise from them.
+
+        Args:
+            _error (Exception): Raised error from target function
+        """
         return
 
     async def after(self) -> None:
+        """This pointcut is always called regardless of error occurrence\n
+        or result return after the execution of the target function."""
         return
 
     async def around(
         self, func: Callable[P, Awaitable[R]], *args: P.args, **kwargs: P.kwargs
     ) -> R:
+        """This pointcut is called before target function is called.\n
+        You can reference input arguments and also the target funcion\n
+        You need to call target function manualy to get the result from target\n
+        You can modify input or even result of target function\n
+        But you should be careful when you modify them.
+
+        Args:
+            func (Callable[P, Awaitable[R]]): Target function
+
+        Returns:
+            R: Result of target function (can be modified by you)
+        """
         return await func(*args, **kwargs)

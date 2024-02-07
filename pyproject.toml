@@ -42,17 +42,21 @@ combine_as_imports = true
 remove_redundant_aliases = true
 length_sort_sections = ["future", "stdlib"]
 
+[tool.pylint.MASTER]
+ignore-patterns = "test_.*?py"
+
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length = 90
 disable = """
     no-member,
+    arguments-differ,
     invalid-field-call,
     too-many-arguments,
     missing-module-docstring,
-    missing-class-docstring,
-    missing-function-docstring,
+    too-many-instance-attributes,
     too-few-public-methods,
-    unnecessary-ellipsis
+    unnecessary-ellipsis,
+    redefined-builtin
 """
 
 [tool.pytest.ini_options]

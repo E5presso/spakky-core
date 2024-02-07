@@ -1,18 +1,16 @@
 from typing import Callable
 from dataclasses import field, dataclass
 
-from spakky.dependency.autowired import Autowired
 from spakky.core.annotation import ClassAnnotation
 from spakky.core.generics import ClassT
+from spakky.dependency.autowired import Autowired
 from spakky.utils.casing import pascal_to_snake
-
-
-class Unknown:
-    ...
 
 
 @dataclass
 class Component(ClassAnnotation):
+    """`Component` annotation to mark the class as injectable."""
+
     name: str = field(init=False, default="")
     dependencies: dict[str, type] = field(init=False, default_factory=dict[str, type])
 

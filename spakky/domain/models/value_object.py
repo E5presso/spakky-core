@@ -4,8 +4,8 @@ from typing import Self, Hashable
 from functools import reduce
 from dataclasses import astuple
 
-from spakky.core.cloneable import ICloneable
-from spakky.core.equatable import IEquatable
+from spakky.core.interfaces.cloneable import ICloneable
+from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.mutability import immutable
 
 
@@ -25,3 +25,9 @@ class ValueObject(IEquatable, ICloneable, ABC):
             (hash(x) for x in astuple(self) if isinstance(x, Hashable)),
             0,
         )
+
+    def validate(self) -> None:
+        return
+
+    def __post_init__(self) -> None:
+        self.validate()

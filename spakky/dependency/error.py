@@ -1,5 +1,6 @@
 from spakky.core.error import SpakkyCoreError
 
 
-class SpakkyComponentError(SpakkyCoreError):
+class SpakkyDependencyError(SpakkyCoreError):
+    """Base error for spakky dependency packages"""
     ...

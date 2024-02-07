@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from spakky.core.equatable import IEquatable
+from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.mutability import immutable, mutable
 
 
