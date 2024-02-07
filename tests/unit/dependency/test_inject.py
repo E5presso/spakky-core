@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
+from spakky.dependency.application_context import ApplicationContext
 from spakky.dependency.autowired import autowired
 from spakky.dependency.component import Component
-from spakky.dependency.context import Context
 from spakky.dependency.inject import inject
 
 
@@ -45,10 +45,10 @@ def test_inject_to_function_by_type() -> None:
         def c(self) -> str:
             return self.__a.a() + self.__b.b()
 
-    context: Context = Context()
-    context.register(A)
-    context.register(B)
-    context.register(C)
+    context: ApplicationContext = ApplicationContext()
+    context.register_managed_component(A)
+    context.register_managed_component(B)
+    context.register_managed_component(C)
 
     def execute_c(c: IC = inject(context=context, required_type=IC)) -> str:
         return c.c()
@@ -95,12 +95,12 @@ def test_inject_to_function_by_name() -> None:
         def c(self) -> str:
             return self.__a.a() + self.__b.b()
 
-    context: Context = Context()
-    context.register(A)
-    context.register(B)
-    context.register(C)
+    context: ApplicationContext = ApplicationContext()
+    context.register_managed_component(A)
+    context.register_managed_component(B)
+    context.register_managed_component(C)
 
-    def execute_c(c: IC = inject(context=context, name="c")) -> str:  # type: ignore
+    def execute_c(c: IC = inject(context, IC, "c")) -> str:  # type: ignore
         return c.c()
 
     assert execute_c() == "ab"

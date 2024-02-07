@@ -1,11 +1,11 @@
 from typing import overload
 
 from spakky.core.generics import ObjectT
-from spakky.dependency.context import Context
+from spakky.dependency.application_context import ApplicationContext
 
 
 @overload
-def inject(context: Context, *, required_type: type[ObjectT]) -> ObjectT:
+def inject(context: ApplicationContext, required_type: type[ObjectT]) -> ObjectT:
     """Inject component from context by given condition\n
 
     Example:
@@ -26,7 +26,9 @@ def inject(context: Context, *, required_type: type[ObjectT]) -> ObjectT:
 
 
 @overload
-def inject(context: Context, *, name: str) -> object:
+def inject(
+    context: ApplicationContext, required_type: type[ObjectT], name: str
+) -> ObjectT:
     """Inject component from context by given condition\n
 
     Example:
@@ -46,10 +48,8 @@ def inject(context: Context, *, name: str) -> object:
 
 
 def inject(
-    context: Context,
-    required_type: type[ObjectT] | None = None,
-    name: str | None = None,
-) -> ObjectT | object:
+    context: ApplicationContext, required_type: type[ObjectT], name: str | None = None
+) -> ObjectT:
     """Inject component from context by given condition\n
 
     Example:
@@ -67,8 +67,6 @@ def inject(
     Returns:
         ObjectT | object: Retrieved component by given condition
     """
-    if required_type is not None:
-        return context.get(required_type=required_type)
-    if name is None:  # pragma: no cover
-        raise ValueError("'required_type' and 'name' both cannot be None")
-    return context.get(name=name)
+    if name is not None:
+        return context.get(required_type, name)
+    return context.get(required_type)

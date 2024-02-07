@@ -49,6 +49,7 @@ ignore-patterns = "test_.*?py"
 max-line-length = 90
 disable = """
     no-member,
+    arguments-differ,
     invalid-field-call,
     too-many-arguments,
     missing-module-docstring,

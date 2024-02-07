@@ -6,6 +6,10 @@ from spakky.core.importing import list_classes, list_modules
 from spakky.dependency.autowired import Unknown
 from spakky.dependency.component import Component
 from spakky.dependency.error import SpakkyDependencyError
+from spakky.dependency.interfaces.managed_container import IManagedContainer
+from spakky.dependency.interfaces.managed_registry import IManagedRegistry
+from spakky.dependency.interfaces.scanner import IComponentScanner
+from spakky.dependency.interfaces.unmanaged_registry import IUnmanagedRegistry
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
 
@@ -32,7 +36,9 @@ class NoUniqueComponentError(SpakkyDependencyError):
     ...
 
 
-class Context:
+class ApplicationContext(
+    IManagedContainer, IManagedRegistry, IUnmanagedRegistry, IComponentScanner
+):
     """Component context manager for DI/IoC\n
     You can manually register component or auto-scanning\n
     components that decorated by `@Component` or children from it\n
@@ -48,6 +54,7 @@ class Context:
     __type_map: dict[type, set[type]]
     __components_type_map: dict[type, type]
     __components_name_map: dict[str, type]
+    __unmanaged_dependencies: dict[str, Any]
     __singleton_cache: dict[type, Any]
 
     def __init__(self, package: ModuleType | None = None) -> None:
@@ -61,11 +68,40 @@ class Context:
         self.__components_type_map = {}
         self.__components_name_map = {}
         self.__components = []
+        self.__unmanaged_dependencies = {}
         self.__singleton_cache = {}
         if package is not None:
             self.scan(package)
 
-    def register(self, component: type) -> None:
+    def __get_target_type(self, required_type: type) -> type:
+        if required_type not in self.__type_map:
+            raise NoSuchComponentError(required_type)
+        derived: set[type] = self.__type_map[required_type]
+        if len(derived) > 1:
+            marked_as_primary: set[type] = {x for x in derived if Primary.contains(x)}
+            if len(marked_as_primary) != 1:
+                raise NoUniqueComponentError(required_type)
+            derived = marked_as_primary
+        return list(derived)[0]
+
+    def __get_instance(
+        self, component: type[ObjectT], providing_type: ProvidingType
+    ) -> ObjectT:
+        component_annotation: Component = Component.single(component)
+        dependencies: dict[str, Any] = {}
+        for name, required_type in component_annotation.dependencies.items():
+            if required_type == Unknown:
+                dependencies[name] = self.get(Any, name)
+                continue
+            dependencies[name] = self.get(required_type=required_type)
+        if providing_type == ProvidingType.FACTORY:
+            return component(**dependencies)
+        if component not in self.__singleton_cache:
+            self.__singleton_cache[component] = component(**dependencies)
+            return self.__singleton_cache[component]
+        return self.__singleton_cache[component]
+
+    def register_managed_component(self, component: type) -> None:
         """Manually register component to context
 
         Args:
@@ -85,6 +121,12 @@ class Context:
         self.__components_name_map[component_annotation.name] = component
         self.__components.append(component)
 
+    def register_factory(self, name: str, factory: Callable[[], ObjectT]) -> None:
+        self.__unmanaged_dependencies[name] = factory
+
+    def register_dependency(self, name: str, dependency: Any) -> None:
+        self.__unmanaged_dependencies[name] = dependency
+
     def scan(self, package: ModuleType) -> None:
         """Auto-scan from given package-module
 
@@ -93,9 +135,9 @@ class Context:
         """
         modules: set[ModuleType] = list_modules(package)
         for module in modules:
-            classes: set[type] = list_classes(module, Component.contains)
-            for clazz in classes:
-                self.register(clazz)
+            components: set[type] = list_classes(module, Component.contains)
+            for component in components:
+                self.register_managed_component(component)
 
     @overload
     def contains(self, *, required_type: type) -> bool:
@@ -139,38 +181,12 @@ class Context:
         """
         if required_type is not None:
             return required_type in self.__components_type_map
-        return name in self.__components_name_map
-
-    def __get_target_type(self, required_type: type) -> type:
-        if required_type not in self.__type_map:
-            raise NoSuchComponentError(required_type)
-        derived: set[type] = self.__type_map[required_type]
-        if len(derived) > 1:
-            marked_as_primary: set[type] = {x for x in derived if Primary.contains(x)}
-            if len(marked_as_primary) != 1:
-                raise NoUniqueComponentError(required_type)
-            derived = marked_as_primary
-        return list(derived)[0]
-
-    def __get_instance(
-        self, component: type[ObjectT], providing_type: ProvidingType
-    ) -> ObjectT:
-        component_annotation: Component = Component.single(component)
-        dependencies: dict[str, Any] = {}
-        for name, required_type in component_annotation.dependencies.items():
-            if required_type == Unknown:
-                dependencies[name] = self.get(name=name)
-                continue
-            dependencies[name] = self.get(required_type=required_type)
-        if providing_type == ProvidingType.FACTORY:
-            return component(**dependencies)
-        if component not in self.__singleton_cache:
-            self.__singleton_cache[component] = component(**dependencies)
-            return self.__singleton_cache[component]
-        return self.__singleton_cache[component]
+        if name in self.__components_name_map:
+            return True
+        return name in self.__unmanaged_dependencies
 
     @overload
-    def get(self, *, required_type: type[ObjectT]) -> ObjectT:
+    def get(self, required_type: type[ObjectT]) -> ObjectT:
         """Retrieve component by given condition
 
         Args:
@@ -186,7 +202,7 @@ class Context:
         ...
 
     @overload
-    def get(self, *, name: str) -> object:
+    def get(self, required_type: type[ObjectT], name: str) -> ObjectT:
         """Retrieve component by given condition
 
         Args:
@@ -200,9 +216,7 @@ class Context:
             object: Retrieved component by given condition
         """
 
-    def get(
-        self, required_type: type[ObjectT] | None = None, name: str | None = None
-    ) -> ObjectT | object:
+    def get(self, required_type: type[ObjectT], name: str | None = None) -> ObjectT:
         """Retrieve component by given condition
 
         Args:
@@ -217,9 +231,12 @@ class Context:
         Returns:
             ObjectT | object: Retrieved component by given condition
         """
-        if required_type is not None:
-            target: type = self.__get_target_type(required_type)
-            component: type = self.__components_type_map[target]
+        if name is not None:
+            if name not in self.__components_name_map:
+                if name not in self.__unmanaged_dependencies:
+                    raise NoSuchComponentError(name)
+                return self.__unmanaged_dependencies[name]
+            component: type = self.__components_name_map[name]
             provider_annotation: Provider | None = Provider.single_or_none(component)
             providing_type: ProvidingType = (
                 provider_annotation.providing_type
@@ -227,11 +244,8 @@ class Context:
                 else ProvidingType.SINGLETON
             )
             return self.__get_instance(component=component, providing_type=providing_type)
-        if name is None:  # pragma: no cover
-            raise ValueError("'required_type' and 'name' both cannot be None")
-        if name not in self.__components_name_map:
-            raise NoSuchComponentError(name)
-        component: type = self.__components_name_map[name]
+        target: type = self.__get_target_type(required_type)
+        component: type = self.__components_type_map[target]
         provider_annotation: Provider | None = Provider.single_or_none(component)
         providing_type: ProvidingType = (
             provider_annotation.providing_type
