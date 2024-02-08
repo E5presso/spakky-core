@@ -11,13 +11,17 @@ def test_aggregate_root_add_event() -> None:
     class User(AggregateRoot[UUID]):
         name: str
 
+        @classmethod
+        def next_id(cls) -> UUID:
+            return uuid4()
+
         @immutable
         class Created(DomainEvent):
             name: str
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            self: Self = cls(id=uuid4(), name=name)
+            self: Self = cls(id=cls.next_id(), name=name)
             self.add_event(self.Created(name=self.name))
             return self
 
@@ -31,13 +35,17 @@ def test_aggregate_root_remove_event() -> None:
     class User(AggregateRoot[UUID]):
         name: str
 
+        @classmethod
+        def next_id(cls) -> UUID:
+            return uuid4()
+
         @immutable
         class Created(DomainEvent):
             name: str
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            self: Self = cls(id=uuid4(), name=name)
+            self: Self = cls(id=cls.next_id(), name=name)
             self.add_event(self.Created(name=self.name))
             return self
 
@@ -53,13 +61,17 @@ def test_aggregate_root_clear_events() -> None:
     class User(AggregateRoot[UUID]):
         name: str
 
+        @classmethod
+        def next_id(cls) -> UUID:
+            return uuid4()
+
         @immutable
         class Created(DomainEvent):
             name: str
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            self: Self = cls(id=uuid4(), name=name)
+            self: Self = cls(id=cls.next_id(), name=name)
             self.add_event(self.Created(name=self.name))
             return self
 

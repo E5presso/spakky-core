@@ -19,7 +19,7 @@ class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
     This is immutable(frozen) object. So you cannot modify them.
     """
 
-    id: UUID = field(default_factory=uuid4)
+    event_id: UUID = field(default_factory=uuid4)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def clone(self) -> Self:
@@ -28,10 +28,10 @@ class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             return False
-        return self.id == other.id and self.timestamp == other.timestamp
+        return self.event_id == other.event_id and self.timestamp == other.timestamp
 
     def __hash__(self) -> int:
-        return hash(self.id) ^ hash(self.timestamp)
+        return hash(self.event_id) ^ hash(self.timestamp)
 
     def __lt__(self, __value: Self) -> bool:
         return self.timestamp < __value.timestamp

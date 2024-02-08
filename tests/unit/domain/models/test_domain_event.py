@@ -11,11 +11,11 @@ def test_domain_event_equals() -> None:
         ...
 
     event1: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     event2: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     assert event1 == event2
@@ -27,11 +27,11 @@ def test_domain_event_not_equals() -> None:
         ...
 
     event1: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     event2: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:31:00.000000+09:00"),
     )
     assert event1 != event2
@@ -47,11 +47,11 @@ def test_domain_event_not_equals_with_wrong_type() -> None:
         ...
 
     event1: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     event2: AnotherEvent = AnotherEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     assert event1 != event2
@@ -63,7 +63,7 @@ def test_domain_event_clone() -> None:
         ...
 
     event1: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     event2: SampleEvent = event1.clone()
@@ -76,11 +76,11 @@ def test_domain_event_hash() -> None:
         ...
 
     event1: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     event2: SampleEvent = SampleEvent(
-        id=UUID("12345678-1234-5678-1234-567812345678"),
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
         timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
     )
     assert hash(event1) == hash(event2)
@@ -93,54 +93,54 @@ def test_domain_event_compare() -> None:
 
     events: list[SampleEvent] = [
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:30.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:01:00.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:40.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:50.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:20.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:10.00000+09:00"),
         ),
     ]
     events.sort()
     assert events == [
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:10.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:20.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:30.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:40.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:00:50.00000+09:00"),
         ),
         SampleEvent(
-            id=UUID("12345678-1234-5678-1234-567812345678"),
+            event_id=UUID("12345678-1234-5678-1234-567812345678"),
             timestamp=datetime.fromisoformat("2024-01-01T00:01:00.00000+09:00"),
         ),
     ]
