@@ -21,7 +21,7 @@ def test_aggregate_root_add_event() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            self: Self = cls(id=cls.next_id(), name=name)
+            self: Self = cls(uid=cls.next_id(), name=name)
             self.add_event(self.Created(name=self.name))
             return self
 
@@ -45,7 +45,7 @@ def test_aggregate_root_remove_event() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            self: Self = cls(id=cls.next_id(), name=name)
+            self: Self = cls(uid=cls.next_id(), name=name)
             self.add_event(self.Created(name=self.name))
             return self
 
@@ -71,7 +71,7 @@ def test_aggregate_root_clear_events() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            self: Self = cls(id=cls.next_id(), name=name)
+            self: Self = cls(uid=cls.next_id(), name=name)
             self.add_event(self.Created(name=self.name))
             return self
 

@@ -19,10 +19,10 @@ def test_entity_equals() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            return cls(id=uuid4(), name=name)
+            return cls(uid=uuid4(), name=name)
 
-    user1: User = User(id=UUID("12345678-1234-5678-1234-567812345678"), name="John")
-    user2: User = User(id=UUID("12345678-1234-5678-1234-567812345678"), name="Sarah")
+    user1: User = User(uid=UUID("12345678-1234-5678-1234-567812345678"), name="John")
+    user2: User = User(uid=UUID("12345678-1234-5678-1234-567812345678"), name="Sarah")
 
     assert user1 == user2
 
@@ -38,7 +38,7 @@ def test_entity_not_equals_with_wrong_type() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            return cls(id=cls.next_id(), name=name)
+            return cls(uid=cls.next_id(), name=name)
 
     @mutable
     class Class(Entity[UUID]):
@@ -50,7 +50,7 @@ def test_entity_not_equals_with_wrong_type() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            return cls(id=cls.next_id(), name=name)
+            return cls(uid=cls.next_id(), name=name)
 
     user: User = User.create(name="John")
     clazz: Class = Class.create(name="first_class")
@@ -69,7 +69,7 @@ def test_entity_not_equals_transient() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            return cls(id=cls.next_id(), name=name)
+            return cls(uid=cls.next_id(), name=name)
 
     user1: User = User.create(name="John")
     user2: User = User.create(name="John")
@@ -88,7 +88,7 @@ def test_entity_not_equals() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            return cls(id=cls.next_id(), name=name)
+            return cls(uid=cls.next_id(), name=name)
 
     user1: User = User.create(name="John")
     user2: User = User.create(name="John")
@@ -107,9 +107,9 @@ def test_entity_hash() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            return cls(id=cls.next_id(), name=name)
+            return cls(uid=cls.next_id(), name=name)
 
-    user: User = User(id=UUID("12345678-1234-5678-1234-567812345678"), name="John")
+    user: User = User(uid=UUID("12345678-1234-5678-1234-567812345678"), name="John")
     assert hash(user) == hash(UUID("12345678-1234-5678-1234-567812345678"))
 
 
@@ -124,7 +124,7 @@ def test_entity_prevent_monkey_patching() -> None:
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
-            return cls(id=cls.next_id(), name=name)
+            return cls(uid=cls.next_id(), name=name)
 
         def update_name(self, name: str) -> None:
             self.name = name
@@ -155,7 +155,7 @@ def test_entity_validation_pass() -> None:
 
         @classmethod
         def create(cls, name: str, age: int) -> Self:
-            return cls(id=cls.next_id(), name=name, age=age)
+            return cls(uid=cls.next_id(), name=name, age=age)
 
         def update_name(self, name: str) -> None:
             self.name = name
@@ -174,7 +174,7 @@ def test_entity_validation_pass() -> None:
 
         @classmethod
         def create(cls, name: str) -> Self:
-            return cls(id=cls.next_id(), name=name)
+            return cls(uid=cls.next_id(), name=name)
 
         def update_name(self, name: str) -> None:
             self.name = name
@@ -190,3 +190,32 @@ def test_entity_validation_pass() -> None:
         User.create("Jesus", -1)
     with pytest.raises(DomainValidationError):
         User.create("Chris", 101)
+
+
+def test_entity_attribute_will_not_change_if_validation_error_raised() -> None:
+    @mutable
+    class User(Entity[UUID]):
+        name: str
+        age: int
+
+        def validate(self) -> None:
+            if not len(self.name) < 4:
+                raise DomainValidationError
+            if not 0 < self.age and self.age < 100:
+                raise DomainValidationError
+
+        @classmethod
+        def next_id(cls) -> UUID:
+            return uuid4()
+
+        @classmethod
+        def create(cls, name: str, age: int) -> Self:
+            return cls(uid=cls.next_id(), name=name, age=age)
+
+        def update_name(self, name: str) -> None:
+            self.name = name
+
+    user: User = User.create("Sam", 30)
+    with pytest.raises(DomainValidationError):
+        user.update_name("John")
+    assert user.name == "Sam"
