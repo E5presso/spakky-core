@@ -1,6 +1,6 @@
 import pytest
 
-from sample.users.model.user import (
+from sample.user.domain.model.user import (
     EmailValidationFailedError,
     PasswordAuthenticationFailedError,
     User,

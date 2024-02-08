@@ -6,10 +6,10 @@ from spakky.core.interfaces.disposable import IAsyncDisposable, IDisposable
 
 
 class AbstractUnitOfWork(IDisposable, ABC):
-    __autocommit_enabled: bool
+    autocommit_enabled: bool
 
     def __init__(self, autocommit: bool = True) -> None:
-        self.__autocommit_enabled = autocommit
+        self.autocommit_enabled = autocommit
 
     @final
     def __enter__(self) -> Self:
@@ -25,7 +25,7 @@ class AbstractUnitOfWork(IDisposable, ABC):
     ) -> bool | None:
         if __exc_value is not None:
             self.rollback()
-        elif self.__autocommit_enabled:
+        elif self.autocommit_enabled:
             self.commit()
         self.dispose()
 
@@ -47,10 +47,10 @@ class AbstractUnitOfWork(IDisposable, ABC):
 
 
 class AbstractAsyncUnitOfWork(IAsyncDisposable, ABC):
-    __autocommit_enabled: bool
+    autocommit_enabled: bool
 
     def __init__(self, autocommit: bool = True) -> None:
-        self.__autocommit_enabled = autocommit
+        self.autocommit_enabled = autocommit
 
     @final
     async def __aenter__(self) -> Self:
@@ -66,7 +66,7 @@ class AbstractAsyncUnitOfWork(IAsyncDisposable, ABC):
     ) -> bool | None:
         if __exc_value is not None:
             await self.rollback()
-        elif self.__autocommit_enabled:
+        elif self.autocommit_enabled:
             await self.commit()
         await self.dispose()
 

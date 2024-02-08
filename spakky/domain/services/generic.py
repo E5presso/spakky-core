@@ -13,13 +13,13 @@ RequestT = TypeVar("RequestT", bound=Request)
 ResponseT = TypeVar("ResponseT", bound=Any)
 
 
-class IGenericUseCase(Generic[RequestT, ResponseT], ABC):
+class IGenericService(Generic[RequestT, ResponseT], ABC):
     @abstractmethod
     def execute(self, request: RequestT) -> ResponseT:
         ...
 
 
-class IAsyncGenericUseCase(Generic[RequestT, ResponseT], ABC):
+class IAsyncGenericService(Generic[RequestT, ResponseT], ABC):
     @abstractmethod
     async def execute(self, request: RequestT) -> ResponseT:
         ...

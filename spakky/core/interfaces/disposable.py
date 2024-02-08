@@ -30,9 +30,11 @@ class IAsyncDisposable(Protocol):
     This is a protocol to use `async with` statement
     """
 
+    @abstractmethod
     async def __aenter__(self) -> Self:
         ...
 
+    @abstractmethod
     async def __aexit__(
         self,
         __exc_type: type[BaseException] | None,
