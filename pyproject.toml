@@ -12,6 +12,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = ">=3.11"
+pycryptodome = "^3.20.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.2"
@@ -53,6 +54,8 @@ disable = """
     invalid-field-call,
     too-many-arguments,
     missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
     too-many-instance-attributes,
     too-few-public-methods,
     unnecessary-ellipsis,

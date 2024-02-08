@@ -5,5 +5,5 @@ class SpakkyDomainError(SpakkyCoreError):
     ...
 
 
-class ValidationFailedError(SpakkyDomainError):
+class DomainValidationError(SpakkyDomainError):
     ...

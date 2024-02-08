@@ -30,7 +30,7 @@ def test_aspect_type_attribute() -> None:
         """dummy doc"""
         return name, age
 
-    assert func.__module__ == "tests.unit.core.test_aspect"
+    assert func.__module__ == "tests.spakky.unit.core.test_aspect"
     assert func.__name__ == "func"
     assert func.__qualname__ == "test_aspect_type_attribute.<locals>.func"
     assert func.__doc__ == "dummy doc"
@@ -276,7 +276,7 @@ async def test_async_aspect_type_attribute() -> None:
         """dummy doc"""
         return name, age
 
-    assert func.__module__ == "tests.unit.core.test_aspect"
+    assert func.__module__ == "tests.spakky.unit.core.test_aspect"
     assert func.__name__ == "func"
     assert func.__qualname__ == "test_async_aspect_type_attribute.<locals>.func"
     assert func.__doc__ == "dummy doc"

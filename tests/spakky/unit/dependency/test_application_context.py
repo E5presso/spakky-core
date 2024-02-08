@@ -16,10 +16,10 @@ from spakky.dependency.autowired import autowired
 from spakky.dependency.component import Component
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
-from tests.unit import dummy_package
-from tests.unit.dummy_package.module_a import ComponentA, DummyA
-from tests.unit.dummy_package.module_b import ComponentB, DummyB
-from tests.unit.dummy_package.module_c import ComponentC, DummyC
+from tests.spakky.unit import dummy_package
+from tests.spakky.unit.dummy_package.module_a import ComponentA, DummyA
+from tests.spakky.unit.dummy_package.module_b import ComponentB, DummyB
+from tests.spakky.unit.dummy_package.module_c import ComponentC, DummyC
 
 
 def test_application_context_register_expect_success() -> None:

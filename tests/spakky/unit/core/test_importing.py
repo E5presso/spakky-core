@@ -10,8 +10,8 @@ from spakky.core.importing import (
     list_modules,
 )
 from spakky.dependency.component import Component
-from tests.unit import dummy_package
-from tests.unit.dummy_package import module_a, module_b, module_c
+from tests.spakky.unit import dummy_package
+from tests.spakky.unit.dummy_package import module_a, module_b, module_c
 
 
 def test_list_modules_expect_success() -> None:
