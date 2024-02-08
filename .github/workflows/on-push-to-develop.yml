@@ -19,7 +19,7 @@ jobs:
       with:
         python-version: ${{ env.PYTHON }}
     - name: Setup Poetry
-      uses: abatilo/actions-poetry@v2.1.6
+      uses: abatilo/actions-poetry@v3
       with:
         poetry-version: ${{ env.POETRY }}
     - name: Install Dependencies
@@ -27,7 +27,7 @@ jobs:
     - name: Generate coverage report
       run: poetry run pytest
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ env.CODECOV_TOKEN }}
         directory: ./coverage/reports/
