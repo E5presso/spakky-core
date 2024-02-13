@@ -173,7 +173,7 @@ class Annotation(ABC):
     @final
     @classmethod
     def contains(cls, obj: Any) -> bool:
-        """Check if annotation exists in object
+        """Check if object contains annotation
         ```python
         @dataclass
         class CustomAnnotation(Annotation):
@@ -187,15 +187,15 @@ class Annotation(ABC):
         def not_annotated() -> None:
             ...
 
-        assert CustomAnnotation.exists(sample) is True
-        assert CustomAnnotation.exists(not_annotated) is False
+        assert CustomAnnotation.contains(sample) is True
+        assert CustomAnnotation.contains(not_annotated) is False
         ```
 
         Args:
-            obj (Any): object to check exists
+            obj (Any): object to check contains
 
         Returns:
-            bool: True if annotation exists in object.
+            bool: True if object contains annotation
         """
         annotations: list[Self] = cls.all(obj)
         return len(annotations) > 0

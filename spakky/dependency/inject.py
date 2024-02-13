@@ -5,7 +5,7 @@ from spakky.dependency.application_context import ApplicationContext
 
 
 @overload
-def inject(context: ApplicationContext, required_type: type[ObjectT]) -> ObjectT:
+def inject(context: ApplicationContext, *, required_type: type[ObjectT]) -> ObjectT:
     """Inject component from context by given condition\n
 
     Example:
@@ -26,9 +26,7 @@ def inject(context: ApplicationContext, required_type: type[ObjectT]) -> ObjectT
 
 
 @overload
-def inject(
-    context: ApplicationContext, required_type: type[ObjectT], name: str
-) -> ObjectT:
+def inject(context: ApplicationContext, *, name: str) -> object:
     """Inject component from context by given condition\n
 
     Example:
@@ -48,8 +46,10 @@ def inject(
 
 
 def inject(
-    context: ApplicationContext, required_type: type[ObjectT], name: str | None = None
-) -> ObjectT:
+    context: ApplicationContext,
+    required_type: type[ObjectT] | None = None,
+    name: str | None = None,
+) -> ObjectT | object:
     """Inject component from context by given condition\n
 
     Example:
@@ -68,5 +68,7 @@ def inject(
         ObjectT | object: Retrieved component by given condition
     """
     if name is not None:
-        return context.get(required_type, name)
-    return context.get(required_type)
+        return context.get(name=name)
+    if required_type is None:
+        raise ValueError("'name' and 'required_type' both cannot be None")
+    return context.get(required_type=required_type)

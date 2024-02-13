@@ -38,7 +38,9 @@ class Autowired(FunctionAnnotation):
         only can be decorate to `__init__` function
     """
 
-    dependencies: dict[str, type] = field(init=False, default_factory=dict[str, type])
+    dependencies: dict[str, type[object]] = field(
+        init=False, default_factory=dict[str, type[object]]
+    )
 
     def __call__(self, obj: FuncT) -> FuncT:
         if obj.__name__ != "__init__":

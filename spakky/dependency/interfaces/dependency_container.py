@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Callable, Protocol, Sequence, overload, runtime_checkable
+from typing import Any, Callable, Protocol, Sequence, overload, runtime_checkable
 
 from spakky.core.generics import ObjectT
 
@@ -53,7 +53,7 @@ class IDependencyContainer(Protocol):
 
     @overload
     @abstractmethod
-    def get(self, required_type: type[ObjectT]) -> ObjectT:
+    def get(self, *, required_type: type[ObjectT]) -> ObjectT:
         """Retrieve component by given condition
 
         Args:
@@ -70,7 +70,7 @@ class IDependencyContainer(Protocol):
 
     @overload
     @abstractmethod
-    def get(self, required_type: ObjectT, name: str) -> ObjectT:
+    def get(self, *, name: str) -> Any:
         """Retrieve component by given condition
 
         Args:
@@ -85,7 +85,9 @@ class IDependencyContainer(Protocol):
         """
 
     @abstractmethod
-    def get(self, required_type: type[ObjectT], name: str | None = None) -> ObjectT:
+    def get(
+        self, required_type: type[ObjectT] | None = None, name: str | None = None
+    ) -> ObjectT | Any:
         """Retrieve component by given condition
 
         Args:
@@ -98,9 +100,8 @@ class IDependencyContainer(Protocol):
             NoSuchComponentError: Cannot find component from context by given condition
 
         Returns:
-            ObjectT | object: Retrieved component by given condition
+            object: Retrieved component by given condition
         """
-        ...
 
     @abstractmethod
     def where(self, clause: Callable[[type], bool]) -> Sequence[object]:

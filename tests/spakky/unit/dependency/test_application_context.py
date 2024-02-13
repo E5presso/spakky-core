@@ -142,7 +142,7 @@ def test_application_context_get_by_name_expect_success() -> None:
     context: ApplicationContext = ApplicationContext()
     context.register_managed_component(SampleComponent)
 
-    assert isinstance(context.get(SampleComponent, "sample_component"), SampleComponent)
+    assert isinstance(context.get(name="sample_component"), SampleComponent)
 
 
 def test_application_context_get_by_name_expect_no_such_error() -> None:
@@ -157,7 +157,7 @@ def test_application_context_get_by_name_expect_no_such_error() -> None:
     context.register_managed_component(SampleComponent)
 
     with pytest.raises(NoSuchComponentError):
-        context.get(SampleComponent, "wrong_component")
+        context.get(name="wrong_component")
 
 
 def test_application_context_contains_by_type_expect_true() -> None:
@@ -396,12 +396,7 @@ def test_application_context_initialize_with_pacakge() -> None:
 
 
 def test_application_context_register_unmanaged_factory() -> None:
-    class IA(ABC):
-        @abstractmethod
-        def a(self) -> str:
-            ...
-
-    class A(IA):
+    class A:
         def a(self) -> str:
             return "A"
 
@@ -412,17 +407,13 @@ def test_application_context_register_unmanaged_factory() -> None:
     context.register_factory("a", get_a)
 
     assert context.contains(name="a") is True
-    assert isinstance(context.get(Callable[[], A], "a")(), A)
-    assert context.get(Callable[[], A], "a")().a() == "A"
+    factory: Callable[[], A] = context.get(name="a")
+    assert isinstance(factory(), A)
+    assert factory().a() == "A"
 
 
 def test_application_context_register_unmanaged_dependency() -> None:
-    class IA(ABC):
-        @abstractmethod
-        def a(self) -> str:
-            ...
-
-    class A(IA):
+    class A:
         def a(self) -> str:
             return "A"
 
@@ -430,4 +421,4 @@ def test_application_context_register_unmanaged_dependency() -> None:
     context.register_dependency("a", A())
 
     assert context.contains(name="a") is True
-    assert context.get(A, "a").a() == "A"
+    assert context.get(name="a").a() == "A"

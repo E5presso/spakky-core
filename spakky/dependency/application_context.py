@@ -63,8 +63,8 @@ class ApplicationContext(
     __type_map: dict[type, set[type]]
     __components_type_map: dict[type, type]
     __components_name_map: dict[str, type]
-    __unmanaged_dependencies: dict[str, Any]
-    __singleton_cache: dict[type, Any]
+    __unmanaged_dependencies: dict[str, object]
+    __singleton_cache: dict[type, object]
 
     def __init__(self, package: ModuleType | None = None) -> None:
         """Initialize context
@@ -93,14 +93,12 @@ class ApplicationContext(
             derived = marked_as_primary
         return list(derived)[0]
 
-    def __get_instance(
-        self, component: type[ObjectT], providing_type: ProvidingType
-    ) -> ObjectT:
+    def __get_instance(self, component: type, providing_type: ProvidingType) -> object:
         component_annotation: Component = Component.single(component)
-        dependencies: dict[str, Any] = {}
+        dependencies: dict[str, object] = {}
         for name, required_type in component_annotation.dependencies.items():
             if required_type == Unknown:
-                dependencies[name] = self.get(Any, name)
+                dependencies[name] = self.get(name=name)
                 continue
             dependencies[name] = self.get(required_type=required_type)
         if providing_type == ProvidingType.FACTORY:
@@ -133,7 +131,7 @@ class ApplicationContext(
     def register_factory(self, name: str, factory: Callable[[], ObjectT]) -> None:
         self.__unmanaged_dependencies[name] = factory
 
-    def register_dependency(self, name: str, dependency: Any) -> None:
+    def register_dependency(self, name: str, dependency: object) -> None:
         self.__unmanaged_dependencies[name] = dependency
 
     def scan(self, package: ModuleType) -> None:
@@ -195,7 +193,7 @@ class ApplicationContext(
         return name in self.__unmanaged_dependencies
 
     @overload
-    def get(self, required_type: type[ObjectT]) -> ObjectT:
+    def get(self, *, required_type: type[ObjectT]) -> ObjectT:
         """Retrieve component by given condition
 
         Args:
@@ -211,7 +209,7 @@ class ApplicationContext(
         ...
 
     @overload
-    def get(self, required_type: type[ObjectT], name: str) -> ObjectT:
+    def get(self, *, name: str) -> Any:
         """Retrieve component by given condition
 
         Args:
@@ -225,7 +223,9 @@ class ApplicationContext(
             object: Retrieved component by given condition
         """
 
-    def get(self, required_type: type[ObjectT], name: str | None = None) -> ObjectT:
+    def get(
+        self, required_type: type[ObjectT] | None = None, name: str | None = None
+    ) -> ObjectT | Any:
         """Retrieve component by given condition
 
         Args:
@@ -253,6 +253,8 @@ class ApplicationContext(
                 else ProvidingType.SINGLETON
             )
             return self.__get_instance(component=component, providing_type=providing_type)
+        if required_type is None:  # pragma: no cover
+            raise ValueError("'name' and 'required_type' both cannot be None")
         target: type = self.__get_target_type(required_type)
         component: type = self.__components_type_map[target]
         provider_annotation: Provider | None = Provider.single_or_none(component)
@@ -274,11 +276,11 @@ class ApplicationContext(
         """
         return [
             self.__get_instance(
-                x,
-                Provider.single(x).providing_type
-                if Provider.contains(x)
+                component,
+                Provider.single(component).providing_type
+                if Provider.contains(component)
                 else ProvidingType.SINGLETON,
             )
-            for x in self.__components
-            if clause(x)
+            for component in self.__components
+            if clause(component)
         ]

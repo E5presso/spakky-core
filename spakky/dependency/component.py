@@ -12,7 +12,9 @@ class Component(ClassAnnotation):
     """`Component` annotation to mark the class as injectable."""
 
     name: str = field(init=False, default="")
-    dependencies: dict[str, type] = field(init=False, default_factory=dict[str, type])
+    dependencies: dict[str, type[object]] = field(
+        init=False, default_factory=dict[str, type[object]]
+    )
 
     def __call__(self, obj: ClassT) -> ClassT:
         constructor: Callable[..., None] = obj.__init__
