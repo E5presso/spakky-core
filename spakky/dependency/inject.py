@@ -69,6 +69,6 @@ def inject(
     """
     if name is not None:
         return context.get(name=name)
-    if required_type is None:
+    if required_type is None:  # pragma: no cover
         raise ValueError("'name' and 'required_type' both cannot be None")
     return context.get(required_type=required_type)
