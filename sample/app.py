@@ -14,6 +14,7 @@ console.setLevel(level=logging.DEBUG)
 formatter = logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
 console.setFormatter(formatter)
 logger.addHandler(console)
+
 context.register_unmanaged_dependency("logger", logger)
 
 context.initialize()
