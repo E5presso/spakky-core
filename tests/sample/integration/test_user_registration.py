@@ -6,7 +6,7 @@ from sample.adapters.event_publisher import AsyncMemoryEventPublisher
 from sample.user.domain.interface.service.command.user_registration import (
     UserRegistrationRequest,
 )
-from sample.user.domain.model.user import User
+from sample.user.domain.model.user import EmailValidationFailedError, User
 from sample.user.domain.usecase.command.user_registration import (
     AsyncUserRegistrationUseCase,
 )
@@ -32,3 +32,18 @@ async def test_user_registration(context: ApplicationContext) -> None:
     assert saved.password != "password"
     assert saved.email == "test@email.com"
     assert isinstance(event_publisher.events[0], User.Created)
+
+
+@pytest.mark.asyncio
+async def test_user_registration_expect_email_validation_failed_error(
+    context: ApplicationContext,
+) -> None:
+    service = context.get(required_type=AsyncUserRegistrationUseCase)
+    with pytest.raises(EmailValidationFailedError):
+        await service.execute(
+            UserRegistrationRequest(
+                username="testuser",
+                password="password",
+                email="wrong_email",
+            )
+        )
