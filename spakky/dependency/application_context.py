@@ -7,12 +7,13 @@ from spakky.dependency.autowired import Unknown
 from spakky.dependency.component import Component
 from spakky.dependency.error import SpakkyDependencyError
 from spakky.dependency.interfaces.dependency_container import IDependencyContainer
-from spakky.dependency.interfaces.managed_dependency_registry import (
-    IManagedDependencyRegistry,
+from spakky.dependency.interfaces.dependency_post_processor import (
+    IDependencyPostProcessor,
 )
 from spakky.dependency.interfaces.managed_dependency_scanner import (
     IManagedDependencyScanner,
 )
+from spakky.dependency.interfaces.managed_registry import IManagedDependencyRegistry
 from spakky.dependency.interfaces.unmanaged_dependency_registry import (
     IUnmanagedDependencyRegistry,
 )
@@ -63,8 +64,9 @@ class ApplicationContext(
     __type_map: dict[type, set[type]]
     __components_type_map: dict[type, type]
     __components_name_map: dict[str, type]
-    __unmanaged_dependencies: dict[str, object]
     __singleton_cache: dict[type, object]
+    __unmanaged_dependencies: dict[str, Any]
+    __post_processors: set[IDependencyPostProcessor]
 
     def __init__(self, package: ModuleType | None = None) -> None:
         """Initialize context
@@ -73,12 +75,13 @@ class ApplicationContext(
             package (ModuleType | None, optional): package to start full-scan.
             Defaults to None.
         """
+        self.__components = []
         self.__type_map = {}
         self.__components_type_map = {}
         self.__components_name_map = {}
-        self.__components = []
-        self.__unmanaged_dependencies = {}
         self.__singleton_cache = {}
+        self.__unmanaged_dependencies = {}
+        self.__post_processors = set()
         if package is not None:
             self.scan(package)
 
@@ -93,6 +96,17 @@ class ApplicationContext(
             derived = marked_as_primary
         return list(derived)[0]
 
+    def __apply_post_processor(self, instance: Any) -> Any:
+        for post_processor in self.__post_processors:
+            instance = post_processor.process_dependency(self, instance)
+        return instance
+
+    def __initialize_dependency(
+        self, component: type, dependencies: dict[str, object]
+    ) -> Any:
+        instance = component(**dependencies)
+        return self.__apply_post_processor(instance)
+
     def __get_instance(self, component: type, providing_type: ProvidingType) -> object:
         component_annotation: Component = Component.single(component)
         dependencies: dict[str, object] = {}
@@ -102,13 +116,16 @@ class ApplicationContext(
                 continue
             dependencies[name] = self.get(required_type=required_type)
         if providing_type == ProvidingType.FACTORY:
-            return component(**dependencies)
+            return self.__initialize_dependency(component, dependencies)
         if component not in self.__singleton_cache:
-            self.__singleton_cache[component] = component(**dependencies)
+            self.__singleton_cache[component] = self.__initialize_dependency(
+                component,
+                dependencies,
+            )
             return self.__singleton_cache[component]
         return self.__singleton_cache[component]
 
-    def register_managed_component(self, component: type) -> None:
+    def register_component(self, component: type) -> None:
         """Manually register component to context
 
         Args:
@@ -128,10 +145,7 @@ class ApplicationContext(
         self.__components_name_map[component_annotation.name] = component
         self.__components.append(component)
 
-    def register_factory(self, name: str, factory: Callable[[], ObjectT]) -> None:
-        self.__unmanaged_dependencies[name] = factory
-
-    def register_dependency(self, name: str, dependency: object) -> None:
+    def register_unmanaged_dependency(self, name: str, dependency: Any) -> None:
         self.__unmanaged_dependencies[name] = dependency
 
     def scan(self, package: ModuleType) -> None:
@@ -144,7 +158,7 @@ class ApplicationContext(
         for module in modules:
             components: set[type] = list_classes(module, Component.contains)
             for component in components:
-                self.register_managed_component(component)
+                self.register_component(component)
 
     @overload
     def contains(self, *, required_type: type) -> bool:
@@ -284,3 +298,6 @@ class ApplicationContext(
             for component in self.__components
             if clause(component)
         ]
+
+    def add_post_processor(self, post_processor: IDependencyPostProcessor) -> None:
+        self.__post_processors.add(post_processor)

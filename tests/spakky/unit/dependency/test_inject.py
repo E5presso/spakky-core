@@ -46,9 +46,9 @@ def test_inject_to_function_by_type() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(A)
-    context.register_managed_component(B)
-    context.register_managed_component(C)
+    context.register_component(A)
+    context.register_component(B)
+    context.register_component(C)
 
     def execute_c(c: IC = inject(context=context, required_type=IC)) -> str:
         return c.c()
@@ -96,9 +96,9 @@ def test_inject_to_function_by_name() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(A)
-    context.register_managed_component(B)
-    context.register_managed_component(C)
+    context.register_component(A)
+    context.register_component(B)
+    context.register_component(C)
 
     def execute_c(c: IC = inject(context, IC, "c")) -> str:  # type: ignore
         return c.c()

@@ -39,8 +39,8 @@ def test_application_context_register_expect_success() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
-    context.register_managed_component(SecondSampleComponent)
+    context.register_component(FirstSampleComponent)
+    context.register_component(SecondSampleComponent)
 
 
 def test_application_context_register_expect_error() -> None:
@@ -52,7 +52,7 @@ def test_application_context_register_expect_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
     with pytest.raises(CannotRegisterNonComponentError):
-        context.register_managed_component(NonComponent)
+        context.register_component(NonComponent)
 
 
 def test_application_context_get_by_type_singleton_expect_success() -> None:
@@ -72,8 +72,8 @@ def test_application_context_get_by_type_singleton_expect_success() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
-    context.register_managed_component(SecondSampleComponent)
+    context.register_component(FirstSampleComponent)
+    context.register_component(SecondSampleComponent)
 
     assert (
         context.get(required_type=FirstSampleComponent).id
@@ -100,7 +100,7 @@ def test_application_context_get_by_type_expect_no_such_error() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
+    context.register_component(FirstSampleComponent)
 
     assert (
         context.get(required_type=FirstSampleComponent).id
@@ -123,7 +123,7 @@ def test_application_context_get_by_type_factory_expect_success() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(SampleComponent)
+    context.register_component(SampleComponent)
 
     assert (
         context.get(required_type=SampleComponent).id
@@ -140,7 +140,7 @@ def test_application_context_get_by_name_expect_success() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(SampleComponent)
+    context.register_component(SampleComponent)
 
     assert isinstance(context.get(name="sample_component"), SampleComponent)
 
@@ -154,7 +154,7 @@ def test_application_context_get_by_name_expect_no_such_error() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(SampleComponent)
+    context.register_component(SampleComponent)
 
     with pytest.raises(NoSuchComponentError):
         context.get(name="wrong_component")
@@ -169,7 +169,7 @@ def test_application_context_contains_by_type_expect_true() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(SampleComponent)
+    context.register_component(SampleComponent)
 
     assert context.contains(required_type=SampleComponent) is True
 
@@ -190,7 +190,7 @@ def test_application_context_contains_by_type_expect_false() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
+    context.register_component(FirstSampleComponent)
 
     assert context.contains(required_type=FirstSampleComponent) is True
     assert context.contains(required_type=SecondSampleComponent) is False
@@ -205,7 +205,7 @@ def test_application_context_contains_by_name_expect_true() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
+    context.register_component(FirstSampleComponent)
 
     assert context.contains(name="first_sample_component") is True
 
@@ -219,7 +219,7 @@ def test_application_context_contains_by_name_expect_false() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
+    context.register_component(FirstSampleComponent)
 
     assert context.contains(name="first_sample_component") is True
     assert context.contains(name="wrong_sample_component") is False
@@ -243,8 +243,8 @@ def test_application_context_get_primary_expect_success() -> None:
             return
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
-    context.register_managed_component(SecondSampleComponent)
+    context.register_component(FirstSampleComponent)
+    context.register_component(SecondSampleComponent)
 
     assert isinstance(context.get(required_type=ISampleComponent), FirstSampleComponent)
 
@@ -268,8 +268,8 @@ def test_application_context_get_primary_expect_no_unique_error() -> None:
             return
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleComponent)
-    context.register_managed_component(SecondSampleComponent)
+    context.register_component(FirstSampleComponent)
+    context.register_component(SecondSampleComponent)
 
     with pytest.raises(NoUniqueComponentError):
         context.get(required_type=ISampleComponent)
@@ -300,9 +300,9 @@ def test_application_context_get_dependency_recursive_by_name() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(A)
-    context.register_managed_component(B)
-    context.register_managed_component(C)
+    context.register_component(A)
+    context.register_component(B)
+    context.register_component(C)
 
     assert context.get(required_type=C).c() == "ab"
 
@@ -332,9 +332,9 @@ def test_application_context_get_dependency_recursive_by_type() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(A)
-    context.register_managed_component(B)
-    context.register_managed_component(C)
+    context.register_component(A)
+    context.register_component(B)
+    context.register_component(C)
 
     assert context.get(required_type=C).c() == "ab"
 
@@ -359,9 +359,9 @@ def test_application_context_where() -> None:
         ...
 
     context: ApplicationContext = ApplicationContext()
-    context.register_managed_component(FirstSampleClassMarked)
-    context.register_managed_component(SecondSampleClass)
-    context.register_managed_component(ThirdSampleClassMarked)
+    context.register_component(FirstSampleClassMarked)
+    context.register_component(SecondSampleClass)
+    context.register_component(ThirdSampleClassMarked)
 
     queried: list[object] = list(context.where(lambda x: x.__name__.endswith("Marked")))
     assert isinstance(queried[0], FirstSampleClassMarked)
@@ -404,7 +404,7 @@ def test_application_context_register_unmanaged_factory() -> None:
         return A()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_factory("a", get_a)
+    context.register_unmanaged_dependency("a", get_a)
 
     assert context.contains(name="a") is True
     factory: Callable[[], A] = context.get(name="a")
@@ -418,7 +418,7 @@ def test_application_context_register_unmanaged_dependency() -> None:
             return "A"
 
     context: ApplicationContext = ApplicationContext()
-    context.register_dependency("a", A())
+    context.register_unmanaged_dependency("a", A())
 
     assert context.contains(name="a") is True
     assert context.get(name="a").a() == "A"
