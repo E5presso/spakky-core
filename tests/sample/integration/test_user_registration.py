@@ -15,7 +15,22 @@ from spakky.dependency.application_context import ApplicationContext
 
 
 @pytest.mark.asyncio
-async def test_user_registration(context: ApplicationContext) -> None:
+async def test_user_registration_expect_email_validation_failed_error(
+    context: ApplicationContext,
+) -> None:
+    service = context.get(required_type=AsyncUserRegistrationUseCase)
+    with pytest.raises(EmailValidationFailedError):
+        await service.execute(
+            UserRegistrationRequest(
+                username="testuser",
+                password="password",
+                email="wrong_email",
+            )
+        )
+
+
+@pytest.mark.asyncio
+async def test_user_registration_succeed(context: ApplicationContext) -> None:
     service = context.get(required_type=AsyncUserRegistrationUseCase)
     uid: UUID = await service.execute(
         UserRegistrationRequest(
@@ -32,18 +47,3 @@ async def test_user_registration(context: ApplicationContext) -> None:
     assert saved.password != "password"
     assert saved.email == "test@email.com"
     assert isinstance(event_publisher.events[0], User.Created)
-
-
-@pytest.mark.asyncio
-async def test_user_registration_expect_email_validation_failed_error(
-    context: ApplicationContext,
-) -> None:
-    service = context.get(required_type=AsyncUserRegistrationUseCase)
-    with pytest.raises(EmailValidationFailedError):
-        await service.execute(
-            UserRegistrationRequest(
-                username="testuser",
-                password="password",
-                email="wrong_email",
-            )
-        )
