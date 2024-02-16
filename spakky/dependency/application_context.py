@@ -84,7 +84,6 @@ class ApplicationContext(
         self.__post_processors = set()
         if package is not None:
             self.scan(package)
-            self.initialize()
 
     def __get_target_type(self, required_type: type) -> type:
         if required_type not in self.__type_map:
