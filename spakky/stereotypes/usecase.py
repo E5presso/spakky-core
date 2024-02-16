@@ -4,5 +4,5 @@ from spakky.dependency.component import Component
 
 
 @dataclass
-class Service(Component):
+class UseCase(Component):
     ...

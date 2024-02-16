@@ -4,7 +4,7 @@ from itertools import chain
 from dataclasses import dataclass
 
 from spakky.core.error import SpakkyCoreError
-from spakky.core.generics import ClassT, FuncT, ObjectT
+from spakky.core.generics import AnyT, ClassT, FuncT
 
 __ANNOTATION_METADATA__ = "__SPAKKY_ANNOTATION_METADATA__"
 __ANNOTATION_TYPEMAP__ = "__SPAKKY_ANNOTATION_TYPEMAP__"
@@ -32,7 +32,7 @@ class Annotation(ABC):
     ```
     """
 
-    def __call__(self, obj: ObjectT) -> ObjectT:
+    def __call__(self, obj: AnyT) -> AnyT:
         """Annotate object
 
         Args:
@@ -44,7 +44,7 @@ class Annotation(ABC):
         return self.__set_annotation(obj)
 
     @final
-    def __set_annotation(self, obj: ObjectT) -> ObjectT:
+    def __set_annotation(self, obj: AnyT) -> AnyT:
         """Allocate Annotation to object
 
         Args:

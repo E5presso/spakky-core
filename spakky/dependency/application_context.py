@@ -84,6 +84,7 @@ class ApplicationContext(
         self.__post_processors = set()
         if package is not None:
             self.scan(package)
+            self.initialize()
 
     def __get_target_type(self, required_type: type) -> type:
         if required_type not in self.__type_map:
@@ -97,9 +98,10 @@ class ApplicationContext(
         return list(derived)[0]
 
     def __apply_post_processor(self, instance: Any) -> Any:
+        proceed: Any = instance
         for post_processor in self.__post_processors:
-            instance = post_processor.process_dependency(self, instance)
-        return instance
+            proceed = post_processor.process_dependency(self, proceed)
+        return proceed
 
     def __initialize_dependency(
         self, component: type, dependencies: dict[str, object]
@@ -159,6 +161,15 @@ class ApplicationContext(
             components: set[type] = list_classes(module, Component.contains)
             for component in components:
                 self.register_component(component)
+
+    def initialize(self) -> None:
+        for component in self.__components:
+            self.__get_instance(
+                component,
+                Provider.single(component).providing_type
+                if Provider.contains(component)
+                else ProvidingType.SINGLETON,
+            )
 
     @overload
     def contains(self, *, required_type: type) -> bool:

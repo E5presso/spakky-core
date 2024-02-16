@@ -12,13 +12,13 @@ class Command(ABC):
 CommandT = TypeVar("CommandT", bound=Command)
 
 
-class ICommandService(Generic[CommandT], ABC):
+class ICommandUseCase(Generic[CommandT], ABC):
     @abstractmethod
     def execute(self, command: CommandT) -> None:
         ...
 
 
-class IAsyncCommandService(Generic[CommandT], ABC):
+class IAsyncCommandUseCase(Generic[CommandT], ABC):
     @abstractmethod
     async def execute(self, command: CommandT) -> None:
         ...

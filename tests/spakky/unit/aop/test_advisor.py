@@ -6,11 +6,11 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.core.aspect import Aspect, AsyncAspect, P, R
+from spakky.aop.advisor import Advisor, AsyncAdvisor, P, R
 
 
-def test_aspect_is_callable() -> None:
-    class DummyAspect(Aspect):
+def test_advisor_is_callable() -> None:
+    class DummyAspect(Advisor):
         ...
 
     @DummyAspect()
@@ -21,8 +21,8 @@ def test_aspect_is_callable() -> None:
     assert inspect.isfunction(sample)
 
 
-def test_aspect_type_attribute() -> None:
-    class DummyAspect(Aspect):
+def test_advisor_type_attribute() -> None:
+    class DummyAspect(Advisor):
         ...
 
     @DummyAspect()
@@ -30,25 +30,25 @@ def test_aspect_type_attribute() -> None:
         """dummy doc"""
         return name, age
 
-    assert func.__module__ == "tests.spakky.unit.core.test_aspect"
+    assert func.__module__ == "tests.spakky.unit.aop.test_advisor"
     assert func.__name__ == "func"
-    assert func.__qualname__ == "test_aspect_type_attribute.<locals>.func"
+    assert func.__qualname__ == "test_advisor_type_attribute.<locals>.func"
     assert func.__doc__ == "dummy doc"
     assert func.__annotations__ == {"name": str, "age": int, "return": tuple[str, int]}
 
 
-def test_aspect_before_expect_success() -> None:
+def test_advisor_before_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_called: bool = False
+    advisor_called: bool = False
 
-    class BeforeAspect(Aspect):
+    class BeforeAspect(Advisor):
         def before(self, *_args: Any, **_kwargs: Any) -> None:
-            nonlocal aspect_called
-            aspect_called = True
+            nonlocal advisor_called
+            advisor_called = True
             return super().before(*_args, **_kwargs)
 
     @BeforeAspect()
@@ -56,32 +56,32 @@ def test_aspect_before_expect_success() -> None:
         return User(name=name, age=age)
 
     assert func(name="John", age=30) == User("John", 30)
-    assert aspect_called is True
+    assert advisor_called is True
 
 
-def test_aspect_after_returning_expect_success() -> None:
+def test_advisor_after_returning_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_returned: bool = False
-    aspect_raised: bool = False
+    advisor_returned: bool = False
+    advisor_raised: bool = False
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterReturningAspect(Aspect):
+    class AfterReturningAspect(Advisor):
         def after_returning(self, _result: Any) -> None:
-            nonlocal aspect_returned
+            nonlocal advisor_returned
             nonlocal return_value
-            aspect_returned = True
+            advisor_returned = True
             return_value = cast(User, _result)
             return super().after_returning(_result)
 
         def after_raising(self, _error: Exception) -> None:
-            nonlocal aspect_raised
+            nonlocal advisor_raised
             nonlocal raised_exception
-            aspect_raised = True
+            advisor_raised = True
             raised_exception = _error
             return super().after_raising(_error)
 
@@ -89,41 +89,41 @@ def test_aspect_after_returning_expect_success() -> None:
     def func(name: str, age: int) -> User:
         return User(name=name, age=age)
 
-    assert aspect_returned is False
-    assert aspect_raised is False
+    assert advisor_returned is False
+    assert advisor_raised is False
     assert return_value is None
     user: User = func("John", 30)
     assert user.name == "John"
     assert user.age == 30
-    assert aspect_returned is True
-    assert aspect_raised is False
+    assert advisor_returned is True
+    assert advisor_raised is False
     assert return_value is not None
     assert return_value == user
 
 
-def test_aspect_after_raising_expect_success() -> None:
+def test_advisor_after_raising_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_returned: bool = False
-    aspect_raised: bool = False
+    advisor_returned: bool = False
+    advisor_raised: bool = False
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterRaisingAspect(Aspect):
+    class AfterRaisingAspect(Advisor):
         def after_returning(self, _result: Any) -> None:
-            nonlocal aspect_returned
+            nonlocal advisor_returned
             nonlocal return_value
-            aspect_returned = True
+            advisor_returned = True
             return_value = cast(User, _result)
             return super().after_returning(_result)
 
         def after_raising(self, _error: Exception) -> None:
-            nonlocal aspect_raised
+            nonlocal advisor_raised
             nonlocal raised_exception
-            aspect_raised = True
+            advisor_raised = True
             raised_exception = _error
             return super().after_raising(_error)
 
@@ -131,42 +131,42 @@ def test_aspect_after_raising_expect_success() -> None:
     def func(name: str, age: int) -> User:
         raise RuntimeError("Unexpected Runtime error occurred")
 
-    assert aspect_returned is False
-    assert aspect_raised is False
+    assert advisor_returned is False
+    assert advisor_raised is False
     assert return_value is None
     assert raised_exception is None
     with pytest.raises(RuntimeError):
         func("John", 30)
-    assert aspect_returned is False
-    assert aspect_raised is True
+    assert advisor_returned is False
+    assert advisor_raised is True
     assert return_value is None
     assert raised_exception is not None
     assert isinstance(raised_exception, RuntimeError)
 
 
-def test_aspect_after_expect_success() -> None:
+def test_advisor_after_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_returned: bool = False
-    aspect_raised: bool = False
+    advisor_returned: bool = False
+    advisor_raised: bool = False
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterAspect(Aspect):
+    class AfterAspect(Advisor):
         def after_returning(self, _result: Any) -> None:
-            nonlocal aspect_returned
+            nonlocal advisor_returned
             nonlocal return_value
-            aspect_returned = True
+            advisor_returned = True
             return_value = cast(User, _result)
             return super().after_returning(_result)
 
         def after_raising(self, _error: Exception) -> None:
-            nonlocal aspect_raised
+            nonlocal advisor_raised
             nonlocal raised_exception
-            aspect_raised = True
+            advisor_raised = True
             raised_exception = _error
             return super().after_raising(_error)
 
@@ -174,21 +174,21 @@ def test_aspect_after_expect_success() -> None:
     def func(name: str, age: int) -> User:
         raise RuntimeError("Unexpected Runtime error occurred")
 
-    assert aspect_returned is False
-    assert aspect_raised is False
+    assert advisor_returned is False
+    assert advisor_raised is False
     assert return_value is None
     assert raised_exception is None
     with pytest.raises(RuntimeError):
         func(name="John", age=30)
-    assert aspect_returned is False
-    assert aspect_raised is True
+    assert advisor_returned is False
+    assert advisor_raised is True
     assert return_value is None
     assert raised_exception is not None
     assert isinstance(raised_exception, RuntimeError)
 
 
-def test_aspect_around_expect_success() -> None:
-    class AroundAspect(Aspect):
+def test_advisor_around_expect_success() -> None:
+    class AroundAspect(Advisor):
         def around(self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
             assert not args
             assert kwargs == {"name": "John", "age": 30}
@@ -207,10 +207,10 @@ def test_aspect_around_expect_success() -> None:
         func(name="John", age=29)
 
 
-def test_log_aspect() -> None:
+def test_log_advisor() -> None:
     logs: list[str] = []
 
-    class LogAspect(Aspect):
+    class LogAspect(Advisor):
         request_id: UUID | None
         timestamp: datetime | None
         arguments: tuple[Any, ...] | None
@@ -253,8 +253,8 @@ def test_log_aspect() -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_aspect_is_coroutine_callable() -> None:
-    class DummyAspect(AsyncAspect):
+async def test_async_advisor_is_coroutine_callable() -> None:
+    class DummyAspect(AsyncAdvisor):
         ...
 
     @DummyAspect()
@@ -267,8 +267,8 @@ async def test_async_aspect_is_coroutine_callable() -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_aspect_type_attribute() -> None:
-    class DummyAspect(AsyncAspect):
+async def test_async_advisor_type_attribute() -> None:
+    class DummyAspect(AsyncAdvisor):
         ...
 
     @DummyAspect()
@@ -276,26 +276,26 @@ async def test_async_aspect_type_attribute() -> None:
         """dummy doc"""
         return name, age
 
-    assert func.__module__ == "tests.spakky.unit.core.test_aspect"
+    assert func.__module__ == "tests.spakky.unit.aop.test_advisor"
     assert func.__name__ == "func"
-    assert func.__qualname__ == "test_async_aspect_type_attribute.<locals>.func"
+    assert func.__qualname__ == "test_async_advisor_type_attribute.<locals>.func"
     assert func.__doc__ == "dummy doc"
     assert func.__annotations__ == {"name": str, "age": int, "return": tuple[str, int]}
 
 
 @pytest.mark.asyncio
-async def test_async_aspect_before_expect_success() -> None:
+async def test_async_advisor_before_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_called: bool = False
+    advisor_called: bool = False
 
-    class BeforeAspect(AsyncAspect):
+    class BeforeAspect(AsyncAdvisor):
         async def before(self, *_args: Any, **_kwargs: Any) -> None:
-            nonlocal aspect_called
-            aspect_called = True
+            nonlocal advisor_called
+            advisor_called = True
             return await super().before(*_args, **_kwargs)
 
     @BeforeAspect()
@@ -303,33 +303,33 @@ async def test_async_aspect_before_expect_success() -> None:
         return User(name=name, age=age)
 
     assert await func(name="John", age=30) == User("John", 30)
-    assert aspect_called is True
+    assert advisor_called is True
 
 
 @pytest.mark.asyncio
-async def test_async_aspect_after_returning_expect_success() -> None:
+async def test_async_advisor_after_returning_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_returned: bool = False
-    aspect_raised: bool = False
+    advisor_returned: bool = False
+    advisor_raised: bool = False
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterReturningAspect(AsyncAspect):
+    class AfterReturningAspect(AsyncAdvisor):
         async def after_returning(self, _result: Any) -> None:
-            nonlocal aspect_returned
+            nonlocal advisor_returned
             nonlocal return_value
-            aspect_returned = True
+            advisor_returned = True
             return_value = cast(User, _result)
             return await super().after_returning(_result)
 
         async def after_raising(self, _error: Exception) -> None:
-            nonlocal aspect_raised
+            nonlocal advisor_raised
             nonlocal raised_exception
-            aspect_raised = True
+            advisor_raised = True
             raised_exception = _error
             return await super().after_raising(_error)
 
@@ -337,42 +337,42 @@ async def test_async_aspect_after_returning_expect_success() -> None:
     async def func(name: str, age: int) -> User:
         return User(name=name, age=age)
 
-    assert aspect_returned is False
-    assert aspect_raised is False
+    assert advisor_returned is False
+    assert advisor_raised is False
     assert return_value is None
     user: User = await func("John", 30)
     assert user.name == "John"
     assert user.age == 30
-    assert aspect_returned is True
-    assert aspect_raised is False
+    assert advisor_returned is True
+    assert advisor_raised is False
     assert return_value is not None
     assert return_value == user
 
 
 @pytest.mark.asyncio
-async def test_async_aspect_after_raising_expect_success() -> None:
+async def test_async_advisor_after_raising_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_returned: bool = False
-    aspect_raised: bool = False
+    advisor_returned: bool = False
+    advisor_raised: bool = False
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterRaisingAspect(AsyncAspect):
+    class AfterRaisingAspect(AsyncAdvisor):
         async def after_returning(self, _result: Any) -> None:
-            nonlocal aspect_returned
+            nonlocal advisor_returned
             nonlocal return_value
-            aspect_returned = True
+            advisor_returned = True
             return_value = cast(User, _result)
             return await super().after_returning(_result)
 
         async def after_raising(self, _error: Exception) -> None:
-            nonlocal aspect_raised
+            nonlocal advisor_raised
             nonlocal raised_exception
-            aspect_raised = True
+            advisor_raised = True
             raised_exception = _error
             return await super().after_raising(_error)
 
@@ -380,43 +380,43 @@ async def test_async_aspect_after_raising_expect_success() -> None:
     async def func(name: str, age: int) -> User:
         raise RuntimeError("Unexpected Runtime error occurred")
 
-    assert aspect_returned is False
-    assert aspect_raised is False
+    assert advisor_returned is False
+    assert advisor_raised is False
     assert return_value is None
     assert raised_exception is None
     with pytest.raises(RuntimeError):
         await func("John", 30)
-    assert aspect_returned is False
-    assert aspect_raised is True
+    assert advisor_returned is False
+    assert advisor_raised is True
     assert return_value is None
     assert raised_exception is not None
     assert isinstance(raised_exception, RuntimeError)
 
 
 @pytest.mark.asyncio
-async def test_async_aspect_after_expect_success() -> None:
+async def test_async_advisor_after_expect_success() -> None:
     @dataclass
     class User:
         name: str
         age: int
 
-    aspect_returned: bool = False
-    aspect_raised: bool = False
+    advisor_returned: bool = False
+    advisor_raised: bool = False
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterAspect(AsyncAspect):
+    class AfterAspect(AsyncAdvisor):
         async def after_returning(self, _result: Any) -> None:
-            nonlocal aspect_returned
+            nonlocal advisor_returned
             nonlocal return_value
-            aspect_returned = True
+            advisor_returned = True
             return_value = cast(User, _result)
             return await super().after_returning(_result)
 
         async def after_raising(self, _error: Exception) -> None:
-            nonlocal aspect_raised
+            nonlocal advisor_raised
             nonlocal raised_exception
-            aspect_raised = True
+            advisor_raised = True
             raised_exception = _error
             return await super().after_raising(_error)
 
@@ -424,22 +424,22 @@ async def test_async_aspect_after_expect_success() -> None:
     async def func(name: str, age: int) -> User:
         raise RuntimeError("Unexpected Runtime error occurred")
 
-    assert aspect_returned is False
-    assert aspect_raised is False
+    assert advisor_returned is False
+    assert advisor_raised is False
     assert return_value is None
     assert raised_exception is None
     with pytest.raises(RuntimeError):
         await func(name="John", age=30)
-    assert aspect_returned is False
-    assert aspect_raised is True
+    assert advisor_returned is False
+    assert advisor_raised is True
     assert return_value is None
     assert raised_exception is not None
     assert isinstance(raised_exception, RuntimeError)
 
 
 @pytest.mark.asyncio
-async def test_async_aspect_around_expect_success() -> None:
-    class AroundAspect(AsyncAspect):
+async def test_async_advisor_around_expect_success() -> None:
+    class AroundAspect(AsyncAdvisor):
         async def around(
             self, func: Callable[P, Awaitable[R]], *args: P.args, **kwargs: P.kwargs
         ) -> R:
@@ -461,10 +461,10 @@ async def test_async_aspect_around_expect_success() -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_log_aspect() -> None:
+async def test_async_log_advisor() -> None:
     logs: list[str] = []
 
-    class AsyncLogAspect(AsyncAspect):
+    class AsyncLogAspect(AsyncAdvisor):
         request_id: UUID | None
         timestamp: datetime | None
         arguments: tuple[Any, ...] | None

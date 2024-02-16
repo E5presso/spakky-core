@@ -1,17 +1,19 @@
+from uuid import UUID
+
 from sample.user.domain.interface.repository.user import IAsyncUserRepository
 from sample.user.domain.interface.service.command.user_registration import (
-    IAsyncUserRegistrationService,
-    UserRegistrationCommand,
+    IAsyncUserRegistrationUseCase,
+    UserRegistrationRequest,
 )
 from sample.user.domain.model.user import User
 from spakky.dependency.autowired import autowired
 from spakky.domain.interfaces.event_publisher import IAsyncEventPublisher
 from spakky.domain.interfaces.unit_of_work import AbstractAsyncUnitOfWork
-from spakky.stereotypes.service import Service
+from spakky.stereotypes.usecase import UseCase
 
 
-@Service()
-class AsyncUserRegistrationService(IAsyncUserRegistrationService):
+@UseCase()
+class AsyncUserRegistrationUseCase(IAsyncUserRegistrationUseCase):
     __transaction: AbstractAsyncUnitOfWork
     __user_repository: IAsyncUserRepository
     __event_publisher: IAsyncEventPublisher
@@ -27,12 +29,13 @@ class AsyncUserRegistrationService(IAsyncUserRegistrationService):
         self.__user_repository = user_repository
         self.__event_publisher = event_publisher
 
-    async def execute(self, command: UserRegistrationCommand) -> None:
+    async def execute(self, request: UserRegistrationRequest) -> UUID:
         async with self.__transaction:
             user: User = User.create(
-                username=command.username,
-                password=command.password,
-                email=command.email,
+                username=request.username,
+                password=request.password,
+                email=request.email,
             )
             await self.__user_repository.save(user)
             await self.__event_publisher.publish(user)
+            return user.uid

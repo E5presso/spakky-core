@@ -1,11 +1,15 @@
+from abc import ABC
 from typing import Any, TypeVar, Callable, Awaitable, ParamSpec
 from functools import wraps
+from dataclasses import dataclass
+
+from spakky.dependency.component import Component
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
-class Aspect:
+class Advisor(ABC):
     """`Aspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
     [`before`, `after_returning`, `after_raising`, `after`, `around`]\n
@@ -101,7 +105,7 @@ class Aspect:
         return func(*args, **kwargs)
 
 
-class AsyncAspect:
+class AsyncAdvisor(ABC):
     """`AsyncAspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
     [`before`, `after_returning`, `after_raising`, `after`, `around`]\n
@@ -201,3 +205,19 @@ class AsyncAspect:
             R: Result of target function (can be modified by you)
         """
         return await func(*args, **kwargs)
+
+
+AdvisorT = TypeVar("AdvisorT", bound=type[Advisor])
+AsyncAdvisorT = TypeVar("AsyncAdvisorT", bound=type[AsyncAdvisor])
+
+
+@dataclass
+class Aspect(Component):
+    def __call__(self, obj: AdvisorT) -> AdvisorT:
+        return super().__call__(obj)
+
+
+@dataclass
+class AsyncAspect(Component):
+    def __call__(self, obj: AsyncAdvisorT) -> AsyncAdvisorT:
+        return super().__call__(obj)

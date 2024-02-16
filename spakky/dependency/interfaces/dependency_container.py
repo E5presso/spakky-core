@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Callable, Protocol, Sequence, overload, runtime_checkable
 
-from spakky.core.generics import ObjectT
+from spakky.core.generics import AnyT
 
 
 @runtime_checkable
@@ -53,7 +53,7 @@ class IDependencyContainer(Protocol):
 
     @overload
     @abstractmethod
-    def get(self, *, required_type: type[ObjectT]) -> ObjectT:
+    def get(self, *, required_type: type[AnyT]) -> AnyT:
         """Retrieve component by given condition
 
         Args:
@@ -86,8 +86,8 @@ class IDependencyContainer(Protocol):
 
     @abstractmethod
     def get(
-        self, required_type: type[ObjectT] | None = None, name: str | None = None
-    ) -> ObjectT | Any:
+        self, required_type: type[AnyT] | None = None, name: str | None = None
+    ) -> AnyT | Any:
         """Retrieve component by given condition
 
         Args:

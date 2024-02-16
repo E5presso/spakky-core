@@ -1,6 +1,10 @@
-from typing import Any, TypeVar, Callable
+from typing import Any, TypeVar, Callable, TypeAlias
 
-ObjectT = TypeVar("ObjectT", bound=Any)
+Func: TypeAlias = Callable[..., Any]
+Action: TypeAlias = Callable[..., None]
+
+AnyT = TypeVar("AnyT", bound=Any)
+ObjectT = TypeVar("ObjectT", bound=object)
 ClassT = TypeVar("ClassT", bound=type)
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 ActionT = TypeVar("ActionT", bound=Callable[..., None])

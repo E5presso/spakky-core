@@ -1,11 +1,11 @@
 from typing import overload
 
-from spakky.core.generics import ObjectT
+from spakky.core.generics import AnyT
 from spakky.dependency.application_context import ApplicationContext
 
 
 @overload
-def inject(context: ApplicationContext, *, required_type: type[ObjectT]) -> ObjectT:
+def inject(context: ApplicationContext, *, required_type: type[AnyT]) -> AnyT:
     """Inject component from context by given condition\n
 
     Example:
@@ -47,9 +47,9 @@ def inject(context: ApplicationContext, *, name: str) -> object:
 
 def inject(
     context: ApplicationContext,
-    required_type: type[ObjectT] | None = None,
+    required_type: type[AnyT] | None = None,
     name: str | None = None,
-) -> ObjectT | object:
+) -> AnyT | object:
     """Inject component from context by given condition\n
 
     Example:

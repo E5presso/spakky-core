@@ -1,13 +1,13 @@
-from spakky.stereotypes.service import Service
+from spakky.stereotypes.usecase import UseCase
 
 
 def test_service() -> None:
-    @Service()
+    @UseCase()
     class SampleService:
         ...
 
     class NonAnnotated:
         ...
 
-    assert Service.single_or_none(SampleService) is not None
-    assert Service.single_or_none(NonAnnotated) is None
+    assert UseCase.single_or_none(SampleService) is not None
+    assert UseCase.single_or_none(NonAnnotated) is None
