@@ -89,7 +89,7 @@ class Advisor(ABC):
         or result return after the execution of the target function."""
         return
 
-    def around(self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+    def around(self, func: Callable[P, R], *_args: P.args, **_kwargs: P.kwargs) -> R:
         """This pointcut is called before target function is called.\n
         You can reference input arguments and also the target funcion\n
         You need to call target function manualy to get the result from target\n
@@ -102,7 +102,7 @@ class Advisor(ABC):
         Returns:
             R: Result of target function (can be modified by you)
         """
-        return func(*args, **kwargs)
+        return func(*_args, **_kwargs)
 
 
 class AsyncAdvisor(ABC):
@@ -190,7 +190,7 @@ class AsyncAdvisor(ABC):
         return
 
     async def around(
-        self, func: Callable[P, Awaitable[R]], *args: P.args, **kwargs: P.kwargs
+        self, func: Callable[P, Awaitable[R]], *_args: P.args, **_kwargs: P.kwargs
     ) -> R:
         """This pointcut is called before target function is called.\n
         You can reference input arguments and also the target funcion\n
@@ -204,7 +204,7 @@ class AsyncAdvisor(ABC):
         Returns:
             R: Result of target function (can be modified by you)
         """
-        return await func(*args, **kwargs)
+        return await func(*_args, **_kwargs)
 
 
 AdvisorT = TypeVar("AdvisorT", bound=type[Advisor])

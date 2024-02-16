@@ -115,7 +115,10 @@ class ApplicationContext(
             if required_type == Unknown:
                 dependencies[name] = self.get(name=name)
                 continue
-            dependencies[name] = self.get(required_type=required_type)
+            try:
+                dependencies[name] = self.get(required_type=required_type)
+            except NoSuchComponentError:
+                dependencies[name] = self.get(name=name)
         if providing_type == ProvidingType.FACTORY:
             return self.__initialize_dependency(component, dependencies)
         if component not in self.__singleton_cache:

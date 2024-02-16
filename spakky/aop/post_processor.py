@@ -13,13 +13,17 @@ class AspectDependencyPostPrecessor(IDependencyPostProcessor):
     def process_dependency(self, container: IDependencyContainer, dependency: Any) -> Any:
         for name, method in getmembers(dependency, ismethod):
             if Pointcut.contains(method):
-                pointcut: Pointcut = Pointcut.single(method)
-                advisor: Advisor = container.get(required_type=pointcut.advisor)
-                setattr(dependency, name, advisor(method))
+                pointcuts: list[Pointcut] = Pointcut.all(method)
+                for async_pointcut in pointcuts:
+                    advisor: Advisor = container.get(required_type=async_pointcut.advisor)
+                    method = advisor(method)
+                setattr(dependency, name, method)
             if AsyncPointcut.contains(method):
-                async_pointcut: AsyncPointcut = AsyncPointcut.single(method)
-                async_advisor: AsyncAdvisor = container.get(
-                    required_type=async_pointcut.advisor
-                )
-                setattr(dependency, name, async_advisor(method))
+                async_pointcuts: list[AsyncPointcut] = AsyncPointcut.all(method)
+                for async_pointcut in async_pointcuts:
+                    async_advisor: AsyncAdvisor = container.get(
+                        required_type=async_pointcut.advisor
+                    )
+                    method = async_advisor(method)
+                setattr(dependency, name, method)
         return dependency
