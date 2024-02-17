@@ -1,8 +1,8 @@
 import pytest
 
 from sample.apps.user.domain.model.user import (
+    AuthenticationFailedError,
     EmailValidationFailedError,
-    PasswordAuthenticationFailedError,
     User,
 )
 
@@ -37,7 +37,7 @@ def test_user_update_password_expect_password_authentication_failed() -> None:
         password="password",
         email="test@email.com",
     )
-    with pytest.raises(PasswordAuthenticationFailedError):
+    with pytest.raises(AuthenticationFailedError):
         user.update_password("wrong", "new")
 
 
@@ -81,7 +81,7 @@ def test_user_authenticate_expect_password_authentication_failed() -> None:
         password="password",
         email="test@email.com",
     )
-    with pytest.raises(PasswordAuthenticationFailedError):
+    with pytest.raises(AuthenticationFailedError):
         user.authenticate("wrong")
 
 

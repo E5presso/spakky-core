@@ -20,6 +20,11 @@ class AsyncInMemoryUserRepository(IAsyncUserRepository):
     async def single_or_none(self, aggregate_id: UUID) -> User | None:
         return self.database.get(aggregate_id, None)
 
+    async def get_by_username(self, username: str) -> User | None:
+        return next(
+            iter(x for x in self.database.values() if x.username == username), None
+        )
+
     async def contains(self, aggregate_id: UUID) -> bool:
         return aggregate_id in self.database
 

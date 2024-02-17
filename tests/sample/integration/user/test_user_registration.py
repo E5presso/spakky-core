@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from sample.apps.user.domain.interface.service.command.user_registration import (
+from sample.apps.user.domain.interface.usecase.command.user_registration import (
     UserRegistrationRequest,
 )
 from sample.apps.user.domain.model.user import EmailValidationFailedError, User
@@ -18,9 +18,9 @@ from spakky.dependency.application_context import ApplicationContext
 async def test_user_registration_expect_email_validation_failed_error(
     context: ApplicationContext,
 ) -> None:
-    service = context.get(required_type=AsyncUserRegistrationUseCase)
+    usecase = context.get(required_type=AsyncUserRegistrationUseCase)
     with pytest.raises(EmailValidationFailedError):
-        await service.execute(
+        await usecase.execute(
             UserRegistrationRequest(
                 username="testuser",
                 password="password",
@@ -31,8 +31,8 @@ async def test_user_registration_expect_email_validation_failed_error(
 
 @pytest.mark.asyncio
 async def test_user_registration_succeed(context: ApplicationContext) -> None:
-    service = context.get(required_type=AsyncUserRegistrationUseCase)
-    uid: UUID = await service.execute(
+    usecase = context.get(required_type=AsyncUserRegistrationUseCase)
+    uid: UUID = await usecase.execute(
         UserRegistrationRequest(
             username="testuser",
             password="password",

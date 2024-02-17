@@ -14,7 +14,7 @@ class EmailValidationFailedError(DomainValidationError):
     ...
 
 
-class PasswordAuthenticationFailedError(DomainValidationError):
+class AuthenticationFailedError(DomainValidationError):
     ...
 
 
@@ -68,7 +68,7 @@ class User(AggregateRoot[UUID]):
 
     def update_password(self, old: str, new: str) -> None:
         if not Password(password_hash=self.password).challenge(old):
-            raise PasswordAuthenticationFailedError
+            raise AuthenticationFailedError
         self.password = Password(password=new).export
         self.add_event(self.PasswordUpdated(uid=self.uid))
 
@@ -78,5 +78,5 @@ class User(AggregateRoot[UUID]):
 
     def authenticate(self, password: str) -> None:
         if not Password(password_hash=self.password).challenge(password):
-            raise PasswordAuthenticationFailedError
+            raise AuthenticationFailedError
         self.add_event(self.Authenticated(uid=self.uid))
