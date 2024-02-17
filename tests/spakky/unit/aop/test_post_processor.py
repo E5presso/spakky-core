@@ -3,8 +3,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.aop.advisor import Advisor, Aspect, AsyncAdvisor, AsyncAspect
-from spakky.aop.pointcut import AsyncPointcut, Pointcut
+from spakky.aop.advice import Advice, Aspect, AsyncAdvice, AsyncPointcut, Pointcut
 from spakky.aop.post_processor import AspectDependencyPostPrecessor
 from spakky.dependency.application_context import ApplicationContext
 from spakky.dependency.component import Component
@@ -14,7 +13,7 @@ def test_aspect_post_processor() -> None:
     logs: list[str] = []
 
     @Aspect()
-    class LogAdvisor(Advisor):
+    class LogAdvisor(Advice):
         def before(self, *_args: Any, **_kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"{_args}, {_kwargs}")
@@ -22,7 +21,7 @@ def test_aspect_post_processor() -> None:
 
     @dataclass
     class Log(Pointcut):
-        advisor = LogAdvisor
+        advice = LogAdvisor
 
     @Component()
     class EchoService:
@@ -45,8 +44,8 @@ def test_aspect_post_processor() -> None:
 async def test_async_aspect_post_processor() -> None:
     logs: list[str] = []
 
-    @AsyncAspect()
-    class AsyncLogAdvisor(AsyncAdvisor):
+    @Aspect()
+    class AsyncLogAdvisor(AsyncAdvice):
         async def before(self, *_args: Any, **_kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"{_args}, {_kwargs}")
@@ -54,7 +53,7 @@ async def test_async_aspect_post_processor() -> None:
 
     @dataclass
     class AsyncLog(AsyncPointcut):
-        advisor = AsyncLogAdvisor
+        advice = AsyncLogAdvisor
 
     @Component()
     class EchoService:

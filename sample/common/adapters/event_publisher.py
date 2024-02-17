@@ -6,7 +6,7 @@ from spakky.domain.models.domain_event import DomainEvent
 
 
 @Component()
-class AsyncMemoryEventPublisher(IAsyncEventPublisher):
+class AsyncInMemoryEventPublisher(IAsyncEventPublisher):
     events: list[DomainEvent]
 
     def __init__(self) -> None:

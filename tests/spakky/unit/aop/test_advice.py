@@ -6,11 +6,11 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.aop.advisor import Advisor, AsyncAdvisor, P, R
+from spakky.aop.advice import Advice, AsyncAdvice, P, R
 
 
 def test_advisor_is_callable() -> None:
-    class DummyAspect(Advisor):
+    class DummyAspect(Advice):
         ...
 
     @DummyAspect()
@@ -22,7 +22,7 @@ def test_advisor_is_callable() -> None:
 
 
 def test_advisor_type_attribute() -> None:
-    class DummyAspect(Advisor):
+    class DummyAspect(Advice):
         ...
 
     @DummyAspect()
@@ -30,7 +30,7 @@ def test_advisor_type_attribute() -> None:
         """dummy doc"""
         return name, age
 
-    assert func.__module__ == "tests.spakky.unit.aop.test_advisor"
+    assert func.__module__ == "tests.spakky.unit.aop.test_advice"
     assert func.__name__ == "func"
     assert func.__qualname__ == "test_advisor_type_attribute.<locals>.func"
     assert func.__doc__ == "dummy doc"
@@ -45,7 +45,7 @@ def test_advisor_before_expect_success() -> None:
 
     advisor_called: bool = False
 
-    class BeforeAspect(Advisor):
+    class BeforeAspect(Advice):
         def before(self, *_args: Any, **_kwargs: Any) -> None:
             nonlocal advisor_called
             advisor_called = True
@@ -70,7 +70,7 @@ def test_advisor_after_returning_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterReturningAspect(Advisor):
+    class AfterReturningAspect(Advice):
         def after_returning(self, _result: Any) -> None:
             nonlocal advisor_returned
             nonlocal return_value
@@ -112,7 +112,7 @@ def test_advisor_after_raising_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterRaisingAspect(Advisor):
+    class AfterRaisingAspect(Advice):
         def after_returning(self, _result: Any) -> None:
             nonlocal advisor_returned
             nonlocal return_value
@@ -155,7 +155,7 @@ def test_advisor_after_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterAspect(Advisor):
+    class AfterAspect(Advice):
         def after_returning(self, _result: Any) -> None:
             nonlocal advisor_returned
             nonlocal return_value
@@ -188,7 +188,7 @@ def test_advisor_after_expect_success() -> None:
 
 
 def test_advisor_around_expect_success() -> None:
-    class AroundAspect(Advisor):
+    class AroundAspect(Advice):
         def around(self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
             assert not args
             assert kwargs == {"name": "John", "age": 30}
@@ -210,7 +210,7 @@ def test_advisor_around_expect_success() -> None:
 def test_log_advisor() -> None:
     logs: list[str] = []
 
-    class LogAspect(Advisor):
+    class LogAspect(Advice):
         request_id: UUID | None
         timestamp: datetime | None
         arguments: tuple[Any, ...] | None
@@ -254,7 +254,7 @@ def test_log_advisor() -> None:
 
 @pytest.mark.asyncio
 async def test_async_advisor_is_coroutine_callable() -> None:
-    class DummyAspect(AsyncAdvisor):
+    class DummyAspect(AsyncAdvice):
         ...
 
     @DummyAspect()
@@ -268,7 +268,7 @@ async def test_async_advisor_is_coroutine_callable() -> None:
 
 @pytest.mark.asyncio
 async def test_async_advisor_type_attribute() -> None:
-    class DummyAspect(AsyncAdvisor):
+    class DummyAspect(AsyncAdvice):
         ...
 
     @DummyAspect()
@@ -276,7 +276,7 @@ async def test_async_advisor_type_attribute() -> None:
         """dummy doc"""
         return name, age
 
-    assert func.__module__ == "tests.spakky.unit.aop.test_advisor"
+    assert func.__module__ == "tests.spakky.unit.aop.test_advice"
     assert func.__name__ == "func"
     assert func.__qualname__ == "test_async_advisor_type_attribute.<locals>.func"
     assert func.__doc__ == "dummy doc"
@@ -292,7 +292,7 @@ async def test_async_advisor_before_expect_success() -> None:
 
     advisor_called: bool = False
 
-    class BeforeAspect(AsyncAdvisor):
+    class BeforeAspect(AsyncAdvice):
         async def before(self, *_args: Any, **_kwargs: Any) -> None:
             nonlocal advisor_called
             advisor_called = True
@@ -318,7 +318,7 @@ async def test_async_advisor_after_returning_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterReturningAspect(AsyncAdvisor):
+    class AfterReturningAspect(AsyncAdvice):
         async def after_returning(self, _result: Any) -> None:
             nonlocal advisor_returned
             nonlocal return_value
@@ -361,7 +361,7 @@ async def test_async_advisor_after_raising_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterRaisingAspect(AsyncAdvisor):
+    class AfterRaisingAspect(AsyncAdvice):
         async def after_returning(self, _result: Any) -> None:
             nonlocal advisor_returned
             nonlocal return_value
@@ -405,7 +405,7 @@ async def test_async_advisor_after_expect_success() -> None:
     return_value: User | None = None
     raised_exception: Exception | None = None
 
-    class AfterAspect(AsyncAdvisor):
+    class AfterAspect(AsyncAdvice):
         async def after_returning(self, _result: Any) -> None:
             nonlocal advisor_returned
             nonlocal return_value
@@ -439,7 +439,7 @@ async def test_async_advisor_after_expect_success() -> None:
 
 @pytest.mark.asyncio
 async def test_async_advisor_around_expect_success() -> None:
-    class AroundAspect(AsyncAdvisor):
+    class AroundAspect(AsyncAdvice):
         async def around(
             self, func: Callable[P, Awaitable[R]], *args: P.args, **kwargs: P.kwargs
         ) -> R:
@@ -464,7 +464,7 @@ async def test_async_advisor_around_expect_success() -> None:
 async def test_async_log_advisor() -> None:
     logs: list[str] = []
 
-    class AsyncLogAspect(AsyncAdvisor):
+    class AsyncLogAspect(AsyncAdvice):
         request_id: UUID | None
         timestamp: datetime | None
         arguments: tuple[Any, ...] | None

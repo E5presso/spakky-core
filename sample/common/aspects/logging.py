@@ -2,14 +2,13 @@ from typing import Callable, Awaitable
 from logging import Logger
 from dataclasses import dataclass
 
-from spakky.aop.advisor import AsyncAdvisor, AsyncAspect, P, R
-from spakky.aop.pointcut import AsyncPointcut
+from spakky.aop.advice import Aspect, AsyncAdvice, AsyncPointcut, P, R
 from spakky.core.generics import FuncT
 from spakky.dependency.autowired import autowired
 
 
-@AsyncAspect()
-class AsyncLoggingAdvisor(AsyncAdvisor):
+@Aspect()
+class AsyncLoggingAdvice(AsyncAdvice):
     __logger: Logger
 
     @autowired
@@ -33,7 +32,7 @@ class AsyncLoggingAdvisor(AsyncAdvisor):
 
 @dataclass
 class AsyncLogging(AsyncPointcut):
-    advisor = AsyncLoggingAdvisor
+    advice = AsyncLoggingAdvice
 
 
 def async_logging(obj: FuncT) -> FuncT:

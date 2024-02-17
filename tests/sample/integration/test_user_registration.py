@@ -2,15 +2,15 @@ from uuid import UUID
 
 import pytest
 
-from sample.adapters.event_publisher import AsyncMemoryEventPublisher
-from sample.user.domain.interface.service.command.user_registration import (
+from sample.apps.user.domain.interface.service.command.user_registration import (
     UserRegistrationRequest,
 )
-from sample.user.domain.model.user import EmailValidationFailedError, User
-from sample.user.domain.usecase.command.user_registration import (
+from sample.apps.user.domain.model.user import EmailValidationFailedError, User
+from sample.apps.user.domain.usecase.command.user_registration import (
     AsyncUserRegistrationUseCase,
 )
-from sample.user.repository.user import AsyncMemoryUserRepository
+from sample.apps.user.repository.user import AsyncInMemoryUserRepository
+from sample.common.adapters.event_publisher import AsyncInMemoryEventPublisher
 from spakky.dependency.application_context import ApplicationContext
 
 
@@ -40,8 +40,8 @@ async def test_user_registration_succeed(context: ApplicationContext) -> None:
         )
     )
 
-    repository = context.get(required_type=AsyncMemoryUserRepository)
-    event_publisher = context.get(required_type=AsyncMemoryEventPublisher)
+    repository = context.get(required_type=AsyncInMemoryUserRepository)
+    event_publisher = context.get(required_type=AsyncInMemoryEventPublisher)
     saved = repository.database[uid]
     assert saved.username == "testuser"
     assert saved.password != "password"

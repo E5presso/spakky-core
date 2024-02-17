@@ -1,15 +1,17 @@
 from abc import ABC
-from typing import Any, TypeVar, Callable, Awaitable, ParamSpec
+from typing import Any, TypeVar, Callable, ClassVar, Awaitable, ParamSpec, final
 from functools import wraps
 from dataclasses import dataclass
 
+from spakky.core.annotation import FunctionAnnotation
+from spakky.core.generics import AsyncFuncT
 from spakky.dependency.component import Component
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
-class Advisor(ABC):
+class Advice(ABC):
     """`Aspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
     [`before`, `after_returning`, `after_raising`, `after`, `around`]\n
@@ -32,6 +34,7 @@ class Advisor(ABC):
     ```
     """
 
+    @final
     def __call__(self, function: Callable[P, R]) -> Callable[P, R]:
         """Annotate origin function to a Aspect wrapper.
 
@@ -105,7 +108,7 @@ class Advisor(ABC):
         return func(*_args, **_kwargs)
 
 
-class AsyncAdvisor(ABC):
+class AsyncAdvice(ABC):
     """`AsyncAspect` class is made to support Aspect Oriented Programming.\n
     You can override joinpoint such as\n
     [`before`, `after_returning`, `after_raising`, `after`, `around`]\n
@@ -132,6 +135,7 @@ class AsyncAdvisor(ABC):
     ```
     """
 
+    @final
     def __call__(self, function: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         """Annotate origin function to a Aspect wrapper.
 
@@ -151,7 +155,7 @@ class AsyncAdvisor(ABC):
                 return result
             except Exception as e:
                 await self.after_raising(e)
-                raise e
+                raise
             finally:
                 await self.after()
 
@@ -207,17 +211,23 @@ class AsyncAdvisor(ABC):
         return await func(*_args, **_kwargs)
 
 
-AdvisorT = TypeVar("AdvisorT", bound=type[Advisor])
-AsyncAdvisorT = TypeVar("AsyncAdvisorT", bound=type[AsyncAdvisor])
+AdviceT = TypeVar("AdviceT", bound=type[Advice | AsyncAdvice])
 
 
 @dataclass
 class Aspect(Component):
-    def __call__(self, obj: AdvisorT) -> AdvisorT:
+    def __call__(self, obj: AdviceT) -> AdviceT:
         return super().__call__(obj)
 
 
 @dataclass
-class AsyncAspect(Component):
-    def __call__(self, obj: AsyncAdvisorT) -> AsyncAdvisorT:
+class Pointcut(FunctionAnnotation):
+    advice: ClassVar[type[Advice]]
+
+
+@dataclass
+class AsyncPointcut(FunctionAnnotation):
+    advice: ClassVar[type[AsyncAdvice]]
+
+    def __call__(self, obj: AsyncFuncT) -> AsyncFuncT:
         return super().__call__(obj)

@@ -1,13 +1,13 @@
 from uuid import UUID
 
-from sample.aspects.logging import async_logging
-from sample.aspects.transaction import async_transactional
-from sample.user.domain.interface.repository.user import IAsyncUserRepository
-from sample.user.domain.interface.service.command.user_registration import (
+from sample.apps.user.domain.interface.repository.user import IAsyncUserRepository
+from sample.apps.user.domain.interface.service.command.user_registration import (
     IAsyncUserRegistrationUseCase,
     UserRegistrationRequest,
 )
-from sample.user.domain.model.user import User
+from sample.apps.user.domain.model.user import User
+from sample.common.aspects.logging import async_logging
+from sample.common.aspects.transaction import async_transactional
 from spakky.dependency.autowired import autowired
 from spakky.domain.interfaces.event_publisher import IAsyncEventPublisher
 from spakky.stereotypes.usecase import UseCase

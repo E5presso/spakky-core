@@ -3,7 +3,7 @@ from spakky.domain.interfaces.unit_of_work import AbstractAsyncUnitOfWork
 
 
 @Component()
-class AsyncMemoryUnitOfWork(AbstractAsyncUnitOfWork):
+class AsyncInMemoryUnitOfWork(AbstractAsyncUnitOfWork):
     async def initialize(self) -> None:
         ...
 

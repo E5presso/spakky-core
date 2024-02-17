@@ -1,13 +1,13 @@
 from uuid import UUID
 from typing import Sequence
 
-from sample.user.domain.interface.repository.user import IAsyncUserRepository
-from sample.user.domain.model.user import User
+from sample.apps.user.domain.interface.repository.user import IAsyncUserRepository
+from sample.apps.user.domain.model.user import User
 from spakky.stereotypes.repository import Repository
 
 
 @Repository()
-class AsyncMemoryUserRepository(IAsyncUserRepository):
+class AsyncInMemoryUserRepository(IAsyncUserRepository):
     database: dict[UUID, User]
 
     def __init__(self) -> None:

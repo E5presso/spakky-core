@@ -1,15 +1,14 @@
 from typing import Callable, Awaitable
 from dataclasses import dataclass
 
-from spakky.aop.advisor import AsyncAdvisor, AsyncAspect, P, R
-from spakky.aop.pointcut import AsyncPointcut
+from spakky.aop.advice import Aspect, AsyncAdvice, AsyncPointcut, P, R
 from spakky.core.generics import FuncT
 from spakky.dependency.autowired import autowired
 from spakky.domain.interfaces.unit_of_work import AbstractAsyncUnitOfWork
 
 
-@AsyncAspect()
-class AsyncTransactionalAdvisor(AsyncAdvisor):
+@Aspect()
+class AsyncTransactionalAdvice(AsyncAdvice):
     __transacntion: AbstractAsyncUnitOfWork
 
     @autowired
@@ -26,7 +25,7 @@ class AsyncTransactionalAdvisor(AsyncAdvisor):
 
 @dataclass
 class AsyncTransactional(AsyncPointcut):
-    advisor = AsyncTransactionalAdvisor
+    advice = AsyncTransactionalAdvice
 
 
 def async_transactional(obj: FuncT) -> FuncT:
