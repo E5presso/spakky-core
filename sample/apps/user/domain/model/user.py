@@ -7,6 +7,7 @@ from sample.apps.user.domain.error import (
     AuthenticationFailedError,
     EmailValidationFailedError,
 )
+from sample.apps.user.domain.model.authentication_log import AuthenticationLog
 from spakky.core.mutability import immutable, mutable
 from spakky.cryptography.password import Password
 from spakky.domain.models.aggregate_root import AggregateRoot
@@ -25,6 +26,9 @@ class User(AggregateRoot[UUID]):
     username: str
     password: str
     email: str
+    authentication_logs: list[AuthenticationLog] = field(
+        default_factory=list[AuthenticationLog]
+    )
 
     @immutable
     class Created(DomainEvent):
@@ -41,6 +45,8 @@ class User(AggregateRoot[UUID]):
     @immutable
     class Authenticated(DomainEvent):
         uid: UUID
+        ip_address: str
+        user_agent: str
 
     @classmethod
     def next_id(cls) -> UUID:
@@ -71,7 +77,12 @@ class User(AggregateRoot[UUID]):
         self.email = email
         self.add_event(self.EmailUpdated(uid=self.uid))
 
-    def authenticate(self, password: str) -> None:
+    def authenticate(self, password: str, ip_address: str, user_agent: str) -> None:
         if not Password(password_hash=self.password).challenge(password):
             raise AuthenticationFailedError
-        self.add_event(self.Authenticated(uid=self.uid))
+        self.authentication_logs.append(
+            AuthenticationLog(ip_address=ip_address, user_agent=user_agent)
+        )
+        self.add_event(
+            self.Authenticated(uid=self.uid, ip_address=ip_address, user_agent=user_agent)
+        )

@@ -82,7 +82,7 @@ def test_user_authenticate_expect_password_authentication_failed() -> None:
         email="test@email.com",
     )
     with pytest.raises(AuthenticationFailedError):
-        user.authenticate("wrong")
+        user.authenticate("wrong", ip_address="127.0.0.1", user_agent="pytest")
 
 
 def test_user_authenticate_expect_success() -> None:
@@ -91,5 +91,5 @@ def test_user_authenticate_expect_success() -> None:
         password="password",
         email="test@email.com",
     )
-    user.authenticate("password")
+    user.authenticate("password", ip_address="127.0.0.1", user_agent="pytest")
     assert isinstance(user.events[1], User.Authenticated)

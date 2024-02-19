@@ -29,7 +29,7 @@ class AspectDependencyPostPrecessor(IDependencyPostProcessor):
                         f"[{type(self).__name__}] {type(pointcut).__name__} -> {method.__qualname__}"
                     )
                     advice: Advice = container.get(required_type=pointcut.advice)
-                    method = advice(method)
+                    method = advice(pointcut, method)
                 setattr(dependency, name, method)
             if AsyncPointcut.contains(method):
                 async_pointcuts: list[AsyncPointcut] = AsyncPointcut.all(method)
@@ -40,6 +40,6 @@ class AspectDependencyPostPrecessor(IDependencyPostProcessor):
                     async_advice: AsyncAdvice = container.get(
                         required_type=async_pointcut.advice
                     )
-                    method = async_advice(method)
+                    method = async_advice(async_pointcut, method)
                 setattr(dependency, name, method)
         return dependency

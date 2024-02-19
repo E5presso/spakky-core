@@ -1,16 +1,16 @@
 from abc import ABC
+from uuid import UUID
 
 from spakky.core.mutability import immutable
 from spakky.domain.usecases.command import Command, IAsyncCommandUseCase
 
 
 @immutable
-class UserAuthenticationCommand(Command):
+class RegistrateUserCommand(Command):
     username: str
     password: str
+    email: str
 
 
-class IAsyncUserAuthenticationUseCase(
-    IAsyncCommandUseCase[UserAuthenticationCommand, None], ABC
-):
+class IAsyncRegistrateUserUseCase(IAsyncCommandUseCase[RegistrateUserCommand, UUID], ABC):
     ...

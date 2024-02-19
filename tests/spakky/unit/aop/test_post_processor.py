@@ -15,10 +15,10 @@ def test_aspect_post_processor() -> None:
 
     @Aspect()
     class LogAdvisor(Advice):
-        def before(self, *_args: Any, **_kwargs: Any) -> None:
+        def before(self, _pointcut: Pointcut, *_args: Any, **_kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"{_args}, {_kwargs}")
-            return super().before(*_args, **_kwargs)
+            return super().before(_pointcut, *_args, **_kwargs)
 
     @dataclass
     class Log(Pointcut):
@@ -57,10 +57,12 @@ async def test_async_aspect_post_processor() -> None:
 
     @Aspect()
     class AsyncLogAdvisor(AsyncAdvice):
-        async def before(self, *_args: Any, **_kwargs: Any) -> None:
+        async def before(
+            self, _pointcut: AsyncPointcut, *_args: Any, **_kwargs: Any
+        ) -> None:
             nonlocal logs
             logs.append(f"{_args}, {_kwargs}")
-            return await super().before(*_args, **_kwargs)
+            return await super().before(_pointcut, *_args, **_kwargs)
 
     @dataclass
     class AsyncLog(AsyncPointcut):
