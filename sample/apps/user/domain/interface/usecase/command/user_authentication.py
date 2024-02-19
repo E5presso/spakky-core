@@ -11,6 +11,6 @@ class UserAuthenticationCommand(Command):
 
 
 class IAsyncUserAuthenticationUseCase(
-    IAsyncCommandUseCase[UserAuthenticationCommand], ABC
+    IAsyncCommandUseCase[UserAuthenticationCommand, None], ABC
 ):
     ...

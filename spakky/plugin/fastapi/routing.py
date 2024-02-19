@@ -1,5 +1,5 @@
-from enum import StrEnum, auto
-from typing import Any, Callable, Sequence
+from enum import StrEnum
+from typing import Any, Callable, Sequence, TypeAlias
 from dataclasses import field, dataclass
 
 from fastapi import Response, params
@@ -11,19 +11,22 @@ from starlette.routing import Route as StarletteRoute
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.generics import FuncT
 
-SetIntStr = set[int | str]
-DictIntStrAny = dict[int | str, Any]
+SetIntStr: TypeAlias = set[int | str]
+DictIntStrAny: TypeAlias = dict[int | str, Any]
 
 
 class HTTPMethod(StrEnum):
-    GET = auto()
-    POST = auto()
-    PUT = auto()
-    PATCH = auto()
-    DELETE = auto()
-    HEAD = auto()
-    OPTIONS = auto()
-    TRACE = auto()
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    PATCH = "PATCH"
+    DELETE = "DELETE"
+    HEAD = "HEAD"
+    OPTIONS = "OPTIONS"
+    TRACE = "TRACE"
+
+    def __repr__(self) -> str:
+        return self.value
 
 
 @dataclass

@@ -14,5 +14,5 @@ def context_fixture() -> Generator[ApplicationContext, Any, None]:
 
 @pytest.fixture(name="test_client", scope="function")
 def test_client_fixture() -> Generator[TestClient, Any, None]:
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://pytest") as client:
         yield client

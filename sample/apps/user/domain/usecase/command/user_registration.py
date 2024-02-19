@@ -1,9 +1,10 @@
 from uuid import UUID
 
+from sample.apps.user.domain.error import UserAlreadyExistsError
 from sample.apps.user.domain.interface.repository.user import IAsyncUserRepository
 from sample.apps.user.domain.interface.usecase.command.user_registration import (
     IAsyncUserRegistrationUseCase,
-    UserRegistrationRequest,
+    UserRegistrationCommand,
 )
 from sample.apps.user.domain.model.user import User
 from sample.common.aspects.logging import async_logging
@@ -29,11 +30,13 @@ class AsyncUserRegistrationUseCase(IAsyncUserRegistrationUseCase):
 
     @async_logging
     @async_transactional
-    async def execute(self, request: UserRegistrationRequest) -> UUID:
+    async def execute(self, command: UserRegistrationCommand) -> UUID:
+        if await self.__user_repository.get_by_username(command.username) is not None:
+            raise UserAlreadyExistsError
         user: User = User.create(
-            username=request.username,
-            password=request.password,
-            email=request.email,
+            username=command.username,
+            password=command.password,
+            email=command.email,
         )
         await self.__user_repository.save(user)
         await self.__event_publisher.publish(user)

@@ -1,3 +1,4 @@
+from uuid import UUID, uuid4
 from typing import Callable, Awaitable
 from logging import Logger
 from dataclasses import dataclass
@@ -19,14 +20,22 @@ class AsyncLoggingAdvice(AsyncAdvice):
     async def around(
         self, func: Callable[P, Awaitable[R]], *_args: P.args, **_kwargs: P.kwargs
     ) -> R:
+        args: str = ", ".join(f"{arg!r}" for arg in _args) if any(_args) else ""
+        kwargs: str = (
+            ", ".join(f"{key}={value!r}" for key, value in _kwargs.items())
+            if any(_kwargs)
+            else ""
+        )
+        trace_id: UUID = uuid4()
+        self.__logger.info(f"[Log][{trace_id}] {func.__qualname__}({args}{kwargs})")
         try:
             result: R = await super().around(func, *_args, **_kwargs)
         except Exception as e:
-            self.__logger.error(f"raised {e!r}", exc_info=e)
+            self.__logger.error(
+                f"[Log][{trace_id}] {func.__qualname__} raised {type(e).__name__}"
+            )
             raise
-        args = f"{_args!r}, " if any(_args) else ""
-        kwargs = f"{_kwargs!r}" if any(_kwargs) else ""
-        self.__logger.info(f"{func.__qualname__}({args}{kwargs}) -> {result!r}")
+        self.__logger.info(f"[Log][{trace_id}] {func.__qualname__} -> {result!r}")
         return result
 
 

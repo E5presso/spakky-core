@@ -1,49 +1,64 @@
-from uuid import UUID
+from http import HTTPStatus
 
 import pytest
+from fastapi.testclient import TestClient
+from httpx import Response
 
-from sample.apps.user.domain.interface.usecase.command.user_registration import (
-    UserRegistrationRequest,
-)
-from sample.apps.user.domain.model.user import EmailValidationFailedError, User
-from sample.apps.user.domain.usecase.command.user_registration import (
-    AsyncUserRegistrationUseCase,
-)
+from sample.apps.user.domain.model.user import User
 from sample.apps.user.repository.user import AsyncInMemoryUserRepository
-from sample.common.adapters.event_publisher import AsyncInMemoryEventPublisher
 from spakky.dependency.application_context import ApplicationContext
 
 
 @pytest.mark.asyncio
 async def test_user_registration_expect_email_validation_failed_error(
-    context: ApplicationContext,
+    test_client: TestClient,
 ) -> None:
-    usecase = context.get(required_type=AsyncUserRegistrationUseCase)
-    with pytest.raises(EmailValidationFailedError):
-        await usecase.execute(
-            UserRegistrationRequest(
-                username="testuser",
-                password="password",
-                email="wrong_email",
-            )
-        )
+    response: Response = test_client.post(
+        url="/users/v1",
+        json={
+            "username": "testuser",
+            "password": "pa55word!!",
+            "email": "wrong_email_format",
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.content.decode() == "유효하지 않은 이메일 형식입니다."
 
 
 @pytest.mark.asyncio
-async def test_user_registration_succeed(context: ApplicationContext) -> None:
-    usecase = context.get(required_type=AsyncUserRegistrationUseCase)
-    uid: UUID = await usecase.execute(
-        UserRegistrationRequest(
+async def test_user_registration_expect_user_already_exists_error(
+    context: ApplicationContext, test_client: TestClient
+) -> None:
+    repository = context.get(required_type=AsyncInMemoryUserRepository)
+    user = await repository.save(
+        User.create(
             username="testuser",
-            password="password",
+            password="pa55word!!",
             email="test@email.com",
         )
     )
+    response: Response = test_client.post(
+        url="/users/v1",
+        json={
+            "username": "testuser",
+            "password": "pa55word!!",
+            "email": "test@email.com",
+        },
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.content.decode() == "이미 존재하는 사용자입니다."
+    await repository.delete(user)
 
-    repository = context.get(required_type=AsyncInMemoryUserRepository)
-    event_publisher = context.get(required_type=AsyncInMemoryEventPublisher)
-    saved = repository.database[uid]
-    assert saved.username == "testuser"
-    assert saved.password != "password"
-    assert saved.email == "test@email.com"
-    assert isinstance(event_publisher.events[0], User.Created)
+
+@pytest.mark.asyncio
+async def test_user_registration_succeed(test_client: TestClient) -> None:
+    response: Response = test_client.post(
+        url="/users/v1",
+        json={
+            "username": "testuser",
+            "password": "pa55word!!",
+            "email": "test@email.com",
+        },
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.headers.get("Location") is not None

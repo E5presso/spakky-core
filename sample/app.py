@@ -10,9 +10,6 @@ from spakky.plugin.fastapi.post_processor import FastAPIDependencyPostProcessor
 app: FastAPI = FastAPI()
 context: ApplicationContext = ApplicationContext(package=sample)
 
-context.add_post_processor(AspectDependencyPostPrecessor())
-context.add_post_processor(FastAPIDependencyPostProcessor(app))
-
 console = logging.StreamHandler()
 console.setLevel(level=logging.DEBUG)
 console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
@@ -20,5 +17,9 @@ logger = logging.getLogger("debug")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(console)
 context.register_unmanaged_dependency("logger", logger)
+context.register_unmanaged_dependency("app", app)
+
+context.register_component(AspectDependencyPostPrecessor)
+context.register_component(FastAPIDependencyPostProcessor)
 
 context.initialize()

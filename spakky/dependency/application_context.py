@@ -17,6 +17,7 @@ from spakky.dependency.interfaces.managed_registry import IManagedDependencyRegi
 from spakky.dependency.interfaces.unmanaged_dependency_registry import (
     IUnmanagedDependencyRegistry,
 )
+from spakky.dependency.plugin import PostProcessor
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
 
@@ -26,13 +27,13 @@ class CannotRegisterNonComponentError(SpakkyDependencyError):
     The component class must be decorated by `@Component()`
     """
 
-    ...
+    message = "Cannot register non-component class."
 
 
 class NoSuchComponentError(SpakkyDependencyError):
     """Cannot find component from context by given condition"""
 
-    ...
+    message = "Cannot find component from context by given condition"
 
 
 class NoUniqueComponentError(SpakkyDependencyError):
@@ -40,7 +41,7 @@ class NoUniqueComponentError(SpakkyDependencyError):
     You can mark component as `@Primary()` to uniquify component
     """
 
-    ...
+    message = "Multiple component found by given condition"
 
 
 class ApplicationContext(
@@ -66,7 +67,6 @@ class ApplicationContext(
     __components_name_map: dict[str, type]
     __singleton_cache: dict[type, object]
     __unmanaged_dependencies: dict[str, Any]
-    __post_processors: set[IDependencyPostProcessor]
 
     def __init__(self, package: ModuleType | None = None) -> None:
         """Initialize context
@@ -81,7 +81,6 @@ class ApplicationContext(
         self.__components_name_map = {}
         self.__singleton_cache = {}
         self.__unmanaged_dependencies = {}
-        self.__post_processors = set()
         if package is not None:
             self.scan(package)
 
@@ -97,16 +96,20 @@ class ApplicationContext(
         return list(derived)[0]
 
     def __apply_post_processor(self, instance: Any) -> Any:
-        proceed: Any = instance
-        for post_processor in self.__post_processors:
-            proceed = post_processor.process_dependency(self, proceed)
-        return proceed
+        if PostProcessor.contains(instance):
+            return instance
+        post_processors = self.where(PostProcessor.contains)
+        for post_processor in post_processors:
+            if isinstance(post_processor, IDependencyPostProcessor):
+                instance = post_processor.process_dependency(self, instance)
+        return instance
 
     def __initialize_dependency(
         self, component: type, dependencies: dict[str, object]
     ) -> Any:
         instance = component(**dependencies)
-        return self.__apply_post_processor(instance)
+        instance = self.__apply_post_processor(instance)
+        return instance
 
     def __get_instance(self, component: type, providing_type: ProvidingType) -> object:
         component_annotation: Component = Component.single(component)
@@ -172,6 +175,9 @@ class ApplicationContext(
                 if Provider.contains(component)
                 else ProvidingType.SINGLETON,
             )
+
+    def clear_singleton_cache(self) -> None:
+        self.__singleton_cache = {}
 
     @overload
     def contains(self, *, required_type: type) -> bool:
@@ -311,6 +317,3 @@ class ApplicationContext(
             for component in self.__components
             if clause(component)
         ]
-
-    def add_post_processor(self, post_processor: IDependencyPostProcessor) -> None:
-        self.__post_processors.add(post_processor)

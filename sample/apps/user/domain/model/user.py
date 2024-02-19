@@ -3,19 +3,14 @@ from uuid import UUID, uuid4
 from typing import Self, ClassVar
 from dataclasses import field
 
+from sample.apps.user.domain.error import (
+    AuthenticationFailedError,
+    EmailValidationFailedError,
+)
 from spakky.core.mutability import immutable, mutable
 from spakky.cryptography.password import Password
-from spakky.domain.error import DomainValidationError
 from spakky.domain.models.aggregate_root import AggregateRoot
 from spakky.domain.models.domain_event import DomainEvent
-
-
-class EmailValidationFailedError(DomainValidationError):
-    ...
-
-
-class AuthenticationFailedError(DomainValidationError):
-    ...
 
 
 @mutable

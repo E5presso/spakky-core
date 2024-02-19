@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 from dataclasses import dataclass
 
@@ -30,9 +31,19 @@ def test_aspect_post_processor() -> None:
             return message
 
     context: ApplicationContext = ApplicationContext()
+
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
+    context.register_unmanaged_dependency("logger", logger)
+
     context.register_component(EchoService)
     context.register_component(LogAdvisor)
-    context.add_post_processor(AspectDependencyPostPrecessor())
+    context.register_component(AspectDependencyPostPrecessor)
+
     context.initialize()
 
     service: EchoService = context.get(required_type=EchoService)
@@ -62,9 +73,19 @@ async def test_async_aspect_post_processor() -> None:
             return message
 
     context: ApplicationContext = ApplicationContext()
+
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
+    context.register_unmanaged_dependency("logger", logger)
+
     context.register_component(EchoService)
     context.register_component(AsyncLogAdvisor)
-    context.add_post_processor(AspectDependencyPostPrecessor())
+    context.register_component(AspectDependencyPostPrecessor)
+
     context.initialize()
 
     service: EchoService = context.get(required_type=EchoService)

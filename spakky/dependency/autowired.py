@@ -18,7 +18,7 @@ class CannotAutowiringNonConstructorMethodError(SpakkyDependencyError):
     `Autowired` is only for constructor for class.
     """
 
-    ...
+    message = "`Autowired` annotation only can be decorate to `__init__` function."
 
 
 @dataclass

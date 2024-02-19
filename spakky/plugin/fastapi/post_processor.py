@@ -1,34 +1,43 @@
 from typing import Any
-from inspect import ismethod, signature, getmembers
-from functools import partial
+from inspect import signature, getmembers, isfunction
+from logging import Logger
 from dataclasses import asdict
 
 from fastapi import APIRouter, FastAPI
 from fastapi.exceptions import FastAPIError
 from fastapi.utils import create_response_field  # type: ignore
 
+from spakky.dependency.autowired import autowired
 from spakky.dependency.interfaces.dependency_container import IDependencyContainer
 from spakky.dependency.interfaces.dependency_post_processor import (
     IDependencyPostProcessor,
 )
+from spakky.dependency.plugin import PostProcessor
 from spakky.plugin.fastapi.routing import Route
 from spakky.stereotypes.controller import Controller
 
 
+@PostProcessor()
 class FastAPIDependencyPostProcessor(IDependencyPostProcessor):
-    __app: FastAPI
+    __logger: Logger
 
-    def __init__(self, app: FastAPI) -> None:
+    @autowired
+    def __init__(self, app: FastAPI, logger: Logger) -> None:
         self.__app = app
+        self.__logger = logger
 
     def process_dependency(self, container: IDependencyContainer, dependency: Any) -> Any:
         if Controller.contains(dependency):
             controller = Controller.single(dependency)
             router: APIRouter = APIRouter(prefix=controller.prefix)
-            for name, method in getmembers(dependency, ismethod):
+            methods = getmembers(dependency, isfunction)
+            for name, method in methods:
                 if not Route.contains(method):
                     continue
                 route = Route.single(method)
+                self.__logger.info(
+                    f"[FastAPI] {route.methods} {controller.prefix}{route.path} -> {method.__qualname__}"
+                )
                 if route.name is None:
                     route.name = " ".join([x.capitalize() for x in name.split("_")])
                 if route.description is None:
@@ -42,8 +51,6 @@ class FastAPIDependencyPostProcessor(IDependencyPostProcessor):
                             pass
                         else:
                             route.response_model = return_annotation
-                router.add_api_route(
-                    endpoint=partial(method, dependency), **asdict(route)
-                )
+                router.add_api_route(endpoint=method, **asdict(route))
             self.__app.include_router(router)
         return dependency
