@@ -2,9 +2,14 @@ from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Sequence
 
 from spakky.core.interfaces.equatable import IEquatable
+from spakky.domain.error import SpakkyDomainError
 from spakky.domain.models.aggregate_root import AggregateRootT
 
 AggregateIdT = TypeVar("AggregateIdT", bound=IEquatable)
+
+
+class EntityNotFoundError(SpakkyDomainError):
+    message = "Entity not found by given id"
 
 
 class IGenericRepository(Generic[AggregateRootT, AggregateIdT], ABC):

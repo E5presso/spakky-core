@@ -40,7 +40,7 @@ class UserApiController:
     @post(path="")
     async def registrate_user(self, command: UserRegistrationCommand) -> Response:
         try:
-            uid: UUID = await self.user_registration_usecase.execute(command=command)
+            uid: UUID = await self.user_registration_usecase.execute(command)
             return Response(
                 headers={"Location": str(uid)},
                 status_code=HTTPStatus.CREATED,
@@ -54,7 +54,7 @@ class UserApiController:
     @post(path="/authenticate")
     async def authenticate_user(self, command: UserAuthenticationCommand) -> Response:
         try:
-            await self.user_authentication_usecase.execute(command=command)
+            await self.user_authentication_usecase.execute(command)
             return Response(status_code=HTTPStatus.OK)
         except AuthenticationFailedError as e:
             return Response(content=e.message, status_code=HTTPStatus.UNAUTHORIZED)

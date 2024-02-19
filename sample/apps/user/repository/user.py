@@ -3,6 +3,7 @@ from typing import Sequence
 
 from sample.apps.user.domain.interface.repository.user import IAsyncUserRepository
 from sample.apps.user.domain.model.user import User
+from spakky.domain.interfaces.repository import EntityNotFoundError
 from spakky.stereotypes.repository import Repository
 
 
@@ -15,7 +16,10 @@ class AsyncInMemoryUserRepository(IAsyncUserRepository):
         self.database = {}
 
     async def single(self, aggregate_id: UUID) -> User:
-        return self.database[aggregate_id]
+        try:
+            return self.database[aggregate_id]
+        except KeyError as e:
+            raise EntityNotFoundError from e
 
     async def single_or_none(self, aggregate_id: UUID) -> User | None:
         return self.database.get(aggregate_id, None)

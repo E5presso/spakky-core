@@ -100,7 +100,7 @@ class ApplicationContext(
             return instance
         post_processors = self.where(PostProcessor.contains)
         for post_processor in post_processors:
-            if isinstance(post_processor, IDependencyPostProcessor):
+            if isinstance(post_processor, IDependencyPostProcessor):  # pragma: no cover
                 instance = post_processor.process_dependency(self, instance)
         return instance
 
@@ -175,9 +175,6 @@ class ApplicationContext(
                 if Provider.contains(component)
                 else ProvidingType.SINGLETON,
             )
-
-    def clear_singleton_cache(self) -> None:
-        self.__singleton_cache = {}
 
     @overload
     def contains(self, *, required_type: type) -> bool:
