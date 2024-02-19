@@ -36,7 +36,7 @@ class FastAPIDependencyPostProcessor(IDependencyPostProcessor):
                     continue
                 route = Route.single(method)
                 self.__logger.info(
-                    f"[FastAPI] {route.methods} {controller.prefix}{route.path} -> {method.__qualname__}"
+                    f"[{type(self).__name__}] {route.methods} {controller.prefix}{route.path} -> {method.__qualname__}"
                 )
                 if route.name is None:
                     route.name = " ".join([x.capitalize() for x in name.split("_")])

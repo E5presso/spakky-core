@@ -12,7 +12,7 @@ context: ApplicationContext = ApplicationContext(package=sample)
 
 console = logging.StreamHandler()
 console.setLevel(level=logging.DEBUG)
-console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+console.setFormatter(logging.Formatter("[%(levelname)s] [%(asctime)s]: %(message)s"))
 logger = logging.getLogger("debug")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(console)

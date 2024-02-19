@@ -26,7 +26,7 @@ class AspectDependencyPostPrecessor(IDependencyPostProcessor):
                 pointcuts: list[Pointcut] = Pointcut.all(method)
                 for pointcut in pointcuts:
                     self.__logger.info(
-                        f"[Aspect] {type(pointcut).__name__} -> {method.__qualname__}"
+                        f"[{type(self).__name__}] {type(pointcut).__name__} -> {method.__qualname__}"
                     )
                     advice: Advice = container.get(required_type=pointcut.advice)
                     method = advice(method)
@@ -35,7 +35,7 @@ class AspectDependencyPostPrecessor(IDependencyPostProcessor):
                 async_pointcuts: list[AsyncPointcut] = AsyncPointcut.all(method)
                 for async_pointcut in async_pointcuts:
                     self.__logger.info(
-                        f"[Aspect] {type(async_pointcut).__name__} -> {method.__qualname__}"
+                        f"[{type(self).__name__}] {type(async_pointcut).__name__} -> {method.__qualname__}"
                     )
                     async_advice: AsyncAdvice = container.get(
                         required_type=async_pointcut.advice

@@ -41,10 +41,7 @@ class UserApiController:
     async def registrate_user(self, command: UserRegistrationCommand) -> Response:
         try:
             uid: UUID = await self.user_registration_usecase.execute(command)
-            return Response(
-                headers={"Location": str(uid)},
-                status_code=HTTPStatus.CREATED,
-            )
+            return Response(content=str(uid), status_code=HTTPStatus.CREATED)
         except EmailValidationFailedError as e:
             return Response(content=e.message, status_code=HTTPStatus.BAD_REQUEST)
         except UserAlreadyExistsError as e:

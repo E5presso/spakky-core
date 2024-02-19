@@ -61,4 +61,4 @@ async def test_user_registration_succeed(test_client: TestClient) -> None:
         },
     )
     assert response.status_code == HTTPStatus.CREATED
-    assert response.headers.get("Location") is not None
+    assert response.content.decode() != ""
