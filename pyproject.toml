@@ -13,10 +13,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.dependencies]
 python = ">=3.11"
 pycryptodome = "^3.20.0"
-fastapi = "^0.109.2"
-uvicorn = "^0.27.1"
-python-multipart = "^0.0.9"
-pydantic-settings = "^2.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.2"
