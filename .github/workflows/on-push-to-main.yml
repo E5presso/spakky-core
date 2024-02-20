@@ -11,11 +11,6 @@ jobs:
       PYTHON: "3.11"
       POETRY: "1.7.1"
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DEBUG: "True"
-      TOKEN_SETTING__SECRET_KEY_STRING: ${{ secrets.JWT_SECRET }}
-      TOKEN_SETTING__URL_SAFE: "False"
-      TOKEN_SETTING__EXPIRE_AFTER_HOURS: 24
-      TOKEN_SETTING__ALGORITHM: "HS256"
     steps:
     - name: Checkout Branch
       uses: actions/checkout@master
