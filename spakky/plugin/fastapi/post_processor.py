@@ -12,12 +12,12 @@ from spakky.dependency.interfaces.dependency_container import IDependencyContain
 from spakky.dependency.interfaces.dependency_post_processor import (
     IDependencyPostProcessor,
 )
-from spakky.dependency.plugin import PostProcessor
+from spakky.dependency.plugin import Plugin
 from spakky.plugin.fastapi.routing import Route
 from spakky.stereotypes.controller import Controller
 
 
-@PostProcessor()
+@Plugin()
 class FastAPIDependencyPostProcessor(IDependencyPostProcessor):
     __logger: Logger
 

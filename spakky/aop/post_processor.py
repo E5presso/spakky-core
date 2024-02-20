@@ -8,10 +8,10 @@ from spakky.dependency.interfaces.dependency_container import IDependencyContain
 from spakky.dependency.interfaces.dependency_post_processor import (
     IDependencyPostProcessor,
 )
-from spakky.dependency.plugin import PostProcessor
+from spakky.dependency.plugin import Plugin
 
 
-@PostProcessor()
+@Plugin()
 class AspectDependencyPostPrecessor(IDependencyPostProcessor):
     __logger: Logger
 

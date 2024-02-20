@@ -7,7 +7,7 @@ from spakky.dependency.interfaces.dependency_post_processor import (
 
 
 @dataclass
-class PostProcessor(Component):
+class Plugin(Component):
     def __call__(
         self, obj: type[IDependencyPostProcessor]
     ) -> type[IDependencyPostProcessor]:

@@ -17,7 +17,7 @@ from spakky.dependency.interfaces.managed_registry import IManagedDependencyRegi
 from spakky.dependency.interfaces.unmanaged_dependency_registry import (
     IUnmanagedDependencyRegistry,
 )
-from spakky.dependency.plugin import PostProcessor
+from spakky.dependency.plugin import Plugin
 from spakky.dependency.primary import Primary
 from spakky.dependency.provider import Provider, ProvidingType
 
@@ -96,9 +96,9 @@ class ApplicationContext(
         return list(derived)[0]
 
     def __apply_post_processor(self, instance: Any) -> Any:
-        if PostProcessor.contains(instance):
+        if Plugin.contains(instance):
             return instance
-        post_processors = self.where(PostProcessor.contains)
+        post_processors = self.where(Plugin.contains)
         for post_processor in post_processors:
             if isinstance(post_processor, IDependencyPostProcessor):  # pragma: no cover
                 instance = post_processor.process_dependency(self, instance)
