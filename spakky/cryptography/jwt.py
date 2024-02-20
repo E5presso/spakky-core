@@ -14,11 +14,6 @@ from spakky.cryptography.hmac import HMAC, HMACType
 from spakky.cryptography.key import Key
 
 
-class JWTJSONDecoder(json.JSONDecoder):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
-
-
 @final
 class JWT:
     __header: dict[str, Any]
