@@ -1,12 +1,12 @@
 from typing import overload
 
+from spakky.bean.application_context import ApplicationContext
 from spakky.core.generics import AnyT
-from spakky.dependency.application_context import ApplicationContext
 
 
 @overload
 def inject(context: ApplicationContext, *, required_type: type[AnyT]) -> AnyT:
-    """Inject component from context by given condition\n
+    """Inject bean from context by given condition\n
 
     Example:
         ```python
@@ -15,19 +15,19 @@ def inject(context: ApplicationContext, *, required_type: type[AnyT]) -> AnyT:
         ```
 
     Args:
-        context (Context): Context instance to get component
-        required_type (type[ObjectT] | None, optional): Required type to get component.
+        context (Context): Context instance to get bean
+        required_type (type[ObjectT] | None, optional): Required type to get bean.
         Defaults to None.
 
     Returns:
-        ObjectT: Retrieved component by given condition
+        ObjectT: Retrieved bean by given condition
     """
     ...
 
 
 @overload
 def inject(context: ApplicationContext, *, name: str) -> object:
-    """Inject component from context by given condition\n
+    """Inject bean from context by given condition\n
 
     Example:
         ```python
@@ -36,11 +36,11 @@ def inject(context: ApplicationContext, *, name: str) -> object:
         ```
 
     Args:
-        context (Context): Context instance to get component
-        name (str | None, optional): Name to get component. Defaults to None.
+        context (Context): Context instance to get bean
+        name (str | None, optional): Name to get bean. Defaults to None.
 
     Returns:
-        object: Retrieved component by given condition
+        object: Retrieved bean by given condition
     """
     ...
 
@@ -50,7 +50,7 @@ def inject(
     required_type: type[AnyT] | None = None,
     name: str | None = None,
 ) -> AnyT | object:
-    """Inject component from context by given condition\n
+    """Inject bean from context by given condition\n
 
     Example:
         ```python
@@ -59,13 +59,13 @@ def inject(
         ```
 
     Args:
-        context (Context): Context instance to get component
-        required_type (type[ObjectT] | None, optional): Required type to get component.
+        context (Context): Context instance to get bean
+        required_type (type[ObjectT] | None, optional): Required type to get bean.
         Defaults to None.
-        name (str | None, optional): Name to get component. Defaults to None.
+        name (str | None, optional): Name to get bean. Defaults to None.
 
     Returns:
-        ObjectT | object: Retrieved component by given condition
+        ObjectT | object: Retrieved bean by given condition
     """
     if name is not None:
         return context.get(name=name)

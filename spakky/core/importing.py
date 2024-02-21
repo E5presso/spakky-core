@@ -1,7 +1,7 @@
 import inspect
 import pkgutil
 import importlib
-from types import ModuleType
+from types import ModuleType, FunctionType
 from typing import Callable
 
 from spakky.core.error import SpakkyCoreError
@@ -62,5 +62,27 @@ def list_classes(
     return {
         member
         for _, member in inspect.getmembers(module, inspect.isclass)
+        if selector(member)
+    }
+
+
+def list_functions(
+    module: ModuleType, selector: Callable[[FunctionType], bool] | None = None
+) -> set[FunctionType]:
+    """Scan functions from module
+
+    Args:
+        module (ModuleType): specified module to scan functions
+        selector (Callable[[FunctionType], bool] | None, optional):
+        Selector to filter some functions in specified condition. Defaults to None.
+
+    Returns:
+        set[type]: Set of scanned functions from specified module.
+    """
+    if selector is None:
+        return {member for _, member in inspect.getmembers(module, inspect.isfunction)}
+    return {
+        member
+        for _, member in inspect.getmembers(module, inspect.isfunction)
         if selector(member)
     }

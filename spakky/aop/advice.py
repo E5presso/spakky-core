@@ -3,9 +3,9 @@ from typing import Any, TypeVar, Callable, ClassVar, Awaitable, ParamSpec, final
 from functools import wraps
 from dataclasses import dataclass
 
+from spakky.bean.bean import Bean
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.generics import AsyncFuncT
-from spakky.dependency.component import Component
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -229,7 +229,7 @@ AdviceT = TypeVar("AdviceT", bound=type[Advice | AsyncAdvice])
 
 
 @dataclass
-class Aspect(Component):
+class Aspect(Bean):
     def __call__(self, obj: AdviceT) -> AdviceT:
         return super().__call__(obj)
 

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from spakky.dependency.component import Component
+from spakky.bean.bean import Bean
 
 
 @dataclass
-class Controller(Component):
+class Controller(Bean):
     prefix: str

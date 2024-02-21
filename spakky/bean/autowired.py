@@ -2,9 +2,9 @@ import inspect
 from inspect import Parameter, Signature
 from dataclasses import field, dataclass
 
+from spakky.bean.error import SpakkyBeanError
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.generics import FuncT
-from spakky.dependency.error import SpakkyDependencyError
 
 
 class Unknown:
@@ -13,7 +13,7 @@ class Unknown:
     ...
 
 
-class CannotAutowiringNonConstructorMethodError(SpakkyDependencyError):
+class CannotAutowiringNonConstructorMethodError(SpakkyBeanError):
     """`Autowired` annotation only can be decorate to `__init__` function.\n
     `Autowired` is only for constructor for class.
     """

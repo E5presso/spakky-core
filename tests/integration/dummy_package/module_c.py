@@ -1,10 +1,10 @@
-from spakky.dependency.component import Component
+from spakky.bean.bean import Bean
 
 
 class DummyC:
     ...
 
 
-@Component()
+@Bean()
 class ComponentC:
     ...

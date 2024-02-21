@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from dataclasses import field, dataclass
 
-from spakky.core.annotation import ClassAnnotation
+from spakky.core.annotation import Annotation
 
 
 class ProvidingType(Enum):
@@ -14,7 +14,7 @@ class ProvidingType(Enum):
 
 
 @dataclass
-class Provider(ClassAnnotation):
+class Provider(Annotation):
     """`Provider` annotation is for specifying loading strategy
     for Component\n
     You can specify providing component between `SINGLETON` or `FACTORY`\n

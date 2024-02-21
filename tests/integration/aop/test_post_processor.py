@@ -6,8 +6,8 @@ import pytest
 
 from spakky.aop.advice import Advice, Aspect, AsyncAdvice, AsyncPointcut, P, Pointcut, R
 from spakky.aop.post_processor import AspectDependencyPostPrecessor
-from spakky.dependency.application_context import ApplicationContext
-from spakky.dependency.component import Component
+from spakky.bean.application_context import ApplicationContext
+from spakky.bean.bean import Bean
 
 
 def test_aspect_post_processor() -> None:
@@ -56,27 +56,25 @@ def test_aspect_post_processor() -> None:
     class Log(Pointcut):
         advice = LogAdvisor
 
-    @Component()
+    @Bean()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
             return message
 
     context: ApplicationContext = ApplicationContext()
-
     console = logging.StreamHandler()
     console.setLevel(level=logging.DEBUG)
     console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
     logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
-    context.register_unmanaged_dependency("logger", logger)
+    context.register_post_processor(AspectDependencyPostPrecessor(logger))
 
-    context.register_component(EchoService)
-    context.register_component(LogAdvisor)
-    context.register_component(AspectDependencyPostPrecessor)
+    context.register_bean(EchoService)
+    context.register_bean(LogAdvisor)
 
-    context.initialize()
+    context.start()
 
     service: EchoService = context.get(required_type=EchoService)
     assert service.echo(message="Hello World!") == "Hello World!"
@@ -132,27 +130,25 @@ def test_aspect_post_processor_raise_error() -> None:
     class Log(Pointcut):
         advice = LogAdvisor
 
-    @Component()
+    @Bean()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
             raise RuntimeError
 
     context: ApplicationContext = ApplicationContext()
-
     console = logging.StreamHandler()
     console.setLevel(level=logging.DEBUG)
     console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
     logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
-    context.register_unmanaged_dependency("logger", logger)
+    context.register_post_processor(AspectDependencyPostPrecessor(logger))
 
-    context.register_component(EchoService)
-    context.register_component(LogAdvisor)
-    context.register_component(AspectDependencyPostPrecessor)
+    context.register_bean(EchoService)
+    context.register_bean(LogAdvisor)
 
-    context.initialize()
+    context.start()
 
     service: EchoService = context.get(required_type=EchoService)
     with pytest.raises(RuntimeError):
@@ -214,27 +210,25 @@ async def test_async_aspect_post_processor() -> None:
     class AsyncLog(AsyncPointcut):
         advice = AsyncLogAdvisor
 
-    @Component()
+    @Bean()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
             return message
 
     context: ApplicationContext = ApplicationContext()
-
     console = logging.StreamHandler()
     console.setLevel(level=logging.DEBUG)
     console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
     logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
-    context.register_unmanaged_dependency("logger", logger)
+    context.register_post_processor(AspectDependencyPostPrecessor(logger))
 
-    context.register_component(EchoService)
-    context.register_component(AsyncLogAdvisor)
-    context.register_component(AspectDependencyPostPrecessor)
+    context.register_bean(EchoService)
+    context.register_bean(AsyncLogAdvisor)
 
-    context.initialize()
+    context.start()
 
     service: EchoService = context.get(required_type=EchoService)
     assert await service.echo(message="Hello World!") == "Hello World!"
@@ -295,7 +289,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
     class AsyncLog(AsyncPointcut):
         advice = AsyncLogAdvisor
 
-    @Component()
+    @Bean()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
@@ -309,13 +303,12 @@ async def test_async_aspect_post_processor_raise_error() -> None:
     logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
-    context.register_unmanaged_dependency("logger", logger)
+    context.register_post_processor(AspectDependencyPostPrecessor(logger))
 
-    context.register_component(EchoService)
-    context.register_component(AsyncLogAdvisor)
-    context.register_component(AspectDependencyPostPrecessor)
+    context.register_bean(EchoService)
+    context.register_bean(AsyncLogAdvisor)
 
-    context.initialize()
+    context.start()
 
     service: EchoService = context.get(required_type=EchoService)
     with pytest.raises(RuntimeError):

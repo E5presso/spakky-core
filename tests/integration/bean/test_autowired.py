@@ -1,6 +1,6 @@
 import pytest
 
-from spakky.dependency.autowired import (
+from spakky.bean.autowired import (
     Autowired,
     CannotAutowiringNonConstructorMethodError,
     Unknown,

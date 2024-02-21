@@ -4,7 +4,7 @@ from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
-class IManagedDependencyScanner(Protocol):
+class IBeanScanner(Protocol):
     @abstractmethod
     def scan(self, package: ModuleType) -> None:
         """Auto-scan from given package-module

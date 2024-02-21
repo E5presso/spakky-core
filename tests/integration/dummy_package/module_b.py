@@ -1,5 +1,5 @@
+from spakky.bean.bean import Bean, BeanFactory
 from spakky.core.annotation import ClassAnnotation
-from spakky.dependency.component import Component
 
 
 @ClassAnnotation()
@@ -7,6 +7,19 @@ class DummyB:
     ...
 
 
-@Component()
+@Bean()
 class ComponentB:
     ...
+
+
+class UnmanagedB:
+    ...
+
+
+@BeanFactory()
+def unmanaged_b() -> UnmanagedB:
+    return UnmanagedB()
+
+
+def hello_world() -> str:
+    return "Hello World"

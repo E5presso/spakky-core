@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
-from spakky.dependency.application_context import ApplicationContext
-from spakky.dependency.autowired import autowired
-from spakky.dependency.component import Component
-from spakky.dependency.inject import inject
+from spakky.bean.application_context import ApplicationContext
+from spakky.bean.autowired import autowired
+from spakky.bean.bean import Bean
+from spakky.bean.inject import inject
 
 
 def test_inject_to_function_by_type() -> None:
@@ -22,17 +22,17 @@ def test_inject_to_function_by_type() -> None:
         def c(self) -> str:
             ...
 
-    @Component()
+    @Bean()
     class A(IA):
         def a(self) -> str:
             return "a"
 
-    @Component()
+    @Bean()
     class B(IB):
         def b(self) -> str:
             return "b"
 
-    @Component()
+    @Bean()
     class C(IC):
         __a: IA
         __b: IB
@@ -46,9 +46,9 @@ def test_inject_to_function_by_type() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_component(A)
-    context.register_component(B)
-    context.register_component(C)
+    context.register_bean(A)
+    context.register_bean(B)
+    context.register_bean(C)
 
     def execute_c(c: IC = inject(context=context, required_type=IC)) -> str:
         return c.c()
@@ -72,17 +72,17 @@ def test_inject_to_function_by_name() -> None:
         def c(self) -> str:
             ...
 
-    @Component()
+    @Bean()
     class A(IA):
         def a(self) -> str:
             return "a"
 
-    @Component()
+    @Bean()
     class B(IB):
         def b(self) -> str:
             return "b"
 
-    @Component()
+    @Bean()
     class C(IC):
         __a: IA
         __b: IB
@@ -96,9 +96,9 @@ def test_inject_to_function_by_name() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_component(A)
-    context.register_component(B)
-    context.register_component(C)
+    context.register_bean(A)
+    context.register_bean(B)
+    context.register_bean(C)
 
     def execute_c(c: IC = inject(context, IC, "c")) -> str:  # type: ignore
         return c.c()
