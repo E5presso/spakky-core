@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        PYTHON: ["3.11", "3.12"]
+        PYTHON: ["3.10", "3.11", "3.12"]
     env:
       OS: ubuntu-latest
       PYTHON: "${{ matrix.PYTHON }}"
