@@ -16,10 +16,10 @@ from spakky.bean.interfaces.bean_registry import CannotRegisterNonBeanFactoryErr
 from spakky.bean.primary import Primary
 from spakky.bean.provider import Provider, ProvidingType
 from spakky.core.annotation import ClassAnnotation
-from tests.integration import dummy_package
-from tests.integration.dummy_package.module_a import ComponentA, DummyA
-from tests.integration.dummy_package.module_b import ComponentB, DummyB, UnmanagedB
-from tests.integration.dummy_package.module_c import ComponentC, DummyC
+from tests import dummy_package
+from tests.dummy_package.module_a import ComponentA, DummyA
+from tests.dummy_package.module_b import ComponentB, DummyB, UnmanagedB
+from tests.dummy_package.module_c import ComponentC, DummyC
 
 
 def test_application_context_register_expect_success() -> None:

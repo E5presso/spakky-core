@@ -11,8 +11,8 @@ from spakky.core.importing import (
     list_functions,
     list_modules,
 )
-from tests.integration import dummy_package
-from tests.integration.dummy_package import module_a, module_b, module_c
+from tests import dummy_package
+from tests.dummy_package import module_a, module_b, module_c
 
 
 def test_list_modules_expect_success() -> None:
