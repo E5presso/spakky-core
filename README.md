@@ -19,4 +19,4 @@
 
 ---
 
-Spakky Core is a framework-agnostic dependency managing framework with Python 3.10+
+Spakky Core is a framework-agnostic Meta framework with Python 3.10+
