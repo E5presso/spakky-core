@@ -1,5 +1,5 @@
 from io import BufferedReader
-from enum import StrEnum
+from enum import Enum
 from typing import final
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 
@@ -7,7 +7,7 @@ from spakky.cryptography.base64_encoder import Base64Encoder
 
 
 @final
-class HashType(StrEnum):
+class HashType(str, Enum):
     MD5 = "MD5"
     SHA1 = "SHA1"
     SHA224 = "SHA224"

@@ -1,10 +1,12 @@
 from abc import ABC
-from typing import Any, Self, final
+from typing import Any, final
 from itertools import chain
 from dataclasses import dataclass
 
+from typing_extensions import Self
+
 from spakky.core.error import SpakkyCoreError
-from spakky.core.generics import ClassT, FuncT, ObjectT
+from spakky.core.generics import AnyT, ClassT, FuncT
 
 __ANNOTATION_METADATA__ = "__SPAKKY_ANNOTATION_METADATA__"
 __ANNOTATION_TYPEMAP__ = "__SPAKKY_ANNOTATION_TYPEMAP__"
@@ -32,7 +34,7 @@ class Annotation(ABC):
     ```
     """
 
-    def __call__(self, obj: ObjectT) -> ObjectT:
+    def __call__(self, obj: AnyT) -> AnyT:
         """Annotate object
 
         Args:
@@ -44,7 +46,7 @@ class Annotation(ABC):
         return self.__set_annotation(obj)
 
     @final
-    def __set_annotation(self, obj: ObjectT) -> ObjectT:
+    def __set_annotation(self, obj: AnyT) -> AnyT:
         """Allocate Annotation to object
 
         Args:
@@ -173,7 +175,7 @@ class Annotation(ABC):
     @final
     @classmethod
     def contains(cls, obj: Any) -> bool:
-        """Check if annotation exists in object
+        """Check if object contains annotation
         ```python
         @dataclass
         class CustomAnnotation(Annotation):
@@ -187,15 +189,15 @@ class Annotation(ABC):
         def not_annotated() -> None:
             ...
 
-        assert CustomAnnotation.exists(sample) is True
-        assert CustomAnnotation.exists(not_annotated) is False
+        assert CustomAnnotation.contains(sample) is True
+        assert CustomAnnotation.contains(not_annotated) is False
         ```
 
         Args:
-            obj (Any): object to check exists
+            obj (Any): object to check contains
 
         Returns:
-            bool: True if annotation exists in object.
+            bool: True if object contains annotation
         """
         annotations: list[Self] = cls.all(obj)
         return len(annotations) > 0

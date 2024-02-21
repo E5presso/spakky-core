@@ -1,9 +1,9 @@
 from abc import ABC
 from copy import deepcopy
-from typing import Generic, TypeVar, Sequence
+from typing import Any, Generic, TypeVar, Sequence
 from dataclasses import field
 
-from spakky.core.interfaces.equatable import EquatableT, IEquatable
+from spakky.core.interfaces.equatable import EquatableT
 from spakky.core.mutability import mutable
 from spakky.domain.models.domain_event import DomainEvent
 from spakky.domain.models.entity import Entity
@@ -53,4 +53,4 @@ class AggregateRoot(Entity[EquatableT], Generic[EquatableT], ABC):
         self.__events.clear()
 
 
-AggregateRootT = TypeVar("AggregateRootT", bound=AggregateRoot[IEquatable])
+AggregateRootT = TypeVar("AggregateRootT", bound=AggregateRoot[Any])

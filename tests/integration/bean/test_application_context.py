@@ -1,0 +1,428 @@
+from abc import ABC, abstractmethod
+from uuid import UUID, uuid4
+from dataclasses import dataclass
+
+import pytest
+
+from spakky.bean.application_context import (
+    ApplicationContext,
+    CannotRegisterNonBeanError,
+    NoSuchBeanError,
+    NoUniqueBeanError,
+)
+from spakky.bean.autowired import autowired
+from spakky.bean.bean import Bean, BeanFactory
+from spakky.bean.interfaces.bean_registry import CannotRegisterNonBeanFactoryError
+from spakky.bean.primary import Primary
+from spakky.bean.provider import Provider, ProvidingType
+from spakky.core.annotation import ClassAnnotation
+from tests.integration import dummy_package
+from tests.integration.dummy_package.module_a import ComponentA, DummyA
+from tests.integration.dummy_package.module_b import ComponentB, DummyB, UnmanagedB
+from tests.integration.dummy_package.module_c import ComponentC, DummyC
+
+
+def test_application_context_register_expect_success() -> None:
+    @Bean()
+    class FirstSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    @Bean()
+    @Provider(ProvidingType.FACTORY)
+    class SecondSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+    context.register_bean(SecondSampleComponent)
+
+
+def test_application_context_register_expect_error() -> None:
+    class NonComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    with pytest.raises(CannotRegisterNonBeanError):
+        context.register_bean(NonComponent)
+
+
+def test_application_context_get_by_type_singleton_expect_success() -> None:
+    @Bean()
+    class FirstSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    @Bean()
+    @Provider(ProvidingType.SINGLETON)
+    class SecondSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+    context.register_bean(SecondSampleComponent)
+
+    assert (
+        context.get(required_type=FirstSampleComponent).id
+        == context.get(required_type=FirstSampleComponent).id
+    )
+    assert (
+        context.get(required_type=SecondSampleComponent).id
+        == context.get(required_type=SecondSampleComponent).id
+    )
+
+
+def test_application_context_get_by_type_expect_no_such_error() -> None:
+    @Bean()
+    class FirstSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    class SecondSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+
+    assert (
+        context.get(required_type=FirstSampleComponent).id
+        == context.get(required_type=FirstSampleComponent).id
+    )
+    with pytest.raises(NoSuchBeanError):
+        assert (
+            context.get(required_type=SecondSampleComponent).id
+            == context.get(required_type=SecondSampleComponent).id
+        )
+
+
+def test_application_context_get_by_type_factory_expect_success() -> None:
+    @Bean()
+    @Provider(ProvidingType.FACTORY)
+    class SampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(SampleComponent)
+
+    assert (
+        context.get(required_type=SampleComponent).id
+        != context.get(required_type=SampleComponent).id
+    )
+
+
+def test_application_context_get_by_name_expect_success() -> None:
+    @Bean()
+    class SampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(SampleComponent)
+
+    assert isinstance(context.get(name="sample_component"), SampleComponent)
+
+
+def test_application_context_get_by_name_expect_no_such_error() -> None:
+    @Bean()
+    class SampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(SampleComponent)
+
+    with pytest.raises(NoSuchBeanError):
+        context.get(name="wrong_component")
+
+
+def test_application_context_contains_by_type_expect_true() -> None:
+    @Bean()
+    class SampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(SampleComponent)
+
+    assert context.contains(required_type=SampleComponent) is True
+
+
+def test_application_context_contains_by_type_expect_false() -> None:
+    @Bean()
+    class FirstSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    @Bean()
+    class SecondSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+
+    assert context.contains(required_type=FirstSampleComponent) is True
+    assert context.contains(required_type=SecondSampleComponent) is False
+
+
+def test_application_context_contains_by_name_expect_true() -> None:
+    @Bean()
+    class FirstSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+
+    assert context.contains(name="first_sample_component") is True
+
+
+def test_application_context_contains_by_name_expect_false() -> None:
+    @Bean()
+    class FirstSampleComponent:
+        id: UUID
+
+        def __init__(self) -> None:
+            self.id = uuid4()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+
+    assert context.contains(name="first_sample_component") is True
+    assert context.contains(name="wrong_sample_component") is False
+
+
+def test_application_context_get_primary_expect_success() -> None:
+    class ISampleComponent(ABC):
+        @abstractmethod
+        def do(self) -> None:
+            ...
+
+    @Primary()
+    @Bean()
+    class FirstSampleComponent(ISampleComponent):
+        def do(self) -> None:
+            return
+
+    @Bean()
+    class SecondSampleComponent(ISampleComponent):
+        def do(self) -> None:
+            return
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+    context.register_bean(SecondSampleComponent)
+
+    assert isinstance(context.get(required_type=ISampleComponent), FirstSampleComponent)
+
+
+def test_application_context_get_primary_expect_no_unique_error() -> None:
+    class ISampleComponent(ABC):
+        @abstractmethod
+        def do(self) -> None:
+            ...
+
+    @Primary()
+    @Bean()
+    class FirstSampleComponent(ISampleComponent):
+        def do(self) -> None:
+            return
+
+    @Primary()
+    @Bean()
+    class SecondSampleComponent(ISampleComponent):
+        def do(self) -> None:
+            return
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleComponent)
+    context.register_bean(SecondSampleComponent)
+
+    with pytest.raises(NoUniqueBeanError):
+        context.get(required_type=ISampleComponent)
+
+
+def test_application_context_get_dependency_recursive_by_name() -> None:
+    @Bean()
+    class A:
+        def a(self) -> str:
+            return "a"
+
+    @Bean()
+    class B:
+        def b(self) -> str:
+            return "b"
+
+    @Bean()
+    class C:
+        __a: A
+        __b: B
+
+        @autowired
+        def __init__(self, a, b) -> None:  # type: ignore
+            self.__a = a
+            self.__b = b
+
+        def c(self) -> str:
+            return self.__a.a() + self.__b.b()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(A)
+    context.register_bean(B)
+    context.register_bean(C)
+
+    assert context.get(required_type=C).c() == "ab"
+
+
+def test_application_context_get_dependency_recursive_by_type() -> None:
+    @Bean()
+    class A:
+        def a(self) -> str:
+            return "a"
+
+    @Bean()
+    class B:
+        def b(self) -> str:
+            return "b"
+
+    @Bean()
+    class C:
+        __a: A
+        __b: B
+
+        @autowired
+        def __init__(self, b: A, a: B) -> None:
+            self.__a = b
+            self.__b = a
+
+        def c(self) -> str:
+            return self.__a.a() + self.__b.b()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(A)
+    context.register_bean(B)
+    context.register_bean(C)
+
+    assert context.get(required_type=C).c() == "ab"
+
+
+def test_application_context_where() -> None:
+    @dataclass
+    class Customized(ClassAnnotation):
+        ...
+
+    @Bean()
+    class FirstSampleClassMarked:
+        ...
+
+    @Bean()
+    @Customized()
+    class SecondSampleClass:
+        ...
+
+    @Bean()
+    @Customized()
+    class ThirdSampleClassMarked:
+        ...
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean(FirstSampleClassMarked)
+    context.register_bean(SecondSampleClass)
+    context.register_bean(ThirdSampleClassMarked)
+
+    queried: list[object] = list(context.where(lambda x: x.__name__.endswith("Marked")))
+    assert isinstance(queried[0], FirstSampleClassMarked)
+    assert isinstance(queried[1], ThirdSampleClassMarked)
+
+    queried = list(context.where(Customized.contains))
+    assert isinstance(queried[0], SecondSampleClass)
+    assert isinstance(queried[1], ThirdSampleClassMarked)
+
+
+def test_application_context_scan() -> None:
+    context: ApplicationContext = ApplicationContext()
+    context.scan(dummy_package)
+
+    assert context.contains(required_type=ComponentA) is True
+    assert context.contains(required_type=ComponentB) is True
+    assert context.contains(required_type=ComponentC) is True
+    assert context.contains(required_type=DummyA) is False
+    assert context.contains(required_type=DummyB) is False
+    assert context.contains(required_type=DummyC) is False
+    assert context.contains(required_type=UnmanagedB) is True
+    assert context.contains(name="unmanaged_b") is True
+
+
+def test_application_context_initialize_with_pacakge() -> None:
+    context: ApplicationContext = ApplicationContext(package=dummy_package)
+
+    assert context.contains(required_type=ComponentA) is True
+    assert context.contains(required_type=ComponentB) is True
+    assert context.contains(required_type=ComponentC) is True
+    assert context.contains(required_type=DummyA) is False
+    assert context.contains(required_type=DummyB) is False
+    assert context.contains(required_type=DummyC) is False
+
+
+def test_application_context_register_unmanaged_factory() -> None:
+    class A:
+        def a(self) -> str:
+            return "A"
+
+    @BeanFactory()
+    def get_a() -> A:
+        return A()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_bean_factory(get_a)
+
+    assert context.contains(name="get_a") is True
+    a: A = context.get(name="get_a")
+    assert isinstance(a, A)
+    assert a.a() == "A"
+
+
+def test_application_context_register_unmanaged_factory_expect_error() -> None:
+    class A:
+        def a(self) -> str:
+            return "A"
+
+    def get_a() -> A:
+        return A()
+
+    context: ApplicationContext = ApplicationContext()
+    with pytest.raises(CannotRegisterNonBeanFactoryError):
+        context.register_bean_factory(get_a)

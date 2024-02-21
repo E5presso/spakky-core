@@ -1,6 +1,6 @@
 import hmac
 import hashlib
-from enum import StrEnum
+from enum import Enum
 from typing import Any, Callable, final
 
 from spakky.cryptography.base64_encoder import Base64Encoder
@@ -8,7 +8,7 @@ from spakky.cryptography.key import Key
 
 
 @final
-class HMACType(StrEnum):
+class HMACType(str, Enum):
     HS224 = "HS224"
     HS256 = "HS256"
     HS384 = "HS384"

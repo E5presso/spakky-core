@@ -1,7 +1,8 @@
-from typing import dataclass_transform
 from dataclasses import field, dataclass
 
-from spakky.core.generics import ObjectT
+from typing_extensions import dataclass_transform
+
+from spakky.core.generics import AnyT
 
 
 @dataclass_transform(
@@ -10,7 +11,7 @@ from spakky.core.generics import ObjectT
     frozen_default=False,
     field_specifiers=(field,),
 )
-def mutable(cls: type[ObjectT]) -> type[ObjectT]:
+def mutable(cls: type[AnyT]) -> type[AnyT]:
     """Make class as mutable dataclass
 
     Args:
@@ -28,7 +29,7 @@ def mutable(cls: type[ObjectT]) -> type[ObjectT]:
     frozen_default=True,
     field_specifiers=(field,),
 )
-def immutable(cls: type[ObjectT]) -> type[ObjectT]:
+def immutable(cls: type[AnyT]) -> type[AnyT]:
     """Make class as immutable(frozen) dataclass
 
     Args:

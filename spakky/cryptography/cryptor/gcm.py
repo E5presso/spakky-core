@@ -18,7 +18,7 @@ class Gcm(ICryptor):
 
     def __init__(self, key: Key, url_safe: bool = False) -> None:
         if key.length != self.KEY_SIZE:
-            raise KeySizeError(size=self.KEY_SIZE)
+            raise KeySizeError
         self.url_safe = url_safe
         self.__key = key
 

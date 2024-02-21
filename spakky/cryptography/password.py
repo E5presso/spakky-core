@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import hashlib
 from typing import Any, final, overload
 
@@ -36,26 +34,21 @@ class Password:
         return str(self)
 
     @overload
-    def __init__(self, *, password_hash: str) -> None:
-        ...
+    def __init__(self, *, password_hash: str) -> None: ...
 
     @overload
-    def __init__(self, *, password: str) -> None:
-        ...
+    def __init__(self, *, password: str) -> None: ...
 
     @overload
-    def __init__(self, *, password: str, salt: Key) -> None:
-        ...
+    def __init__(self, *, password: str, salt: Key) -> None: ...
 
     @overload
-    def __init__(self, *, password: str, salt: Key, hash_type: HashType) -> None:
-        ...
+    def __init__(self, *, password: str, salt: Key, hash_type: HashType) -> None: ...
 
     @overload
     def __init__(
         self, *, password: str, salt: Key, hash_type: HashType, iteration: int
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(
         self,

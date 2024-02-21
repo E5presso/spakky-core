@@ -1,5 +1,7 @@
 from abc import abstractmethod
-from typing import Self, TypeVar, Protocol, runtime_checkable
+from typing import TypeVar, Protocol, runtime_checkable
+
+from typing_extensions import Self
 
 
 @runtime_checkable

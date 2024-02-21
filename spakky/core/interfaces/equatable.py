@@ -1,5 +1,7 @@
 from abc import abstractmethod
-from typing import Self, TypeVar, Protocol, runtime_checkable
+from typing import TypeVar, Protocol, runtime_checkable
+
+from typing_extensions import Self
 
 
 @runtime_checkable
@@ -9,12 +11,10 @@ class IEquatable(Protocol):
     """
 
     @abstractmethod
-    def __eq__(self, __value: Self) -> bool:
-        ...
+    def __eq__(self, __value: Self) -> bool: ...
 
     @abstractmethod
-    def __hash__(self) -> int:
-        ...
+    def __hash__(self) -> int: ...
 
 
 EquatableT = TypeVar("EquatableT", bound=IEquatable)
