@@ -1,5 +1,6 @@
-from typing import dataclass_transform
 from dataclasses import field, dataclass
+
+from typing_extensions import dataclass_transform
 
 from spakky.core.generics import AnyT
 

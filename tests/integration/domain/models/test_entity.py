@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
-from typing import Self
 
 import pytest
+from typing_extensions import Self
 
 from spakky.core.mutability import mutable
 from spakky.domain.error import DomainValidationError

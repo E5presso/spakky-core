@@ -1,8 +1,10 @@
 from abc import ABC
 from copy import deepcopy
-from typing import Self, Hashable
+from typing import Hashable
 from functools import reduce
 from dataclasses import astuple
+
+from typing_extensions import Self
 
 from spakky.core.interfaces.cloneable import ICloneable
 from spakky.core.interfaces.equatable import IEquatable

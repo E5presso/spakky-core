@@ -1,5 +1,6 @@
 from uuid import UUID, uuid4
-from typing import Self
+
+from typing_extensions import Self
 
 from spakky.core.mutability import immutable, mutable
 from spakky.domain.models.aggregate_root import AggregateRoot
