@@ -13,7 +13,7 @@
         <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
     </a>
     <a href="https://github.com/E5presso/spakky-core">
-        <img src="https://img.shields.io/badge/python-3.10_|_3.11-green.svg">
+        <img src="https://img.shields.io/badge/python-3.10_|_3.11_3.12-green.svg">
     </a>
 </p>
 
