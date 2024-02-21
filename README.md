@@ -1,8 +1,8 @@
-<h1 style="text-align: center">Spakky Core</h1>
-<p style="text-align: center">
+<h1 align="center">Spakky Core</h1>
+<p align="center">
     <em>Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc...</em>
 </p>
-<p style="text-align: center">
+<p align="center">
     <a href="https://github.com/E5presso/spakky-core/actions/workflows/on-push-to-main.yml">
         <img src="https://github.com/E5presso/spakky-core/actions/workflows/on-push-to-main.yml/badge.svg" alt="Test">
     </a>
