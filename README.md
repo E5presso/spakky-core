@@ -1,6 +1,6 @@
 <h1 style="text-align: center">Spakky Core</h1>
 <p style="text-align: center">
-    <em>Highly abstracted Framework for DI/IoC & AOP</em>
+    <em>Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc...</em>
 </p>
 <p style="text-align: center">
     <a href="https://github.com/E5presso/spakky-core/actions/workflows/on-push-to-main.yml">
@@ -19,4 +19,4 @@
 
 ---
 
-Spakky Core is a framework-agnostic dependency managing framework with Python 3.11+
+Spakky Core is a framework-agnostic dependency managing framework with Python 3.10+
