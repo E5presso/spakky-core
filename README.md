@@ -3,8 +3,8 @@
     <em>Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc...</em>
 </p>
 <p align="center">
-    <a href="https://github.com/E5presso/spakky-core/actions/workflows/on-push-to-main.yml">
-        <img src="https://github.com/E5presso/spakky-core/actions/workflows/on-push-to-main.yml/badge.svg" alt="Test">
+    <a href="https://github.com/E5presso/spakky-core/actions/workflows/test.yml">
+        <img src="https://github.com/E5presso/spakky-core/actions/workflows/test.yml/badge.svg" alt="Test">
     </a>
     <a href="https://codecov.io/gh/E5presso/spakky-core">
         <img src="https://codecov.io/gh/E5presso/spakky-core/graph/badge.svg?token=5MGPkbqo0V" alt="Coverage">
