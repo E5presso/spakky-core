@@ -6,9 +6,12 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        PYTHON: ["3.11", "3.12"]
     env:
       OS: ubuntu-latest
-      PYTHON: "3.11"
+      PYTHON: "${{ matrix.PYTHON }}"
       POETRY: "1.7.1"
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
