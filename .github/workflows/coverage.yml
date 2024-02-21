@@ -1,17 +1,19 @@
 name: Test CI
 on:
+  pull_request:
+    branches:
+      - "develop"
+      - "main"
   push:
     branches:
+      - "develop"
       - "main"
 jobs:
   run:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        PYTHON: ["3.10", "3.11", "3.12"]
     env:
       OS: ubuntu-latest
-      PYTHON: "${{ matrix.PYTHON }}"
+      PYTHON: "3.10"
       POETRY: "1.7.1"
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
