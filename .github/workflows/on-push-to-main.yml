@@ -1,4 +1,4 @@
-name: (Push -> 'main') Test CI
+name: Test CI
 on:
   push:
     branches:
