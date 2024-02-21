@@ -12,8 +12,8 @@
     <a href="https://github.com/psf/black">
         <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
     </a>
-    <a href="https://www.python.org/downloads/release/python-3110">
-        <img src="https://img.shields.io/badge/python-3.11-green.svg">
+    <a href="https://github.com/E5presso/spakky-core">
+        <img src="https://img.shields.io/badge/python-3.11_|_3.10-green.svg">
     </a>
 </p>
 
