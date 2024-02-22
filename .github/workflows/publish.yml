@@ -1,30 +1,22 @@
-name: Test CI
+name: Publish
+
 on:
-  pull_request:
-    branches:
-      - "develop"
-      - "main"
-    paths:
-      - "!**.md"
-  push:
-    branches:
-      - "develop"
-      - "main"
-    paths:
-      - "!**.md"
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
 jobs:
-  run:
+  deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        PYTHON: ["3.10", "3.11", "3.12"]
     env:
       OS: ubuntu-latest
-      PYTHON: "${{ matrix.PYTHON }}"
+      PYTHON: "3.10"
       POETRY: "1.7.1"
     steps:
-    - name: Checkout Branch
-      uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: Setup Python
       uses: actions/setup-python@master
       with:
@@ -41,6 +33,12 @@ jobs:
         key: venv-${{ runner.os }}-${{ env.PYTHON }}-${{ env.POETRY }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      run: poetry install --with ci
-    - name: Run Test Suite
-      run: poetry run pytest
+      run: poetry install
+    - name: Publish
+      env:
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
+      run: poetry publish --build
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
