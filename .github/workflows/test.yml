@@ -29,14 +29,7 @@ jobs:
       uses: abatilo/actions-poetry@v3
       with:
         poetry-version: ${{ env.POETRY }}
-    - name: Use Build Cache
-      id: cache
-      uses: actions/cache@v2
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ env.PYTHON }}-${{ env.POETRY }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install Dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
       run: poetry install --with ci
     - name: Run Test Suite
       run: poetry run pytest
