@@ -8,36 +8,15 @@ from spakky.core.generics import FuncT
 
 
 class Unknown:
-    """Marker class for unknown type hint"""
-
     ...
 
 
 class CannotAutowiringNonConstructorMethodError(SpakkyBeanError):
-    """`Autowired` annotation only can be decorate to `__init__` function.\n
-    `Autowired` is only for constructor for class.
-    """
-
     message = "`Autowired` annotation only can be decorate to `__init__` function."
 
 
 @dataclass
 class Autowired(FunctionAnnotation):
-    """`Autowired` annotation for constructor of class
-
-    Usage:
-        ```python
-        class A:
-            @Autowired()
-            def __init__(self) -> None:
-                ...
-        ```
-
-    Raises:
-        CannotAutowiringNonConstructorMethodError: `Autowired` annotation
-        only can be decorate to `__init__` function
-    """
-
     dependencies: dict[str, type[object]] = field(
         init=False, default_factory=dict[str, type[object]]
     )
@@ -58,12 +37,4 @@ class Autowired(FunctionAnnotation):
 
 
 def autowired(func: FuncT) -> FuncT:
-    """`autowired` decorator for constructor of class
-
-    Args:
-        func (FuncT): `__init__` function of class
-
-    Returns:
-        FuncT: decorated `__init__` function of class
-    """
     return Autowired()(func)

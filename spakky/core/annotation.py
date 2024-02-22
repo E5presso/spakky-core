@@ -14,47 +14,11 @@ __ANNOTATION_TYPEMAP__ = "__SPAKKY_ANNOTATION_TYPEMAP__"
 
 @dataclass
 class Annotation(ABC):
-    """`Annotation` is a class-based decorator to write custom metadata to Any objects.\n
-    It is pretty much same with Java's Annotation.\n
-    You have to inherit this class with @dataclass decorator.\n
-    Here is a example.
-    ```python
-    @dataclass
-    class CustomAnnotation(Annotation):
-        name: str
-        age: int
-
-    @CustomAnnotation(name="John", age=30)
-    def sample() -> None:
-        ...
-
-    @CustomAnnotation(name="John", age=30)
-    class SampleClass:
-        ...
-    ```
-    """
-
     def __call__(self, obj: AnyT) -> AnyT:
-        """Annotate object
-
-        Args:
-            obj (ObjectT): Object to annotate
-
-        Returns:
-            ObjectT: Annotated object
-        """
         return self.__set_annotation(obj)
 
     @final
     def __set_annotation(self, obj: AnyT) -> AnyT:
-        """Allocate Annotation to object
-
-        Args:
-            obj (ObjectT): Object to allocate annotation
-
-        Returns:
-            ObjectT: Annotated object
-        """
         typemap: dict[type, set[type[Self]]] = self.__get_typemap(obj)
         metadata: dict[type[Self], list[Self]] = self.__get_metadata(obj)
         for parent in type(self).mro():
@@ -71,31 +35,6 @@ class Annotation(ABC):
     @final
     @classmethod
     def all(cls, obj: Any) -> list[Self]:
-        """Get all annotations in object.
-        ```python
-        @dataclass
-        class CustomAnnotation(Annotation):
-            name: str
-            age: int
-
-        @CustomAnnotation(name="John", age=30)
-        @CustomAnnotation(name="Sarah", age=28)
-        def sample() -> None:
-            ...
-
-        annotations: list[CustomAnnotation] = CustomAnnotation.all(sample)
-        assert annotations == [
-            CustomAnnotation(name="Sarah", age=28),
-            CustomAnnotation(name="John", age=30),
-        ]
-        ```
-
-        Args:
-            obj (Any): Object to get all annotations
-
-        Returns:
-            list[Self]: All annotations
-        """
         typemap: dict[type, set[type[Self]]] = cls.__get_typemap(obj)
         metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
         if cls not in typemap:
@@ -107,30 +46,6 @@ class Annotation(ABC):
     @final
     @classmethod
     def single(cls, obj: Any) -> Self:
-        """Get single annotation in object.
-        ```python
-        @dataclass
-        class CustomAnnotation(Annotation):
-            name: str
-            age: int
-
-        @CustomAnnotation(name="John", age=30)
-        def sample() -> None:
-            ...
-
-        annotation: CustomAnnotation = CustomAnnotation.single(sample)
-        ```
-
-        Args:
-            obj (Any): object to get single annotation
-
-        Raises:
-            MultipleAnnotationFoundError: When multiple annotations found in object.
-            AnnotationNotFoundError: When annotation not found in object.
-
-        Returns:
-            Self: Single annotation found in object
-        """
         annotations: list[Self] = cls.all(obj)
         if len(annotations) > 1:
             raise MultipleAnnotationFoundError(cls, obj)
@@ -141,30 +56,6 @@ class Annotation(ABC):
     @final
     @classmethod
     def single_or_none(cls, obj: Any) -> Self | None:
-        """Get single annotation in object.
-        Returns None when annotation not found in object.
-        ```python
-        @dataclass
-        class CustomAnnotation(Annotation):
-            name: str
-            age: int
-
-        @CustomAnnotation(name="John", age=30)
-        def sample() -> None:
-            ...
-
-        annotation: CustomAnnotation | None = CustomAnnotation.single_or_none(sample)
-        ```
-
-        Args:
-            obj (Any): object to get single annotation or None
-
-        Raises:
-            MultipleAnnotationFoundError: When multiple annotations found in object.
-
-        Returns:
-            Self | None: Single annotation or None
-        """
         annotations: list[Self] = cls.all(obj)
         if len(annotations) > 1:
             raise MultipleAnnotationFoundError(cls, obj)
@@ -175,166 +66,37 @@ class Annotation(ABC):
     @final
     @classmethod
     def contains(cls, obj: Any) -> bool:
-        """Check if object contains annotation
-        ```python
-        @dataclass
-        class CustomAnnotation(Annotation):
-            name: str
-            age: int
-
-        @CustomAnnotation(name="John", age=30)
-        def sample() -> None:
-            ...
-
-        def not_annotated() -> None:
-            ...
-
-        assert CustomAnnotation.contains(sample) is True
-        assert CustomAnnotation.contains(not_annotated) is False
-        ```
-
-        Args:
-            obj (Any): object to check contains
-
-        Returns:
-            bool: True if object contains annotation
-        """
         annotations: list[Self] = cls.all(obj)
         return len(annotations) > 0
 
     @final
     @classmethod
     def __get_typemap(cls, obj: Any) -> dict[type, set[type[Self]]]:
-        """Get typemap from object to mimic liskov substitution for annotation.
-
-        Args:
-            obj (Any): Object to get typemap
-
-        Returns:
-            dict[type, set[type[Self]]]: Typemap from object
-        """
         typemap: dict[type, set[type[Self]]] = getattr(obj, __ANNOTATION_TYPEMAP__, {})
         return typemap
 
     @final
     @classmethod
     def __get_metadata(cls, obj: Any) -> dict[type[Self], list[Self]]:
-        """Get actual metadata from object.
-
-        Args:
-            obj (Any): Object to get actual metadata
-
-        Returns:
-            dict[type[Self], list[Self]]: Metadata from object
-        """
         metadata: dict[type[Self], list[Self]] = getattr(obj, __ANNOTATION_METADATA__, {})
         return metadata
 
 
 class AnnotationNotFoundError(SpakkyCoreError):
-    """Annotation not found in specified object.
-
-    Args:
-        SpakkyCoreError (_type_): Core error
-    """
-
-    __annotation: type[Annotation]
-    __obj: Any
-
-    def __init__(self, annotation: type[Annotation], obj: Any) -> None:
-        self.__annotation = annotation
-        self.__obj = obj
-
-    def __repr__(self) -> str:
-        return f"'{self.__obj.__name__}' has no annotation '{self.__annotation.__name__}'"
+    message = "Object has no specified annotation"
 
 
 class MultipleAnnotationFoundError(SpakkyCoreError):
-    """Multiple annotation found in specified object.
-
-    Args:
-        SpakkyCoreError (_type_): Core error
-    """
-
-    __annotation: type[Annotation]
-    __obj: Any
-
-    def __init__(self, annotation: type[Annotation], obj: Any) -> None:
-        self.__annotation = annotation
-        self.__obj = obj
-
-    def __repr__(self) -> str:
-        return (
-            f"Multiple '{self.__annotation.__name__}' "
-            + f"annotation found in '{self.__obj.__name__}'."
-        )
+    message = "Multiple annotation found in object"
 
 
 @dataclass
 class ClassAnnotation(Annotation, ABC):
-    """`ClassAnnotation` is a class-based decorator to write\n
-    custom metadata to `type` objects.\n
-    It is pretty much same with Java's Annotation.\n
-    You have to inherit this class with @dataclass decorator.\n
-    Here is a example.
-    ```python
-    @dataclass
-    class CustomAnnotation(ClassAnnotation):
-        name: str
-        age: int
-
-    @CustomAnnotation(name="John", age=30)
-    class SampleClass:
-        ...
-
-    # @CustomAnnotation(name="John", age=30) <- Can't annotate with ClassAnnotation
-    # def sample() -> None:
-    #     ...
-    ```
-    """
-
     def __call__(self, obj: ClassT) -> ClassT:
-        """Annotate class
-
-        Args:
-            obj (ClassT): Class to annotate
-
-        Returns:
-            ClassT: Annotated class
-        """
         return super().__call__(obj)
 
 
 @dataclass
 class FunctionAnnotation(Annotation, ABC):
-    """`FunctionAnnotation` is a class-based decorator to write\n
-    custom metadata to `Callable` objects.\n
-    It is pretty much same with Java's Annotation.\n
-    You have to inherit this class with @dataclass decorator.\n
-    Here is a example.
-    ```python
-    @dataclass
-    class CustomAnnotation(FunctionAnnotation):
-        name: str
-        age: int
-
-    @CustomAnnotation(name="John", age=30)
-    def sample() -> None:
-        ...
-
-    # @CustomAnnotation(name="John", age=30) <- Can't annotate with FunctionAnnotation
-    # class SampleClass:
-    #     ...
-    ```
-    """
-
     def __call__(self, obj: FuncT) -> FuncT:
-        """Annotate function
-
-        Args:
-            obj (FuncT): function to annotate
-
-        Returns:
-            FuncT: Annotated function
-        """
         return super().__call__(obj)

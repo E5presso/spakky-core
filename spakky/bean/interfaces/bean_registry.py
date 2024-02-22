@@ -6,18 +6,10 @@ from spakky.bean.error import SpakkyBeanError
 
 
 class CannotRegisterNonBeanError(SpakkyBeanError):
-    """Cannot register non bean class.\n
-    The bean class must be decorated by `@Bean()`
-    """
-
     message = "Cannot register non-bean class."
 
 
 class CannotRegisterNonBeanFactoryError(SpakkyBeanError):
-    """Cannot register non-bean class.\n
-    The bean factory must be decorated by `@BeanFactory()`
-    """
-
     message = "Cannot register non bean-factory function."
 
 
@@ -25,14 +17,6 @@ class CannotRegisterNonBeanFactoryError(SpakkyBeanError):
 class IBeanRegistry(Protocol):
     @abstractmethod
     def register_bean(self, bean: type) -> None:
-        """Manually register bean to context
-
-        Args:
-            bean (type): Bean class to register
-
-        Raises:
-            CannotRegisterNonBeanError: Cannot register non bean class
-        """
         ...
 
     @abstractmethod
