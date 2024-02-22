@@ -4,10 +4,14 @@ on:
     branches:
       - "develop"
       - "main"
+    paths:
+      - "!**.md"
   push:
     branches:
       - "develop"
       - "main"
+    paths:
+      - "!**.md"
 jobs:
   run:
     runs-on: ubuntu-latest
