@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Any, Callable, Protocol, Sequence, overload, runtime_checkable
 
 from spakky.bean.error import SpakkyBeanError
-from spakky.core.generics import AnyT
+from spakky.core.types import AnyT
 
 
 class NoSuchBeanError(SpakkyBeanError):

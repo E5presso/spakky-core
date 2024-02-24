@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 from types import ModuleType
-from typing import Any, Callable, Sequence, overload
+from typing import Any, Callable, Sequence, cast, overload
 
 from spakky.bean.autowired import Unknown
 from spakky.bean.bean import Bean, BeanFactory, BeanFactoryType
@@ -15,28 +15,19 @@ from spakky.bean.interfaces.bean_registry import (
     IBeanRegistry,
 )
 from spakky.bean.interfaces.bean_scanner import IBeanScanner
-from spakky.bean.interfaces.post_processor import (
-    IBeanPostPrecessorRegistry,
-    IBeanPostProcessor,
-)
+from spakky.bean.interfaces.post_processor import IBeanPostProcessor
 from spakky.bean.primary import Primary
-from spakky.bean.provider import ProvidingType
-from spakky.core.generics import AnyT
 from spakky.core.importing import list_classes, list_functions, list_modules
+from spakky.core.types import AnyT
 
 
-class ApplicationContext(
-    IBeanContainer,
-    IBeanRegistry,
-    IBeanScanner,
-    IBeanPostPrecessorRegistry,
-):
+class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
     __type_map: dict[type, set[type]]
     __bean_map: dict[UUID, type | BeanFactoryType]
     __bean_type_map: dict[type, UUID]
     __bean_name_map: dict[str, UUID]
     __singleton_cache: dict[UUID, object]
-    __post_processors: set[IBeanPostProcessor]
+    __post_processed_beans: set[UUID]
 
     def __init__(self, package: ModuleType | None = None) -> None:
         self.__bean_map = {}
@@ -44,7 +35,7 @@ class ApplicationContext(
         self.__bean_type_map = {}
         self.__bean_name_map = {}
         self.__singleton_cache = {}
-        self.__post_processors = set()
+        self.__post_processed_beans = set()
         if package is not None:
             self.scan(package)
 
@@ -57,17 +48,17 @@ class ApplicationContext(
     def __set_bean(self, bean: type) -> UUID:
         annotation: Bean = Bean.single(bean)
         bean_id: UUID = uuid4()
-        self.__bean_map[bean_id] = bean
         self.__bean_type_map[bean] = bean_id
-        self.__bean_name_map[annotation.name] = bean_id
+        self.__bean_name_map[annotation.bean_name] = bean_id
+        self.__bean_map[bean_id] = bean
         return bean_id
 
     def __set_bean_factory(self, factory: BeanFactoryType) -> UUID:
         annotation: BeanFactory = BeanFactory.single(factory)
         bean_id: UUID = uuid4()
-        self.__bean_map[bean_id] = factory
         self.__bean_type_map[annotation.bean_type] = bean_id
-        self.__bean_name_map[annotation.name] = bean_id
+        self.__bean_name_map[annotation.bean_name] = bean_id
+        self.__bean_map[bean_id] = factory
         return bean_id
 
     def __get_target_type(self, required_type: type) -> type:
@@ -99,32 +90,27 @@ class ApplicationContext(
             dependencies[name] = self.get(required_type=required_type)
         return dependencies
 
-    def __get_provider_type(self, bean_id: UUID) -> ProvidingType:
-        bean = self.__bean_map[bean_id]
-        if isinstance(bean, type):
-            return Bean.single(bean).providing_type
-        return BeanFactory.single(bean).providing_type
-
-    def __instaniate_bean(self, bean_id: UUID) -> Any:
+    def __instaniate_bean(self, bean_id: UUID) -> object:
         bean = self.__bean_map[bean_id]
         if isinstance(bean, type):
             return bean(**self.__get_dependencies(bean))
         return bean()
 
-    def __process_bean(self, bean: Any) -> Any:
-        for post_processor in self.__post_processors:
-            bean = post_processor.process_bean(self, bean)
+    def __post_process_bean(self, bean_id: UUID, bean: object) -> object:
+        if bean_id in self.__post_processed_beans:
+            return bean
+        self.__post_processed_beans.add(bean_id)
+        post_processors = self.where(lambda type: issubclass(type, IBeanPostProcessor))
+        for post_processor in post_processors:
+            post_processor = cast(IBeanPostProcessor, post_processor)
+            bean = post_processor.post_process(self, bean)
         return bean
 
-    def __get_bean(self, bean_id: UUID) -> Any:
-        providing_type = self.__get_provider_type(bean_id)
-        if providing_type == ProvidingType.SINGLETON:
-            if bean_id not in self.__singleton_cache:
-                instance = self.__instaniate_bean(bean_id)
-                self.__singleton_cache[bean_id] = self.__process_bean(instance)
-            return self.__singleton_cache[bean_id]
-        instance = self.__instaniate_bean(bean_id)
-        return self.__process_bean(instance)
+    def __get_bean(self, bean_id: UUID) -> object:
+        if bean_id not in self.__singleton_cache:
+            instance = self.__instaniate_bean(bean_id)
+            self.__singleton_cache[bean_id] = self.__post_process_bean(bean_id, instance)
+        return self.__singleton_cache[bean_id]
 
     @overload
     def contains(self, *, required_type: type) -> bool:
@@ -182,9 +168,6 @@ class ApplicationContext(
         annotation: BeanFactory = BeanFactory.single(factory)
         self.__set_target_type(annotation.bean_type)
         self.__set_bean_factory(factory)
-
-    def register_post_processor(self, post_processor: IBeanPostProcessor) -> None:
-        self.__post_processors.add(post_processor)
 
     def scan(self, package: ModuleType) -> None:
         modules: set[ModuleType] = list_modules(package)

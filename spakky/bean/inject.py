@@ -1,7 +1,7 @@
 from typing import overload
 
 from spakky.bean.application_context import ApplicationContext
-from spakky.core.generics import AnyT
+from spakky.core.types import AnyT
 
 
 @overload

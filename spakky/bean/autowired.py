@@ -4,7 +4,7 @@ from dataclasses import field, dataclass
 
 from spakky.bean.error import SpakkyBeanError
 from spakky.core.annotation import FunctionAnnotation
-from spakky.core.generics import FuncT
+from spakky.core.types import FuncT
 
 
 class Unknown:
@@ -17,9 +17,7 @@ class CannotAutowiringNonConstructorMethodError(SpakkyBeanError):
 
 @dataclass
 class Autowired(FunctionAnnotation):
-    dependencies: dict[str, type[object]] = field(
-        init=False, default_factory=dict[str, type[object]]
-    )
+    dependencies: dict[str, type[object]] = field(init=False, default_factory=dict)
 
     def __call__(self, obj: FuncT) -> FuncT:
         if obj.__name__ != "__init__":

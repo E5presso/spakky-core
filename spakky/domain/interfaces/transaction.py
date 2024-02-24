@@ -7,7 +7,7 @@ from typing_extensions import Self
 from spakky.core.interfaces.disposable import IAsyncDisposable, IDisposable
 
 
-class AbstractUnitOfWork(IDisposable, ABC):
+class AbstractTransaction(IDisposable, ABC):
     autocommit_enabled: bool
 
     def __init__(self, autocommit: bool = True) -> None:
@@ -32,19 +32,23 @@ class AbstractUnitOfWork(IDisposable, ABC):
         self.dispose()
 
     @abstractmethod
-    def initialize(self) -> None: ...
+    def initialize(self) -> None:
+        ...
 
     @abstractmethod
-    def dispose(self) -> None: ...
+    def dispose(self) -> None:
+        ...
 
     @abstractmethod
-    def commit(self) -> None: ...
+    def commit(self) -> None:
+        ...
 
     @abstractmethod
-    def rollback(self) -> None: ...
+    def rollback(self) -> None:
+        ...
 
 
-class AbstractAsyncUnitOfWork(IAsyncDisposable, ABC):
+class AbstractAsyncTranasction(IAsyncDisposable, ABC):
     autocommit_enabled: bool
 
     def __init__(self, autocommit: bool = True) -> None:
@@ -69,13 +73,17 @@ class AbstractAsyncUnitOfWork(IAsyncDisposable, ABC):
         await self.dispose()
 
     @abstractmethod
-    async def initialize(self) -> None: ...
+    async def initialize(self) -> None:
+        ...
 
     @abstractmethod
-    async def dispose(self) -> None: ...
+    async def dispose(self) -> None:
+        ...
 
     @abstractmethod
-    async def commit(self) -> None: ...
+    async def commit(self) -> None:
+        ...
 
     @abstractmethod
-    async def rollback(self) -> None: ...
+    async def rollback(self) -> None:
+        ...
