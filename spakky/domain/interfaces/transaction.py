@@ -1,8 +1,12 @@
+import sys
 from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import final
 
-from typing_extensions import Self
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from spakky.core.interfaces.disposable import IAsyncDisposable, IDisposable
 

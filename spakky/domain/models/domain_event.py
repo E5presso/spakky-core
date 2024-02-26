@@ -1,10 +1,14 @@
+import sys
 from abc import ABC
 from copy import deepcopy
 from uuid import UUID, uuid4
 from datetime import datetime
 from dataclasses import field
 
-from typing_extensions import Self
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from spakky.core.interfaces.cloneable import ICloneable
 from spakky.core.interfaces.comparable import IComparable

@@ -1,10 +1,14 @@
+import sys
 import json
 from copy import deepcopy
 from uuid import UUID, uuid4
 from typing import Any, Sequence, final
 from datetime import datetime, timedelta
 
-from typing_extensions import Self
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from spakky.cryptography.base64_encoder import Base64Encoder
 from spakky.cryptography.error import (
