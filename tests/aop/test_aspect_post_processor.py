@@ -15,7 +15,7 @@ from spakky.aop.advice import (
 )
 from spakky.aop.aspect_post_processor import AspectBeanPostPrecessor
 from spakky.bean.application_context import ApplicationContext
-from spakky.bean.bean import Bean, BeanFactory
+from spakky.bean.bean import Bean
 
 
 def test_aspect_post_processor() -> None:
@@ -72,20 +72,14 @@ def test_aspect_post_processor() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @BeanFactory()
-    def logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
 
-    context.register_bean_factory(logger)
-    context.register_bean(AspectBeanPostPrecessor)
+    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
     context.register_bean(EchoService)
     context.register_bean(LogAdvice)
 
@@ -153,20 +147,14 @@ def test_aspect_post_processor_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @BeanFactory()
-    def logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
 
-    context.register_bean_factory(logger)
-    context.register_bean(AspectBeanPostPrecessor)
+    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
     context.register_bean(EchoService)
     context.register_bean(LogAdvice)
 
@@ -240,20 +228,14 @@ async def test_async_aspect_post_processor() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @BeanFactory()
-    def logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
 
-    context.register_bean_factory(logger)
-    context.register_bean(AspectBeanPostPrecessor)
+    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
     context.register_bean(EchoService)
     context.register_bean(AsyncLogAdvice)
 
@@ -326,20 +308,14 @@ async def test_async_aspect_post_processor_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @BeanFactory()
-    def logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
 
-    context.register_bean_factory(logger)
-    context.register_bean(AspectBeanPostPrecessor)
+    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
     context.register_bean(EchoService)
     context.register_bean(AsyncLogAdvice)
 

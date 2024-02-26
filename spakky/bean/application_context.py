@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 from types import ModuleType
-from typing import Any, Callable, Sequence, cast, overload
+from typing import Any, Callable, Sequence, overload
 
 from spakky.bean.autowired import Unknown
 from spakky.bean.bean import Bean, BeanFactory, BeanFactoryType
@@ -16,17 +16,24 @@ from spakky.bean.interfaces.bean_registry import (
 )
 from spakky.bean.interfaces.bean_scanner import IBeanScanner
 from spakky.bean.interfaces.post_processor import IBeanPostProcessor
+from spakky.bean.interfaces.post_processor_registry import IBeanPostProcessorRegistry
 from spakky.bean.primary import Primary
 from spakky.core.importing import list_classes, list_functions, list_modules
 from spakky.core.types import AnyT
 
 
-class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
+class ApplicationContext(
+    IBeanContainer,
+    IBeanRegistry,
+    IBeanPostProcessorRegistry,
+    IBeanScanner,
+):
     __type_map: dict[type, set[type]]
     __bean_map: dict[UUID, type | BeanFactoryType]
     __bean_type_map: dict[type, UUID]
     __bean_name_map: dict[str, UUID]
     __singleton_cache: dict[UUID, object]
+    __post_processors: list[IBeanPostProcessor]
 
     def __init__(self, package: ModuleType | None = None) -> None:
         self.__bean_map = {}
@@ -34,6 +41,7 @@ class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
         self.__bean_type_map = {}
         self.__bean_name_map = {}
         self.__singleton_cache = {}
+        self.__post_processors = []
         if package is not None:
             self.scan(package)
 
@@ -95,11 +103,7 @@ class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
         return bean()
 
     def __post_process_bean(self, bean: object) -> object:
-        if isinstance(bean, IBeanPostProcessor):
-            return bean
-        post_processors = self.where(lambda type: issubclass(type, IBeanPostProcessor))
-        for post_processor in post_processors:
-            post_processor = cast(IBeanPostProcessor, post_processor)
+        for post_processor in self.__post_processors:
             bean = post_processor.post_process_bean(self, bean)
         return bean
 
@@ -165,6 +169,9 @@ class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
         annotation: BeanFactory = BeanFactory.single(factory)
         self.__set_target_type(annotation.bean_type)
         self.__set_bean_factory(factory)
+
+    def register_bean_post_processor(self, post_processor: IBeanPostProcessor) -> None:
+        self.__post_processors.append(post_processor)
 
     def scan(self, package: ModuleType) -> None:
         modules: set[ModuleType] = list_modules(package)
