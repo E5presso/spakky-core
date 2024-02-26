@@ -4,17 +4,25 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.aop.advice import Advice, Aspect, AsyncAdvice, AsyncPointcut, P, Pointcut, R
-from spakky.aop.post_processor import AspectDependencyPostPrecessor
+from spakky.aop.advice import (
+    AbstractAdvice,
+    AbstractAsyncAdvice,
+    Aspect,
+    AsyncPointcut,
+    P,
+    Pointcut,
+    R,
+)
+from spakky.aop.aspect_post_processor import AspectBeanPostPrecessor
 from spakky.bean.application_context import ApplicationContext
-from spakky.bean.bean import Bean
+from spakky.bean.bean import Bean, BeanFactory
 
 
 def test_aspect_post_processor() -> None:
     logs: list[str] = []
 
     @Aspect()
-    class LogAdvisor(Advice):
+    class LogAdvice(AbstractAdvice):
         def before(self, _pointcut: Pointcut, *_args: Any, **_kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {_args}, {_kwargs}")
@@ -54,7 +62,7 @@ def test_aspect_post_processor() -> None:
 
     @dataclass
     class Log(Pointcut):
-        advice = LogAdvisor
+        advice = LogAdvice
 
     @Bean()
     class EchoService:
@@ -63,16 +71,23 @@ def test_aspect_post_processor() -> None:
             return message
 
     context: ApplicationContext = ApplicationContext()
-    console = logging.StreamHandler()
-    console.setLevel(level=logging.DEBUG)
-    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(console)
-    context.register_post_processor(AspectDependencyPostPrecessor(logger))
 
+    @BeanFactory()
+    def logger() -> logging.Logger:
+        console = logging.StreamHandler()
+        console.setLevel(level=logging.DEBUG)
+        console.setFormatter(
+            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
+        )
+        logger = logging.getLogger("debug")
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(console)
+        return logger
+
+    context.register_bean_factory(logger)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_bean(LogAdvice)
 
     context.start()
 
@@ -88,7 +103,7 @@ def test_aspect_post_processor_raise_error() -> None:
     logs: list[str] = []
 
     @Aspect()
-    class LogAdvisor(Advice):
+    class LogAdvice(AbstractAdvice):
         def before(self, _pointcut: Pointcut, *_args: Any, **_kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {_args}, {_kwargs}")
@@ -128,7 +143,7 @@ def test_aspect_post_processor_raise_error() -> None:
 
     @dataclass
     class Log(Pointcut):
-        advice = LogAdvisor
+        advice = LogAdvice
 
     @Bean()
     class EchoService:
@@ -137,16 +152,23 @@ def test_aspect_post_processor_raise_error() -> None:
             raise RuntimeError
 
     context: ApplicationContext = ApplicationContext()
-    console = logging.StreamHandler()
-    console.setLevel(level=logging.DEBUG)
-    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(console)
-    context.register_post_processor(AspectDependencyPostPrecessor(logger))
 
+    @BeanFactory()
+    def logger() -> logging.Logger:
+        console = logging.StreamHandler()
+        console.setLevel(level=logging.DEBUG)
+        console.setFormatter(
+            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
+        )
+        logger = logging.getLogger("debug")
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(console)
+        return logger
+
+    context.register_bean_factory(logger)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_bean(LogAdvice)
 
     context.start()
 
@@ -164,7 +186,7 @@ async def test_async_aspect_post_processor() -> None:
     logs: list[str] = []
 
     @Aspect()
-    class AsyncLogAdvisor(AsyncAdvice):
+    class AsyncLogAdvice(AbstractAsyncAdvice):
         async def before(
             self, _pointcut: AsyncPointcut, *_args: Any, **_kwargs: Any
         ) -> None:
@@ -208,7 +230,7 @@ async def test_async_aspect_post_processor() -> None:
 
     @dataclass
     class AsyncLog(AsyncPointcut):
-        advice = AsyncLogAdvisor
+        advice = AsyncLogAdvice
 
     @Bean()
     class EchoService:
@@ -217,16 +239,23 @@ async def test_async_aspect_post_processor() -> None:
             return message
 
     context: ApplicationContext = ApplicationContext()
-    console = logging.StreamHandler()
-    console.setLevel(level=logging.DEBUG)
-    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(console)
-    context.register_post_processor(AspectDependencyPostPrecessor(logger))
 
+    @BeanFactory()
+    def logger() -> logging.Logger:
+        console = logging.StreamHandler()
+        console.setLevel(level=logging.DEBUG)
+        console.setFormatter(
+            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
+        )
+        logger = logging.getLogger("debug")
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(console)
+        return logger
+
+    context.register_bean_factory(logger)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_bean(AsyncLogAdvice)
 
     context.start()
 
@@ -243,7 +272,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
     logs: list[str] = []
 
     @Aspect()
-    class AsyncLogAdvisor(AsyncAdvice):
+    class AsyncLogAdvice(AbstractAsyncAdvice):
         async def before(
             self, _pointcut: AsyncPointcut, *_args: Any, **_kwargs: Any
         ) -> None:
@@ -287,7 +316,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
 
     @dataclass
     class AsyncLog(AsyncPointcut):
-        advice = AsyncLogAdvisor
+        advice = AsyncLogAdvice
 
     @Bean()
     class EchoService:
@@ -297,16 +326,22 @@ async def test_async_aspect_post_processor_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    console = logging.StreamHandler()
-    console.setLevel(level=logging.DEBUG)
-    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(console)
-    context.register_post_processor(AspectDependencyPostPrecessor(logger))
+    @BeanFactory()
+    def logger() -> logging.Logger:
+        console = logging.StreamHandler()
+        console.setLevel(level=logging.DEBUG)
+        console.setFormatter(
+            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
+        )
+        logger = logging.getLogger("debug")
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(console)
+        return logger
 
+    context.register_bean_factory(logger)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_bean(AsyncLogAdvice)
 
     context.start()
 

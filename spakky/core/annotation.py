@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing_extensions import Self
 
 from spakky.core.error import SpakkyCoreError
-from spakky.core.generics import AnyT, ClassT, FuncT
+from spakky.core.types import AnyT, ClassT, FuncT
 
 __ANNOTATION_METADATA__ = "__SPAKKY_ANNOTATION_METADATA__"
 __ANNOTATION_TYPEMAP__ = "__SPAKKY_ANNOTATION_TYPEMAP__"

@@ -14,7 +14,6 @@ from spakky.bean.autowired import autowired
 from spakky.bean.bean import Bean, BeanFactory
 from spakky.bean.interfaces.bean_registry import CannotRegisterNonBeanFactoryError
 from spakky.bean.primary import Primary
-from spakky.bean.provider import Provider, ProvidingType
 from spakky.core.annotation import ClassAnnotation
 from tests import dummy_package
 from tests.dummy_package.module_a import ComponentA, DummyA
@@ -31,7 +30,6 @@ def test_application_context_register_expect_success() -> None:
             self.id = uuid4()
 
     @Bean()
-    @Provider(ProvidingType.FACTORY)
     class SecondSampleComponent:
         id: UUID
 
@@ -64,7 +62,6 @@ def test_application_context_get_by_type_singleton_expect_success() -> None:
             self.id = uuid4()
 
     @Bean()
-    @Provider(ProvidingType.SINGLETON)
     class SecondSampleComponent:
         id: UUID
 
@@ -111,24 +108,6 @@ def test_application_context_get_by_type_expect_no_such_error() -> None:
             context.get(required_type=SecondSampleComponent).id
             == context.get(required_type=SecondSampleComponent).id
         )
-
-
-def test_application_context_get_by_type_factory_expect_success() -> None:
-    @Bean()
-    @Provider(ProvidingType.FACTORY)
-    class SampleComponent:
-        id: UUID
-
-        def __init__(self) -> None:
-            self.id = uuid4()
-
-    context: ApplicationContext = ApplicationContext()
-    context.register_bean(SampleComponent)
-
-    assert (
-        context.get(required_type=SampleComponent).id
-        != context.get(required_type=SampleComponent).id
-    )
 
 
 def test_application_context_get_by_name_expect_success() -> None:

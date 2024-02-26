@@ -5,13 +5,13 @@ from dataclasses import dataclass
 
 from spakky.bean.bean import Bean
 from spakky.core.annotation import FunctionAnnotation
-from spakky.core.generics import AsyncFuncT
+from spakky.core.types import AsyncFuncT
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
-class Advice(ABC):
+class AbstractAdvice(ABC):
     @final
     def __call__(self, pointcut: "Pointcut", function: Callable[P, R]) -> Callable[P, R]:
         @wraps(function)
@@ -51,7 +51,7 @@ class Advice(ABC):
         return func(*_args, **_kwargs)
 
 
-class AsyncAdvice(ABC):
+class AbstractAsyncAdvice(ABC):
     @final
     def __call__(
         self, pointcut: "AsyncPointcut", function: Callable[P, Awaitable[R]]
@@ -95,7 +95,7 @@ class AsyncAdvice(ABC):
         return await func(*_args, **_kwargs)
 
 
-AdviceT = TypeVar("AdviceT", bound=type[Advice | AsyncAdvice])
+AdviceT = TypeVar("AdviceT", bound=type[AbstractAdvice | AbstractAsyncAdvice])
 
 
 @dataclass
@@ -106,12 +106,12 @@ class Aspect(Bean):
 
 @dataclass
 class Pointcut(FunctionAnnotation):
-    advice: ClassVar[type[Advice]]
+    advice: ClassVar[type[AbstractAdvice]]
 
 
 @dataclass
 class AsyncPointcut(FunctionAnnotation):
-    advice: ClassVar[type[AsyncAdvice]]
+    advice: ClassVar[type[AbstractAsyncAdvice]]
 
     def __call__(self, obj: AsyncFuncT) -> AsyncFuncT:
         return super().__call__(obj)

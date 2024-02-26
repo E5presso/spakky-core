@@ -6,7 +6,6 @@ from spakky.bean.bean import (
     BeanFactory,
     ReturnAnnotationNotFoundInBeanFactoryError,
 )
-from spakky.bean.provider import Provider, ProvidingType
 
 
 def test_bean_with_autowired() -> None:
@@ -21,7 +20,7 @@ def test_bean_with_autowired() -> None:
             self.age = age
 
     assert Bean.single(SampleClass).dependencies == {"name": str, "age": int}
-    assert Bean.single(SampleClass).name == "sample_class"
+    assert Bean.single(SampleClass).bean_name == "sample_class"
     sample: SampleClass = SampleClass(name="John", age=30)
     assert sample.name == "John"
     assert sample.age == 30
@@ -38,13 +37,13 @@ def test_bean_without_autowired() -> None:
             self.age = age
 
     assert Bean.single(SampleClass).dependencies == {}
-    assert Bean.single(SampleClass).name == "sample_class"
+    assert Bean.single(SampleClass).bean_name == "sample_class"
     sample: SampleClass = SampleClass(name="John", age=30)
     assert sample.name == "John"
     assert sample.age == 30
 
 
-def test_bean_with_return_annotation() -> None:
+def test_bean_factory_with_return_annotation() -> None:
     class A:
         ...
 
@@ -54,12 +53,11 @@ def test_bean_with_return_annotation() -> None:
 
     assert BeanFactory.contains(get_a) is True
     assert BeanFactory.single(get_a) is not None
-    assert BeanFactory.single(get_a).name == "get_a"
+    assert BeanFactory.single(get_a).bean_name == "get_a"
     assert BeanFactory.single(get_a).bean_type is A
-    assert BeanFactory.single(get_a).providing_type == ProvidingType.SINGLETON
 
 
-def test_bean_without_return_annotation() -> None:
+def test_bean_factory_without_return_annotation() -> None:
     class A:
         ...
 
@@ -70,32 +68,25 @@ def test_bean_without_return_annotation() -> None:
             return A()
 
 
-def test_bean_with_provider() -> None:
+def test_bean_with_name() -> None:
+    @Bean(bean_name="asdf")
     class A:
         ...
 
-    @BeanFactory()
-    @Provider(ProvidingType.FACTORY)
+    assert Bean.contains(A) is True
+    assert Bean.single(A) is not None
+    assert Bean.single(A).bean_name == "asdf"
+
+
+def test_bean_factory_with_name() -> None:
+    class A:
+        ...
+
+    @BeanFactory(bean_name="a")
     def get_a() -> A:
         return A()
 
     assert BeanFactory.contains(get_a) is True
     assert BeanFactory.single(get_a) is not None
-    assert BeanFactory.single(get_a).name == "get_a"
+    assert BeanFactory.single(get_a).bean_name == "a"
     assert BeanFactory.single(get_a).bean_type is A
-    assert BeanFactory.single(get_a).providing_type == ProvidingType.FACTORY
-
-
-def test_bean_without_provider() -> None:
-    class A:
-        ...
-
-    @BeanFactory()
-    def get_a() -> A:
-        return A()
-
-    assert BeanFactory.contains(get_a) is True
-    assert BeanFactory.single(get_a) is not None
-    assert BeanFactory.single(get_a).name == "get_a"
-    assert BeanFactory.single(get_a).bean_type is A
-    assert BeanFactory.single(get_a).providing_type == ProvidingType.SINGLETON

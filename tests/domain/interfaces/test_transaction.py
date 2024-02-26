@@ -1,13 +1,13 @@
 import pytest
 
-from spakky.domain.interfaces.unit_of_work import (
-    AbstractAsyncUnitOfWork,
-    AbstractUnitOfWork,
+from spakky.domain.interfaces.transaction import (
+    AbstractAsyncTranasction,
+    AbstractTransaction,
 )
 
 
-def test_unit_of_work_auto_commit() -> None:
-    class InMemoryUnitOfWork(AbstractUnitOfWork):
+def test_tranasction_auto_commit() -> None:
+    class InMemoryTransaction(AbstractTransaction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -24,17 +24,17 @@ def test_unit_of_work_auto_commit() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-    uow: InMemoryUnitOfWork = InMemoryUnitOfWork(autocommit=True)
+    transaction: InMemoryTransaction = InMemoryTransaction(autocommit=True)
 
-    with uow:
+    with transaction:
         print("do_something")
 
-    assert uow.committed is True
-    assert uow.rolled_back is False
+    assert transaction.committed is True
+    assert transaction.rolled_back is False
 
 
-def test_unit_of_work_manual_commit() -> None:
-    class InMemoryUnitOfWork(AbstractUnitOfWork):
+def test_tranasction_manual_commit() -> None:
+    class InMemoryTransaction(AbstractTransaction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -51,24 +51,24 @@ def test_unit_of_work_manual_commit() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-    uow: InMemoryUnitOfWork = InMemoryUnitOfWork(autocommit=False)
+    transaction: InMemoryTransaction = InMemoryTransaction(autocommit=False)
 
-    with uow:
+    with transaction:
         print("do_something")
 
-    assert uow.committed is False
-    assert uow.rolled_back is False
+    assert transaction.committed is False
+    assert transaction.rolled_back is False
 
-    with uow as tx:
+    with transaction as tx:
         print("do_something")
         tx.commit()
 
-    assert uow.committed is True
-    assert uow.rolled_back is False
+    assert transaction.committed is True
+    assert transaction.rolled_back is False
 
 
-def test_unit_of_work_rollback_when_raised() -> None:
-    class InMemoryUnitOfWork(AbstractUnitOfWork):
+def test_tranasction_rollback_when_raised() -> None:
+    class InMemoryTransaction(AbstractTransaction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -85,19 +85,19 @@ def test_unit_of_work_rollback_when_raised() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-    uow: InMemoryUnitOfWork = InMemoryUnitOfWork(autocommit=True)
+    transaction: InMemoryTransaction = InMemoryTransaction(autocommit=True)
 
     with pytest.raises(RuntimeError):
-        with uow:
+        with transaction:
             raise RuntimeError
 
-    assert uow.committed is False
-    assert uow.rolled_back is True
+    assert transaction.committed is False
+    assert transaction.rolled_back is True
 
 
 @pytest.mark.asyncio
-async def test_async_unit_of_work_auto_commit() -> None:
-    class AsyncInMemoryUnitOfWork(AbstractAsyncUnitOfWork):
+async def test_async_tranasction_auto_commit() -> None:
+    class AsyncInMemoryTransaction(AbstractAsyncTranasction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -114,18 +114,18 @@ async def test_async_unit_of_work_auto_commit() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-    uow: AsyncInMemoryUnitOfWork = AsyncInMemoryUnitOfWork(autocommit=True)
+    transaction: AsyncInMemoryTransaction = AsyncInMemoryTransaction(autocommit=True)
 
-    async with uow:
+    async with transaction:
         print("do_something")
 
-    assert uow.committed is True
-    assert uow.rolled_back is False
+    assert transaction.committed is True
+    assert transaction.rolled_back is False
 
 
 @pytest.mark.asyncio
-async def test_async_unit_of_work_manual_commit() -> None:
-    class AsyncInMemoryUnitOfWork(AbstractAsyncUnitOfWork):
+async def test_async_tranasction_manual_commit() -> None:
+    class AsyncInMemoryTransaction(AbstractAsyncTranasction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -142,25 +142,25 @@ async def test_async_unit_of_work_manual_commit() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-    uow: AsyncInMemoryUnitOfWork = AsyncInMemoryUnitOfWork(autocommit=False)
+    transaction: AsyncInMemoryTransaction = AsyncInMemoryTransaction(autocommit=False)
 
-    async with uow:
+    async with transaction:
         print("do_something")
 
-    assert uow.committed is False
-    assert uow.rolled_back is False
+    assert transaction.committed is False
+    assert transaction.rolled_back is False
 
-    async with uow as tx:
+    async with transaction as tx:
         print("do_something")
         await tx.commit()
 
-    assert uow.committed is True
-    assert uow.rolled_back is False
+    assert transaction.committed is True
+    assert transaction.rolled_back is False
 
 
 @pytest.mark.asyncio
-async def test_async_unit_of_work_rollback_when_raised() -> None:
-    class AsyncInMemoryUnitOfWork(AbstractAsyncUnitOfWork):
+async def test_async_tranasction_rollback_when_raised() -> None:
+    class AsyncInMemoryTransaction(AbstractAsyncTranasction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -177,11 +177,11 @@ async def test_async_unit_of_work_rollback_when_raised() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-    uow: AsyncInMemoryUnitOfWork = AsyncInMemoryUnitOfWork(autocommit=True)
+    transaction: AsyncInMemoryTransaction = AsyncInMemoryTransaction(autocommit=True)
 
     with pytest.raises(RuntimeError):
-        async with uow:
+        async with transaction:
             raise RuntimeError
 
-    assert uow.committed is False
-    assert uow.rolled_back is True
+    assert transaction.committed is False
+    assert transaction.rolled_back is True

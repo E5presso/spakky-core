@@ -11,9 +11,7 @@ from spakky.domain.models.entity import Entity
 
 @mutable
 class AggregateRoot(Entity[EquatableT], Generic[EquatableT], ABC):
-    __events: list[DomainEvent] = field(
-        init=False, repr=False, default_factory=list[DomainEvent]
-    )
+    __events: list[DomainEvent] = field(init=False, repr=False, default_factory=list)
 
     @property
     def events(self) -> Sequence[DomainEvent]:
