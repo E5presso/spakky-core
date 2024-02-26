@@ -1,4 +1,4 @@
-from spakky.stereotypes.configuration import Configuration
+from spakky.stereotype.configuration import Configuration
 
 
 def test_configuration() -> None:

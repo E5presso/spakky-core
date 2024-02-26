@@ -27,7 +27,6 @@ class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
     __bean_type_map: dict[type, UUID]
     __bean_name_map: dict[str, UUID]
     __singleton_cache: dict[UUID, object]
-    __post_processed_beans: set[UUID]
 
     def __init__(self, package: ModuleType | None = None) -> None:
         self.__bean_map = {}
@@ -35,7 +34,6 @@ class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
         self.__bean_type_map = {}
         self.__bean_name_map = {}
         self.__singleton_cache = {}
-        self.__post_processed_beans = set()
         if package is not None:
             self.scan(package)
 
@@ -96,20 +94,19 @@ class ApplicationContext(IBeanContainer, IBeanRegistry, IBeanScanner):
             return bean(**self.__get_dependencies(bean))
         return bean()
 
-    def __post_process_bean(self, bean_id: UUID, bean: object) -> object:
-        if bean_id in self.__post_processed_beans:
+    def __post_process_bean(self, bean: object) -> object:
+        if isinstance(bean, IBeanPostProcessor):
             return bean
-        self.__post_processed_beans.add(bean_id)
         post_processors = self.where(lambda type: issubclass(type, IBeanPostProcessor))
         for post_processor in post_processors:
             post_processor = cast(IBeanPostProcessor, post_processor)
-            bean = post_processor.post_process(self, bean)
+            bean = post_processor.post_process_bean(self, bean)
         return bean
 
     def __get_bean(self, bean_id: UUID) -> object:
         if bean_id not in self.__singleton_cache:
             instance = self.__instaniate_bean(bean_id)
-            self.__singleton_cache[bean_id] = self.__post_process_bean(bean_id, instance)
+            self.__singleton_cache[bean_id] = self.__post_process_bean(instance)
         return self.__singleton_cache[bean_id]
 
     @overload

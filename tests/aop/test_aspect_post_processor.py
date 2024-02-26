@@ -13,7 +13,7 @@ from spakky.aop.advice import (
     Pointcut,
     R,
 )
-from spakky.aop.post_processor import AspectDependencyPostPrecessor
+from spakky.aop.aspect_post_processor import AspectBeanPostPrecessor
 from spakky.bean.application_context import ApplicationContext
 from spakky.bean.bean import Bean, BeanFactory
 
@@ -85,7 +85,7 @@ def test_aspect_post_processor() -> None:
         return logger
 
     context.register_bean_factory(logger)
-    context.register_bean(AspectDependencyPostPrecessor)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
     context.register_bean(LogAdvice)
 
@@ -166,7 +166,7 @@ def test_aspect_post_processor_raise_error() -> None:
         return logger
 
     context.register_bean_factory(logger)
-    context.register_bean(AspectDependencyPostPrecessor)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
     context.register_bean(LogAdvice)
 
@@ -253,7 +253,7 @@ async def test_async_aspect_post_processor() -> None:
         return logger
 
     context.register_bean_factory(logger)
-    context.register_bean(AspectDependencyPostPrecessor)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
     context.register_bean(AsyncLogAdvice)
 
@@ -339,7 +339,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
         return logger
 
     context.register_bean_factory(logger)
-    context.register_bean(AspectDependencyPostPrecessor)
+    context.register_bean(AspectBeanPostPrecessor)
     context.register_bean(EchoService)
     context.register_bean(AsyncLogAdvice)
 
