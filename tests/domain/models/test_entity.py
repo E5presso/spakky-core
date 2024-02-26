@@ -1,7 +1,12 @@
+import sys
 from uuid import UUID, uuid4
 
 import pytest
-from typing_extensions import Self
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from spakky.core.mutability import mutable
 from spakky.domain.error import DomainValidationError

@@ -1,6 +1,10 @@
+import sys
 from uuid import UUID, uuid4
 
-from typing_extensions import Self
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from spakky.core.mutability import immutable, mutable
 from spakky.domain.models.aggregate_root import AggregateRoot
