@@ -33,7 +33,7 @@ async def test_logging_with_masking() -> None:
 
     advice = AsyncLoggingAdvice(logger)
     assert (
-        await advice.around(
+        await advice.around_async(
             joinpoint=authenticate,
             username="John",
             password="1234",
@@ -41,7 +41,7 @@ async def test_logging_with_masking() -> None:
         is True
     )
     assert (
-        await advice.around(
+        await advice.around_async(
             authenticate,
             "John",
             "12345",
@@ -49,7 +49,7 @@ async def test_logging_with_masking() -> None:
         is False
     )
     with pytest.raises(ValueError, match="Mike?"):
-        assert await advice.around(authenticate, "Mike", "1234") is False
+        assert await advice.around_async(authenticate, "Mike", "1234") is False
 
     assert console.log_records == [
         "[INFO]: [Log] test_logging_with_masking.<locals>.authenticate(username='John', password='******')",
@@ -87,7 +87,7 @@ async def test_logging_without_masking() -> None:
 
     advice = AsyncLoggingAdvice(logger)
     assert (
-        await advice.around(
+        await advice.around_async(
             joinpoint=authenticate,
             username="John",
             password="1234",
@@ -95,7 +95,7 @@ async def test_logging_without_masking() -> None:
         is True
     )
     assert (
-        await advice.around(
+        await advice.around_async(
             authenticate,
             "John",
             "12345",
@@ -103,7 +103,7 @@ async def test_logging_without_masking() -> None:
         is False
     )
     with pytest.raises(ValueError, match="Mike?"):
-        assert await advice.around(authenticate, "Mike", "1234") is False
+        assert await advice.around_async(authenticate, "Mike", "1234") is False
 
     assert console.log_records == [
         "[INFO]: [Log] test_logging_without_masking.<locals>.authenticate(username='John', password='1234')",
