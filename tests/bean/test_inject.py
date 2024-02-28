@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import Protocol
 
 from spakky.bean.application_context import ApplicationContext
 from spakky.bean.autowired import autowired
@@ -7,17 +8,17 @@ from spakky.bean.inject import inject
 
 
 def test_inject_to_function_by_type() -> None:
-    class IA(ABC):
+    class IA(Protocol):
         @abstractmethod
         def a(self) -> str:
             ...
 
-    class IB(ABC):
+    class IB(Protocol):
         @abstractmethod
         def b(self) -> str:
             ...
 
-    class IC(ABC):
+    class IC(Protocol):
         @abstractmethod
         def c(self) -> str:
             ...
@@ -57,17 +58,17 @@ def test_inject_to_function_by_type() -> None:
 
 
 def test_inject_to_function_by_name() -> None:
-    class IA(ABC):
+    class IA(Protocol):
         @abstractmethod
         def a(self) -> str:
             ...
 
-    class IB(ABC):
+    class IB(Protocol):
         @abstractmethod
         def b(self) -> str:
             ...
 
-    class IC(ABC):
+    class IC(Protocol):
         @abstractmethod
         def c(self) -> str:
             ...
