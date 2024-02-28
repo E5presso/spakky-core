@@ -1,59 +1,41 @@
 from abc import abstractmethod
-from types import new_class
-from typing import (
-    Any,
-    Generic,
-    TypeVar,
-    Callable,
-    Protocol,
-    ParamSpec,
-    runtime_checkable,
-)
+from types import MethodType, new_class
+from typing import Any, Generic, Protocol, runtime_checkable
 from functools import wraps
 
 from spakky.core.types import ObjectT
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
 
 @runtime_checkable
-class IInvocationHandler(Protocol):
+class IMethodInterceptor(Protocol):
     @abstractmethod
-    def intercept(
-        self,
-        target: object,
-        method: Callable[P, R],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> R:
+    def intercept(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
         ...
 
 
 class Enhancer(Generic[ObjectT]):
-    __super_class: type[ObjectT]
-    __callback: IInvocationHandler
+    __superclass: type[ObjectT]
+    __callback: IMethodInterceptor
 
-    def __init__(self, super_class: type[ObjectT], callback: IInvocationHandler) -> None:
-        self.__super_class = super_class
+    def __init__(self, superclass: type[ObjectT], callback: IMethodInterceptor) -> None:
+        self.__superclass = superclass
         self.__callback = callback
 
-    def create(self, *args: Any, **kwargs: Any) -> ObjectT:
+    def create(self) -> ObjectT:
         def __getattribute__(instance: ObjectT, name: str) -> Any:
-            attr: Any = object.__getattribute__(instance, name)
-            if callable(attr):
+            attribute: Any = object.__getattribute__(instance, name)
+            if callable(attribute):
+                method = attribute
 
-                @wraps(attr)
+                @wraps(method)
                 def wrapper(*args: Any, **kwargs: Any) -> Any:
-                    return self.__callback.intercept(instance, attr, *args, **kwargs)
+                    return self.__callback.intercept(method, *args, **kwargs)
 
                 return wrapper
-            return attr
+            return attribute
 
         return new_class(
-            name=f"Dynamic{self.__super_class.__name__}ProxyByEnhancer",
-            bases=(self.__super_class,),
-            exec_body=lambda namespace: namespace.update(
-                {"__getattribute__": __getattribute__}
-            ),
-        )(*args, **kwargs)
+            name=f"{self.__superclass.__name__}DynamicProxyByEnhancer",
+            bases=(self.__superclass,),
+            exec_body=lambda x: x.update(__getattribute__=__getattribute__),
+        )()

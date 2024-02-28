@@ -5,14 +5,14 @@ from typing import Hashable
 from functools import reduce
 from dataclasses import astuple
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
-
 from spakky.core.interfaces.cloneable import ICloneable
 from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.mutability import immutable
+
+if sys.version_info >= (3, 11):
+    from typing import Self  # pragma: no cover
+else:
+    from typing_extensions import Self  # pragma: no cover
 
 
 @immutable

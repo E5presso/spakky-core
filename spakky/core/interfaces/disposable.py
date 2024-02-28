@@ -1,12 +1,12 @@
-from abc import abstractmethod
 import sys
+from abc import abstractmethod
 from types import TracebackType
 from typing import TypeVar, Protocol, runtime_checkable
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    from typing import Self  # pragma: no cover
 else:
-    from typing_extensions import Self
+    from typing_extensions import Self  # pragma: no cover
 
 
 @runtime_checkable
