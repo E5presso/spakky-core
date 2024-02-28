@@ -3,7 +3,7 @@ from logging import Logger, Handler, Formatter, LogRecord
 
 import pytest
 
-from spakky.aspects.transactional import AsyncTransactionalAdvice
+from spakky.aop.builtin.transactional import AsyncTransactionalAdvisor
 from spakky.domain.interfaces.transaction import AbstractAsyncTranasction
 
 
@@ -53,7 +53,7 @@ async def test_transactional_commit() -> None:
             raise ValueError("Mike?")
         return username == "John" and password == "1234"
 
-    advice = AsyncTransactionalAdvice(InMemoryTransaction(), logger)
+    advice = AsyncTransactionalAdvisor(InMemoryTransaction(), logger)
     assert (
         await advice.around_async(
             authenticate,

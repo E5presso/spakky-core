@@ -17,7 +17,7 @@ class AsyncTransactional(FunctionAnnotation):
 
 
 @AsyncAspect()
-class AsyncTransactionalAdvice(IAsyncAdvisor):
+class AsyncTransactionalAdvisor(IAsyncAdvisor):
     __transacntion: AbstractAsyncTranasction
     __logger: Logger
 
