@@ -3,8 +3,9 @@ from typing import Any, ClassVar
 from logging import Logger
 from dataclasses import field, dataclass
 
-from spakky.aop.aspect import Aspect
-from spakky.aop.pointcut import AsyncAround
+from spakky.aop.advice import Around
+from spakky.aop.advisor import IAsyncAdvisor
+from spakky.aop.aspect import AsyncAspect
 from spakky.bean.autowired import autowired
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc
@@ -16,8 +17,8 @@ class AsyncLogging(FunctionAnnotation):
     masking_keys: list[str] = field(default_factory=lambda: ["secret", "key", "password"])
 
 
-@Aspect()
-class AsyncLoggingAdvice:
+@AsyncAspect()
+class AsyncLoggingAdvice(IAsyncAdvisor):
     MASKING_TEXT: ClassVar[str] = r"\2'******'"
     MASKING_REGEX: ClassVar[
         str
@@ -29,8 +30,8 @@ class AsyncLoggingAdvice:
         super().__init__()
         self.__logger = logger
 
-    @AsyncAround(AsyncLogging.contains)
-    async def around(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+    @Around(AsyncLogging.contains)
+    async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         annotation: AsyncLogging = AsyncLogging.single(joinpoint)
         masking_keys: str = "|".join(annotation.masking_keys)
         masking_regex: str = self.MASKING_REGEX.format(keys=masking_keys)

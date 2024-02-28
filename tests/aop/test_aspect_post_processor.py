@@ -4,19 +4,9 @@ from dataclasses import dataclass
 
 import pytest
 
+from spakky.aop.advice import After, AfterRaising, AfterReturning, Around, Before
+from spakky.aop.advisor import IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
-from spakky.aop.pointcut import (
-    After,
-    AfterRaising,
-    AfterReturning,
-    Around,
-    AsyncAfter,
-    AsyncAfterRaising,
-    AsyncAfterReturning,
-    AsyncAround,
-    AsyncBefore,
-    Before,
-)
 from spakky.aop.post_processor import AspectBeanPostProcessor
 from spakky.bean.application_context import ApplicationContext
 from spakky.bean.bean import Bean
@@ -81,7 +71,7 @@ def test_aspect_post_processor() -> None:
     console = logging.StreamHandler()
     console.setLevel(level=logging.DEBUG)
     console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
+    logger: logging.Logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
@@ -158,7 +148,7 @@ def test_aspect_post_processor_raise_error() -> None:
     console = logging.StreamHandler()
     console.setLevel(level=logging.DEBUG)
     console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
+    logger: logging.Logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
@@ -187,29 +177,29 @@ async def test_async_aspect_post_processor() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvice:
-        @AsyncBefore(AsyncLog.contains)
-        async def before(self, *args: Any, **kwargs: Any) -> None:
+    class AsyncLogAdvice(IAsyncAdvisor):
+        @Before(AsyncLog.contains)
+        async def before_async(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AsyncAfterRaising(AsyncLog.contains)
-        async def after_raising(self, error: Exception) -> None:
+        @AfterRaising(AsyncLog.contains)
+        async def after_raising_async(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AsyncAfterReturning(AsyncLog.contains)
-        async def after_returning(self, result: Any) -> None:
+        @AfterReturning(AsyncLog.contains)
+        async def after_returning_async(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @AsyncAfter(AsyncLog.contains)
-        async def after(self) -> None:
+        @After(AsyncLog.contains)
+        async def after_async(self) -> None:
             nonlocal logs
             logs.append(f"after")
 
-        @AsyncAround(AsyncLog.contains)
-        async def around(
+        @Around(AsyncLog.contains)
+        async def around_async(
             self,
             joinpoint: AsyncFunc,
             *args: Any,
@@ -236,7 +226,7 @@ async def test_async_aspect_post_processor() -> None:
     console = logging.StreamHandler()
     console.setLevel(level=logging.DEBUG)
     console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
+    logger: logging.Logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
@@ -264,29 +254,29 @@ async def test_async_aspect_post_processor_raise_error() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvice:
-        @AsyncBefore(AsyncLog.contains)
-        async def before(self, *args: Any, **kwargs: Any) -> None:
+    class AsyncLogAdvice(IAsyncAdvisor):
+        @Before(AsyncLog.contains)
+        async def before_async(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AsyncAfterRaising(AsyncLog.contains)
-        async def after_raising(self, error: Exception) -> None:
+        @AfterRaising(AsyncLog.contains)
+        async def after_raising_async(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AsyncAfterReturning(AsyncLog.contains)
-        async def after_returning(self, result: Any) -> None:
+        @AfterReturning(AsyncLog.contains)
+        async def after_returning_async(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @AsyncAfter(AsyncLog.contains)
-        async def after(self) -> None:
+        @After(AsyncLog.contains)
+        async def after_async(self) -> None:
             nonlocal logs
             logs.append(f"after")
 
-        @AsyncAround(AsyncLog.contains)
-        async def around(
+        @Around(AsyncLog.contains)
+        async def around_async(
             self,
             joinpoint: AsyncFunc,
             *args: Any,
@@ -313,7 +303,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
     console = logging.StreamHandler()
     console.setLevel(level=logging.DEBUG)
     console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger = logging.getLogger("debug")
+    logger: logging.Logger = logging.getLogger("debug")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 

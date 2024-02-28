@@ -2,8 +2,9 @@ from typing import Any
 from logging import Logger
 from dataclasses import dataclass
 
+from spakky.aop.advice import Around
+from spakky.aop.advisor import IAsyncAdvisor
 from spakky.aop.aspect import AsyncAspect
-from spakky.aop.pointcut import AsyncAround
 from spakky.bean.autowired import autowired
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc
@@ -16,7 +17,7 @@ class AsyncTransactional(FunctionAnnotation):
 
 
 @AsyncAspect()
-class AsyncTransactionalAdvice:
+class AsyncTransactionalAdvice(IAsyncAdvisor):
     __transacntion: AbstractAsyncTranasction
     __logger: Logger
 
@@ -26,13 +27,8 @@ class AsyncTransactionalAdvice:
         self.__transacntion = transaction
         self.__logger = logger
 
-    @AsyncAround(AsyncTransactional.contains)
-    async def around(
-        self,
-        joinpoint: AsyncFunc,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
+    @Around(AsyncTransactional.contains)
+    async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         self.__logger.info("[Transaction] BEGIN TRANSACTION")
         try:
             async with self.__transacntion:

@@ -55,7 +55,7 @@ async def test_transactional_commit() -> None:
 
     advice = AsyncTransactionalAdvice(InMemoryTransaction(), logger)
     assert (
-        await advice.around(
+        await advice.around_async(
             authenticate,
             username="John",
             password="1234",
@@ -63,7 +63,7 @@ async def test_transactional_commit() -> None:
         is True
     )
     with pytest.raises(ValueError, match="Mike?"):
-        assert await advice.around(
+        assert await advice.around_async(
             authenticate,
             "Mike",
             "1234",
