@@ -18,7 +18,7 @@ class AsyncLogging(FunctionAnnotation):
 
 
 @AsyncAspect()
-class AsyncLoggingAdvice(IAsyncAdvisor):
+class AsyncLoggingAdvisor(IAsyncAdvisor):
     MASKING_TEXT: ClassVar[str] = r"\2'******'"
     MASKING_REGEX: ClassVar[
         str

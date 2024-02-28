@@ -3,7 +3,7 @@ from logging import Logger, Formatter, LogRecord
 
 import pytest
 
-from spakky.aspects.logging import AsyncLogging, AsyncLoggingAdvice
+from spakky.aop.builtin.logging import AsyncLogging, AsyncLoggingAdvisor
 
 
 @pytest.mark.asyncio
@@ -31,7 +31,7 @@ async def test_logging_with_masking() -> None:
             raise ValueError("Mike?")
         return username == "John" and password == "1234"
 
-    advice = AsyncLoggingAdvice(logger)
+    advice = AsyncLoggingAdvisor(logger)
     assert (
         await advice.around_async(
             joinpoint=authenticate,
@@ -85,7 +85,7 @@ async def test_logging_without_masking() -> None:
             raise ValueError("Mike?")
         return username == "John" and password == "1234"
 
-    advice = AsyncLoggingAdvice(logger)
+    advice = AsyncLoggingAdvisor(logger)
     assert (
         await advice.around_async(
             joinpoint=authenticate,
