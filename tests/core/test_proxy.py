@@ -1,36 +1,24 @@
 from time import perf_counter_ns
-from typing import Callable
+from types import MethodType
+from typing import Any
 
-from spakky.core.proxy import Enhancer, IInvocationHandler, P, R
+from spakky.core.proxy import Enhancer, IMethodInterceptor
 
 
 def test_proxy() -> None:
     class Subject:
-        message: str
-
-        def __init__(self, message: str) -> None:
-            self.message = message
-
         def call(self) -> str:
-            return self.message
+            return "Hello World!"
 
-    class MyInvocationHandler(IInvocationHandler):
-        def intercept(
-            self,
-            target: object,
-            method: Callable[P, R],
-            *args: P.args,
-            **kwargs: P.kwargs,
-        ) -> R:
+    class MyMethodInterceptor(IMethodInterceptor):
+        def intercept(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()
-            result: R = method(*args, **kwargs)
+            result: Any = method(*args, **kwargs)
             end_time = perf_counter_ns()
             result_time = end_time - start_time
-            print(f"TimeProxy 종료 result_time = {result_time}")
+            print(f"TimeProxy 종료 result_time = {result_time}ns")
             return result
 
-    proxy: Subject = Enhancer(Subject, MyInvocationHandler()).create(
-        message="Hello World!"
-    )
+    proxy: Subject = Enhancer(Subject, MyMethodInterceptor()).create()
     assert proxy.call() == "Hello World!"

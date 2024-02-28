@@ -1,68 +1,74 @@
 import logging
-from typing import Any, Callable, Awaitable
+from typing import Any
 from dataclasses import dataclass
 
 import pytest
 
-from spakky.aop.advice import (
-    AbstractAdvice,
-    AbstractAsyncAdvice,
-    Aspect,
-    AsyncPointcut,
-    P,
-    Pointcut,
-    R,
+from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.pointcut import (
+    After,
+    AfterRaising,
+    AfterReturning,
+    Around,
+    AsyncAfter,
+    AsyncAfterRaising,
+    AsyncAfterReturning,
+    AsyncAround,
+    AsyncBefore,
+    Before,
 )
-from spakky.aop.aspect_post_processor import AspectBeanPostPrecessor
+from spakky.aop.post_processor import AspectBeanPostProcessor
 from spakky.bean.application_context import ApplicationContext
 from spakky.bean.bean import Bean
+from spakky.core.annotation import FunctionAnnotation
+from spakky.core.types import AsyncFunc, AsyncFuncT, Func
 
 
 def test_aspect_post_processor() -> None:
     logs: list[str] = []
 
+    @dataclass
+    class Log(FunctionAnnotation):
+        ...
+
     @Aspect()
-    class LogAdvice(AbstractAdvice):
-        def before(self, _pointcut: Pointcut, *_args: Any, **_kwargs: Any) -> None:
+    class LogAdvice:
+        @Before(Log.contains)
+        def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
-            logs.append(f"before {_args}, {_kwargs}")
-            return super().before(_pointcut, *_args, **_kwargs)
+            logs.append(f"before {args}, {kwargs}")
 
-        def after_raising(self, _pointcut: Pointcut, _error: Exception) -> None:
+        @AfterRaising(Log.contains)
+        def after_raising(self, error: Exception) -> None:
             nonlocal logs
-            logs.append(f"after_raising {_error}")
-            return super().after_raising(_pointcut, _error)
+            logs.append(f"after_raising {error}")
 
-        def after_returning(self, _pointcut: Pointcut, _result: Any) -> None:
+        @AfterReturning(Log.contains)
+        def after_returning(self, result: Any) -> None:
             nonlocal logs
-            logs.append(f"after_returning {_result}")
-            return super().after_returning(_pointcut, _result)
+            logs.append(f"after_returning {result}")
 
-        def after(self, _pointcut: Pointcut) -> None:
+        @After(Log.contains)
+        def after(self) -> None:
             nonlocal logs
             logs.append(f"after")
-            return super().after(_pointcut)
 
+        @Around(Log.contains)
         def around(
             self,
-            _pointcut: Pointcut,
-            func: Callable[P, R],
-            *_args: P.args,
-            **_kwargs: P.kwargs,
-        ) -> R:
+            joinpoint: Func,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
             nonlocal logs
             try:
-                result: R = super().around(_pointcut, func, *_args, **_kwargs)
+                result = joinpoint(*args, **kwargs)
             except Exception as e:
-                logs.append(f"around {_args}, {_kwargs} {e}")
+                logs.append(f"around {args}, {kwargs} {e}")
                 raise
             else:
-                logs.append(f"around {_args}, {_kwargs} {result}")
+                logs.append(f"around {args}, {kwargs} {result}")
                 return result
-
-    @dataclass
-    class Log(Pointcut):
-        advice = LogAdvice
 
     @Bean()
     class EchoService:
@@ -79,7 +85,7 @@ def test_aspect_post_processor() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
     context.register_bean(LogAdvice)
 
@@ -96,48 +102,50 @@ def test_aspect_post_processor() -> None:
 def test_aspect_post_processor_raise_error() -> None:
     logs: list[str] = []
 
-    @Aspect()
-    class LogAdvice(AbstractAdvice):
-        def before(self, _pointcut: Pointcut, *_args: Any, **_kwargs: Any) -> None:
-            nonlocal logs
-            logs.append(f"before {_args}, {_kwargs}")
-            return super().before(_pointcut, *_args, **_kwargs)
-
-        def after_raising(self, _pointcut: Pointcut, _error: Exception) -> None:
-            nonlocal logs
-            logs.append(f"after_raising {_error}")
-            return super().after_raising(_pointcut, _error)
-
-        def after_returning(self, _pointcut: Pointcut, _result: Any) -> None:
-            nonlocal logs
-            logs.append(f"after_returning {_result}")
-            return super().after_returning(_pointcut, _result)
-
-        def after(self, _pointcut: Pointcut) -> None:
-            nonlocal logs
-            logs.append(f"after")
-            return super().after(_pointcut)
-
-        def around(
-            self,
-            _pointcut: Pointcut,
-            func: Callable[P, R],
-            *_args: P.args,
-            **_kwargs: P.kwargs,
-        ) -> R:
-            nonlocal logs
-            try:
-                result: R = super().around(_pointcut, func, *_args, **_kwargs)
-            except Exception as e:
-                logs.append(f"around {_args}, {_kwargs} {e}")
-                raise
-            else:
-                logs.append(f"around {_args}, {_kwargs} {result}")
-                return result
+    logs: list[str] = []
 
     @dataclass
-    class Log(Pointcut):
-        advice = LogAdvice
+    class Log(FunctionAnnotation):
+        ...
+
+    @Aspect()
+    class LogAdvice:
+        @Before(Log.contains)
+        def before(self, *args: Any, **kwargs: Any) -> None:
+            nonlocal logs
+            logs.append(f"before {args}, {kwargs}")
+
+        @AfterRaising(Log.contains)
+        def after_raising(self, error: Exception) -> None:
+            nonlocal logs
+            logs.append(f"after_raising {error}")
+
+        @AfterReturning(Log.contains)
+        def after_returning(self, result: Any) -> None:
+            nonlocal logs
+            logs.append(f"after_returning {result}")
+
+        @After(Log.contains)
+        def after(self) -> None:
+            nonlocal logs
+            logs.append(f"after")
+
+        @Around(Log.contains)
+        def around(
+            self,
+            joinpoint: Func,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
+            nonlocal logs
+            try:
+                result = joinpoint(*args, **kwargs)
+            except Exception as e:
+                logs.append(f"around {args}, {kwargs} {e}")
+                raise
+            else:
+                logs.append(f"around {args}, {kwargs} {result}")
+                return result
 
     @Bean()
     class EchoService:
@@ -154,7 +162,7 @@ def test_aspect_post_processor_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
     context.register_bean(LogAdvice)
 
@@ -173,52 +181,49 @@ def test_aspect_post_processor_raise_error() -> None:
 async def test_async_aspect_post_processor() -> None:
     logs: list[str] = []
 
-    @Aspect()
-    class AsyncLogAdvice(AbstractAsyncAdvice):
-        async def before(
-            self, _pointcut: AsyncPointcut, *_args: Any, **_kwargs: Any
-        ) -> None:
-            nonlocal logs
-            logs.append(f"before {_args}, {_kwargs}")
-            return await super().before(_pointcut, *_args, **_kwargs)
+    @dataclass
+    class AsyncLog(FunctionAnnotation):
+        def __call__(self, obj: AsyncFuncT) -> AsyncFuncT:
+            return super().__call__(obj)
 
-        async def after_raising(
-            self, _pointcut: AsyncPointcut, _error: Exception
-        ) -> None:
+    @AsyncAspect()
+    class AsyncLogAdvice:
+        @AsyncBefore(AsyncLog.contains)
+        async def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
-            logs.append(f"after_raising {_error}")
-            return await super().after_raising(_pointcut, _error)
+            logs.append(f"before {args}, {kwargs}")
 
-        async def after_returning(self, _pointcut: AsyncPointcut, _result: Any) -> None:
+        @AsyncAfterRaising(AsyncLog.contains)
+        async def after_raising(self, error: Exception) -> None:
             nonlocal logs
-            logs.append(f"after_returning {_result}")
-            return await super().after_returning(_pointcut, _result)
+            logs.append(f"after_raising {error}")
 
-        async def after(self, _pointcut: AsyncPointcut) -> None:
+        @AsyncAfterReturning(AsyncLog.contains)
+        async def after_returning(self, result: Any) -> None:
+            nonlocal logs
+            logs.append(f"after_returning {result}")
+
+        @AsyncAfter(AsyncLog.contains)
+        async def after(self) -> None:
             nonlocal logs
             logs.append(f"after")
-            return await super().after(_pointcut)
 
+        @AsyncAround(AsyncLog.contains)
         async def around(
             self,
-            _pointcut: AsyncPointcut,
-            func: Callable[P, Awaitable[R]],
-            *_args: P.args,
-            **_kwargs: P.kwargs,
-        ) -> R:
+            joinpoint: AsyncFunc,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
             nonlocal logs
             try:
-                result: R = await super().around(_pointcut, func, *_args, **_kwargs)
+                result = await joinpoint(*args, **kwargs)
             except Exception as e:
-                logs.append(f"around {_args}, {_kwargs} {e}")
+                logs.append(f"around {args}, {kwargs} {e}")
                 raise
             else:
-                logs.append(f"around {_args}, {_kwargs} {result}")
+                logs.append(f"around {args}, {kwargs} {result}")
                 return result
-
-    @dataclass
-    class AsyncLog(AsyncPointcut):
-        advice = AsyncLogAdvice
 
     @Bean()
     class EchoService:
@@ -235,7 +240,7 @@ async def test_async_aspect_post_processor() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
     context.register_bean(AsyncLogAdvice)
 
@@ -253,52 +258,49 @@ async def test_async_aspect_post_processor() -> None:
 async def test_async_aspect_post_processor_raise_error() -> None:
     logs: list[str] = []
 
-    @Aspect()
-    class AsyncLogAdvice(AbstractAsyncAdvice):
-        async def before(
-            self, _pointcut: AsyncPointcut, *_args: Any, **_kwargs: Any
-        ) -> None:
-            nonlocal logs
-            logs.append(f"before {_args}, {_kwargs}")
-            return await super().before(_pointcut, *_args, **_kwargs)
+    @dataclass
+    class AsyncLog(FunctionAnnotation):
+        def __call__(self, obj: AsyncFuncT) -> AsyncFuncT:
+            return super().__call__(obj)
 
-        async def after_raising(
-            self, _pointcut: AsyncPointcut, _error: Exception
-        ) -> None:
+    @AsyncAspect()
+    class AsyncLogAdvice:
+        @AsyncBefore(AsyncLog.contains)
+        async def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
-            logs.append(f"after_raising {_error}")
-            return await super().after_raising(_pointcut, _error)
+            logs.append(f"before {args}, {kwargs}")
 
-        async def after_returning(self, _pointcut: AsyncPointcut, _result: Any) -> None:
+        @AsyncAfterRaising(AsyncLog.contains)
+        async def after_raising(self, error: Exception) -> None:
             nonlocal logs
-            logs.append(f"after_returning {_result}")
-            return await super().after_returning(_pointcut, _result)
+            logs.append(f"after_raising {error}")
 
-        async def after(self, _pointcut: AsyncPointcut) -> None:
+        @AsyncAfterReturning(AsyncLog.contains)
+        async def after_returning(self, result: Any) -> None:
+            nonlocal logs
+            logs.append(f"after_returning {result}")
+
+        @AsyncAfter(AsyncLog.contains)
+        async def after(self) -> None:
             nonlocal logs
             logs.append(f"after")
-            return await super().after(_pointcut)
 
+        @AsyncAround(AsyncLog.contains)
         async def around(
             self,
-            _pointcut: AsyncPointcut,
-            func: Callable[P, Awaitable[R]],
-            *_args: P.args,
-            **_kwargs: P.kwargs,
-        ) -> R:
+            joinpoint: AsyncFunc,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
             nonlocal logs
             try:
-                result: R = await super().around(_pointcut, func, *_args, **_kwargs)
+                result = await joinpoint(*args, **kwargs)
             except Exception as e:
-                logs.append(f"around {_args}, {_kwargs} {e}")
+                logs.append(f"around {args}, {kwargs} {e}")
                 raise
             else:
-                logs.append(f"around {_args}, {_kwargs} {result}")
+                logs.append(f"around {args}, {kwargs} {result}")
                 return result
-
-    @dataclass
-    class AsyncLog(AsyncPointcut):
-        advice = AsyncLogAdvice
 
     @Bean()
     class EchoService:
@@ -315,7 +317,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostPrecessor(logger))
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
     context.register_bean(AsyncLogAdvice)
 

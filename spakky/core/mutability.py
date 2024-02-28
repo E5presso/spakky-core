@@ -1,8 +1,12 @@
+import sys
 from dataclasses import field, dataclass
 
-from typing_extensions import dataclass_transform
-
 from spakky.core.types import AnyT
+
+if sys.version_info >= (3, 11):
+    from typing import dataclass_transform  # pragma: no cover
+else:
+    from typing_extensions import dataclass_transform  # pragma: no cover
 
 
 @dataclass_transform(

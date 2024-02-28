@@ -5,11 +5,6 @@ from uuid import UUID, uuid4
 from typing import Any, Sequence, final
 from datetime import datetime, timedelta
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
-
 from spakky.cryptography.base64_encoder import Base64Encoder
 from spakky.cryptography.error import (
     InvalidJWTFormatError,
@@ -18,6 +13,11 @@ from spakky.cryptography.error import (
 )
 from spakky.cryptography.hmac import HMAC, HMACType
 from spakky.cryptography.key import Key
+
+if sys.version_info >= (3, 11):
+    from typing import Self  # pragma: no cover
+else:
+    from typing_extensions import Self  # pragma: no cover
 
 
 @final

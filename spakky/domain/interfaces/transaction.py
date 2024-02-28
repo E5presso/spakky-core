@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import final
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
-
 from spakky.core.interfaces.disposable import IAsyncDisposable, IDisposable
+
+if sys.version_info >= (3, 11):
+    from typing import Self  # pragma: no cover
+else:
+    from typing_extensions import Self  # pragma: no cover
 
 
 class AbstractTransaction(IDisposable, ABC):

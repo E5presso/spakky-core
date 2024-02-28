@@ -4,13 +4,14 @@ from typing import Any, final
 from itertools import chain
 from dataclasses import dataclass
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
-
 from spakky.core.error import SpakkyCoreError
 from spakky.core.types import AnyT, ClassT, FuncT
+
+if sys.version_info >= (3, 11):
+    from typing import Self  # pragma: no cover
+else:
+    from typing_extensions import Self  # pragma: no cover
+
 
 __ANNOTATION_METADATA__ = "__SPAKKY_ANNOTATION_METADATA__"
 __ANNOTATION_TYPEMAP__ = "__SPAKKY_ANNOTATION_TYPEMAP__"
