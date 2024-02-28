@@ -7,6 +7,8 @@ from spakky.core.proxy import Enhancer, IMethodInterceptor
 
 def test_proxy() -> None:
     class Subject:
+        name: str = "John"
+
         def call(self) -> str:
             return "Hello World!"
 
@@ -22,3 +24,4 @@ def test_proxy() -> None:
 
     proxy: Subject = Enhancer(Subject, MyMethodInterceptor()).create()
     assert proxy.call() == "Hello World!"
+    assert proxy.name == "John"

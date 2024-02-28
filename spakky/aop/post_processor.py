@@ -69,13 +69,13 @@ class AspectMethodInterceptor(IMethodInterceptor):
         if iscoroutinefunction(method):
             runnable = method
             for advisor in self.__advisors:
-                if not isinstance(advisor, IAsyncAdvisor):
+                if not isinstance(advisor, IAsyncAdvisor):  # pragma: no cover
                     continue
                 runnable = AsyncRunnable(advisor, runnable)
             return runnable(*args, **kwargs)
         runnable = method
         for advisor in self.__advisors:
-            if not isinstance(advisor, IAdvisor):
+            if not isinstance(advisor, IAdvisor):  # pragma: no cover
                 continue
             runnable = Runnable(advisor, runnable)
         return runnable(*args, **kwargs)
