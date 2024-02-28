@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar, Protocol, runtime_checkable
 
 from spakky.core.mutability import immutable
 
@@ -9,17 +9,19 @@ class Command(ABC):
     ...
 
 
-CommandT = TypeVar("CommandT", bound=Command)
-ResultT = TypeVar("ResultT", bound=Any)
+CommandT_contra = TypeVar("CommandT_contra", bound=Command, contravariant=True)
+ResultT_co = TypeVar("ResultT_co", bound=Any, covariant=True)
 
 
-class ICommandUseCase(Generic[CommandT, ResultT], ABC):
+@runtime_checkable
+class ICommandUseCase(Protocol[CommandT_contra, ResultT_co]):
     @abstractmethod
-    def execute(self, command: CommandT) -> ResultT:
+    def execute(self, command: CommandT_contra) -> ResultT_co:
         ...
 
 
-class IAsyncCommandUseCase(Generic[CommandT, ResultT], ABC):
+@runtime_checkable
+class IAsyncCommandUseCase(Protocol[CommandT_contra, ResultT_co]):
     @abstractmethod
-    async def execute(self, command: CommandT) -> ResultT:
+    async def execute(self, command: CommandT_contra) -> ResultT_co:
         ...

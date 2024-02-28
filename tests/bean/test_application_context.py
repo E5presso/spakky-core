@@ -1,5 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from uuid import UUID, uuid4
+from typing import Protocol
 from dataclasses import dataclass
 
 import pytest
@@ -205,7 +206,7 @@ def test_application_context_contains_by_name_expect_false() -> None:
 
 
 def test_application_context_get_primary_expect_success() -> None:
-    class ISampleComponent(ABC):
+    class ISampleComponent(Protocol):
         @abstractmethod
         def do(self) -> None:
             ...
@@ -229,7 +230,7 @@ def test_application_context_get_primary_expect_success() -> None:
 
 
 def test_application_context_get_primary_expect_no_unique_error() -> None:
-    class ISampleComponent(ABC):
+    class ISampleComponent(Protocol):
         @abstractmethod
         def do(self) -> None:
             ...
