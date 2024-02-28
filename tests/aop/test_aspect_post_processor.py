@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pytest
 
 from spakky.aop.advice import After, AfterRaising, AfterReturning, Around, Before
-from spakky.aop.advisor import IAsyncAdvisor
+from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.post_processor import AspectBeanPostProcessor
 from spakky.bean.application_context import ApplicationContext
@@ -22,7 +22,7 @@ def test_aspect_post_processor() -> None:
         ...
 
     @Aspect()
-    class LogAdvice:
+    class LogAdvisor(IAdvisor):
         @Before(Log.contains)
         def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
@@ -77,7 +77,7 @@ def test_aspect_post_processor() -> None:
 
     context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
-    context.register_bean(LogAdvice)
+    context.register_bean(LogAdvisor)
 
     context.start()
 
@@ -99,7 +99,7 @@ def test_aspect_post_processor_raise_error() -> None:
         ...
 
     @Aspect()
-    class LogAdvice:
+    class LogAdvisor(IAdvisor):
         @Before(Log.contains)
         def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
@@ -154,7 +154,7 @@ def test_aspect_post_processor_raise_error() -> None:
 
     context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
-    context.register_bean(LogAdvice)
+    context.register_bean(LogAdvisor)
 
     context.start()
 
@@ -177,7 +177,7 @@ async def test_async_aspect_post_processor() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvice(IAsyncAdvisor):
+    class AsyncLogAdvisor(IAsyncAdvisor):
         @Before(AsyncLog.contains)
         async def before_async(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
@@ -232,7 +232,7 @@ async def test_async_aspect_post_processor() -> None:
 
     context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvice)
+    context.register_bean(AsyncLogAdvisor)
 
     context.start()
 
@@ -254,7 +254,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvice(IAsyncAdvisor):
+    class AsyncLogAdvisor(IAsyncAdvisor):
         @Before(AsyncLog.contains)
         async def before_async(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
@@ -309,7 +309,7 @@ async def test_async_aspect_post_processor_raise_error() -> None:
 
     context.register_bean_post_processor(AspectBeanPostProcessor(logger))
     context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvice)
+    context.register_bean(AsyncLogAdvisor)
 
     context.start()
 
