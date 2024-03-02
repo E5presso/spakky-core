@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "spakky-core"
-version = "0.4.1"
+version = "0.4.2"
 description = "Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc..."
 authors = ["Spakky <sejong418@icloud.com>"]
-packages = [{include = "spakky"}]
+packages = [{ include = "spakky" }]
 readme = "README.md"
 
 [build-system]
@@ -96,5 +96,5 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError",
     "@(abc\\.)?abstractmethod",
-    "@(typing\\.)?overload"
+    "@(typing\\.)?overload",
 ]
