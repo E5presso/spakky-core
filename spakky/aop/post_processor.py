@@ -1,6 +1,5 @@
 from types import MethodType
 from typing import Any, Sequence, cast
-from inspect import iscoroutinefunction
 from logging import Logger
 
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
@@ -11,7 +10,7 @@ from spakky.core.proxy import Enhancer, IMethodInterceptor
 from spakky.core.types import AsyncFunc, Func
 
 
-class Runnable:
+class _Runnable:
     instance: IAdvisor
     next: Func
 
@@ -32,7 +31,7 @@ class Runnable:
             self.instance.after()
 
 
-class AsyncRunnable:
+class _AsyncRunnable:
     instance: IAsyncAdvisor
     next: AsyncFunc
 
@@ -60,25 +59,21 @@ class AspectMethodInterceptor(IMethodInterceptor):
         super().__init__()
         self.__advisors = advisors
 
-    def intercept(
-        self,
-        method: MethodType,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
-        if iscoroutinefunction(method):
-            runnable = method
-            for advisor in self.__advisors:
-                if not isinstance(advisor, IAsyncAdvisor):  # pragma: no cover
-                    continue
-                runnable = AsyncRunnable(advisor, runnable)
-            return runnable(*args, **kwargs)
-        runnable = method
+    def intercept(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
+        runnable: Func = method
         for advisor in self.__advisors:
             if not isinstance(advisor, IAdvisor):  # pragma: no cover
                 continue
-            runnable = Runnable(advisor, runnable)
+            runnable = _Runnable(advisor, runnable)
         return runnable(*args, **kwargs)
+
+    async def intercept_async(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
+        runnable: AsyncFunc = method
+        for advisor in self.__advisors:
+            if not isinstance(advisor, IAsyncAdvisor):  # pragma: no cover
+                continue
+            runnable = _AsyncRunnable(advisor, runnable)
+        return await runnable(*args, **kwargs)
 
 
 class AspectBeanPostProcessor(IBeanPostProcessor):
