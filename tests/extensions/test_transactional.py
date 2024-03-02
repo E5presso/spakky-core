@@ -3,8 +3,10 @@ from logging import Logger, Handler, Formatter, LogRecord
 
 import pytest
 
-from spakky.aop.builtin.transactional import AsyncTransactionalAdvisor
-from spakky.domain.interfaces.transaction import AbstractAsyncTranasction
+from spakky.domain.infrastructures.persistency.transaction import (
+    AbstractAsyncTranasction,
+)
+from spakky.extensions.transactional import AsyncTransactionalAdvisor
 
 
 @pytest.mark.asyncio

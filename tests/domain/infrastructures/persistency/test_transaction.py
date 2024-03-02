@@ -1,6 +1,6 @@
 import pytest
 
-from spakky.domain.interfaces.transaction import (
+from spakky.domain.infrastructures.persistency.transaction import (
     AbstractAsyncTranasction,
     AbstractTransaction,
 )

@@ -3,7 +3,7 @@ from logging import Logger, Formatter, LogRecord
 
 import pytest
 
-from spakky.aop.builtin.logging import AsyncLogging, AsyncLoggingAdvisor
+from spakky.extensions.logging import AsyncLogging, AsyncLoggingAdvisor
 
 
 @pytest.mark.asyncio

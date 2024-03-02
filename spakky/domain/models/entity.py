@@ -14,7 +14,7 @@ class CannotMonkeyPatchEntityError(SpakkyDomainError):
 @mutable
 class Entity(IEquatable, Generic[EquatableT], ABC):
     uid: EquatableT
-    __is_setted: bool = field(init=False, repr=False, default=False)
+    __initialized: bool = field(init=False, repr=False, default=False)
 
     @classmethod
     @abstractmethod
@@ -31,14 +31,14 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
 
     def __post_init__(self) -> None:
         self.validate()
-        self.__is_setted = True
+        self.__initialized = True
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name not in self.__dataclass_fields__:
             raise CannotMonkeyPatchEntityError
         __old: Any | None = getattr(self, __name, None)
         super().__setattr__(__name, __value)
-        if self.__is_setted:
+        if self.__initialized:
             try:
                 self.validate()
             except:

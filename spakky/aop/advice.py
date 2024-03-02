@@ -9,7 +9,7 @@ from spakky.core.annotation import FunctionAnnotation
 class _Advice(FunctionAnnotation):
     pointcut: Callable[[MethodType], bool]
 
-    def is_matched(self, method: MethodType) -> bool:
+    def matches(self, method: MethodType) -> bool:
         return self.pointcut(method)
 
 

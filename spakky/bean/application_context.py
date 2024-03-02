@@ -91,9 +91,9 @@ class ApplicationContext(
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
             if required_type == Unknown:
-                dependencies[name] = self.get(name=name)
+                dependencies[name] = self.single(name=name)
                 continue
-            dependencies[name] = self.get(required_type=required_type)
+            dependencies[name] = self.single(required_type=required_type)
         return dependencies
 
     def __instaniate_bean(self, bean_id: UUID) -> object:
@@ -134,14 +134,14 @@ class ApplicationContext(
         return name in self.__bean_name_map
 
     @overload
-    def get(self, *, required_type: type[AnyT]) -> AnyT:
+    def single(self, *, required_type: type[AnyT]) -> AnyT:
         ...
 
     @overload
-    def get(self, *, name: str) -> Any:
+    def single(self, *, name: str) -> Any:
         ...
 
-    def get(
+    def single(
         self, required_type: type[AnyT] | None = None, name: str | None = None
     ) -> AnyT | Any:
         if required_type is not None:
@@ -155,7 +155,7 @@ class ApplicationContext(
 
     def where(self, clause: Callable[[type], bool]) -> Sequence[object]:
         filtered: list[type[object]] = [x for x in self.__bean_type_map if clause(x)]
-        return [self.get(required_type=x) for x in filtered]
+        return [self.single(required_type=x) for x in filtered]
 
     def register_bean(self, bean: type) -> None:
         if not Bean.contains(bean):

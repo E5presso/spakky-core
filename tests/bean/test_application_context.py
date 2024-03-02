@@ -74,12 +74,12 @@ def test_application_context_get_by_type_singleton_expect_success() -> None:
     context.register_bean(SecondSampleComponent)
 
     assert (
-        context.get(required_type=FirstSampleComponent).id
-        == context.get(required_type=FirstSampleComponent).id
+        context.single(required_type=FirstSampleComponent).id
+        == context.single(required_type=FirstSampleComponent).id
     )
     assert (
-        context.get(required_type=SecondSampleComponent).id
-        == context.get(required_type=SecondSampleComponent).id
+        context.single(required_type=SecondSampleComponent).id
+        == context.single(required_type=SecondSampleComponent).id
     )
 
 
@@ -101,13 +101,13 @@ def test_application_context_get_by_type_expect_no_such_error() -> None:
     context.register_bean(FirstSampleComponent)
 
     assert (
-        context.get(required_type=FirstSampleComponent).id
-        == context.get(required_type=FirstSampleComponent).id
+        context.single(required_type=FirstSampleComponent).id
+        == context.single(required_type=FirstSampleComponent).id
     )
     with pytest.raises(NoSuchBeanError):
         assert (
-            context.get(required_type=SecondSampleComponent).id
-            == context.get(required_type=SecondSampleComponent).id
+            context.single(required_type=SecondSampleComponent).id
+            == context.single(required_type=SecondSampleComponent).id
         )
 
 
@@ -122,7 +122,7 @@ def test_application_context_get_by_name_expect_success() -> None:
     context: ApplicationContext = ApplicationContext()
     context.register_bean(SampleComponent)
 
-    assert isinstance(context.get(name="sample_component"), SampleComponent)
+    assert isinstance(context.single(name="sample_component"), SampleComponent)
 
 
 def test_application_context_get_by_name_expect_no_such_error() -> None:
@@ -137,7 +137,7 @@ def test_application_context_get_by_name_expect_no_such_error() -> None:
     context.register_bean(SampleComponent)
 
     with pytest.raises(NoSuchBeanError):
-        context.get(name="wrong_component")
+        context.single(name="wrong_component")
 
 
 def test_application_context_contains_by_type_expect_true() -> None:
@@ -226,7 +226,9 @@ def test_application_context_get_primary_expect_success() -> None:
     context.register_bean(FirstSampleComponent)
     context.register_bean(SecondSampleComponent)
 
-    assert isinstance(context.get(required_type=ISampleComponent), FirstSampleComponent)
+    assert isinstance(
+        context.single(required_type=ISampleComponent), FirstSampleComponent
+    )
 
 
 def test_application_context_get_primary_expect_no_unique_error() -> None:
@@ -252,7 +254,7 @@ def test_application_context_get_primary_expect_no_unique_error() -> None:
     context.register_bean(SecondSampleComponent)
 
     with pytest.raises(NoUniqueBeanError):
-        context.get(required_type=ISampleComponent)
+        context.single(required_type=ISampleComponent)
 
 
 def test_application_context_get_dependency_recursive_by_name() -> None:
@@ -284,7 +286,7 @@ def test_application_context_get_dependency_recursive_by_name() -> None:
     context.register_bean(B)
     context.register_bean(C)
 
-    assert context.get(required_type=C).c() == "ab"
+    assert context.single(required_type=C).c() == "ab"
 
 
 def test_application_context_get_dependency_recursive_by_type() -> None:
@@ -316,7 +318,7 @@ def test_application_context_get_dependency_recursive_by_type() -> None:
     context.register_bean(B)
     context.register_bean(C)
 
-    assert context.get(required_type=C).c() == "ab"
+    assert context.single(required_type=C).c() == "ab"
 
 
 def test_application_context_where() -> None:
@@ -390,7 +392,7 @@ def test_application_context_register_unmanaged_factory() -> None:
     context.register_bean_factory(get_a)
 
     assert context.contains(name="get_a") is True
-    a: A = context.get(name="get_a")
+    a: A = context.single(name="get_a")
     assert isinstance(a, A)
     assert a.a() == "A"
 
