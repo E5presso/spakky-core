@@ -110,6 +110,8 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
                 )
                 matched_advisors.append(cast(IAsyncAdvisor, advisor))
                 break
+        if not matched_advisors:
+            return bean
         return Enhancer(
             superclass=type(bean),
             callback=AspectMethodInterceptor(advisors=matched_advisors),
