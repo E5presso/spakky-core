@@ -66,8 +66,8 @@ async def test_transactional_commit() -> None:
     )
 
     assert console.log_records == [
-        "[INFO]: [Transaction] BEGIN TRANSACTION",
-        "[INFO]: [Transaction] COMMIT",
+        "[INFO]: [AsyncTransactionalAdvisor] BEGIN TRANSACTION",
+        "[INFO]: [AsyncTransactionalAdvisor] COMMIT",
     ]
 
 
@@ -126,6 +126,6 @@ async def test_transactional_rollback() -> None:
         )
 
     assert console.log_records == [
-        "[INFO]: [Transaction] BEGIN TRANSACTION",
-        "[INFO]: [Transaction] ROLLBACK",
+        "[INFO]: [AsyncTransactionalAdvisor] BEGIN TRANSACTION",
+        "[INFO]: [AsyncTransactionalAdvisor] ROLLBACK",
     ]

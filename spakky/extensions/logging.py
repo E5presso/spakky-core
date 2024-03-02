@@ -43,7 +43,9 @@ class AsyncLoggingAdvisor(IAsyncAdvisor):
             else ""
         )
 
-        before: str = f"[Log] {joinpoint.__qualname__}({_args}{_kwargs})"
+        before: str = (
+            f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs})"
+        )
         self.__logger.info(
             mask.sub(self.MASKING_TEXT, before) if annotation.enable_masking else before
         )
@@ -51,12 +53,12 @@ class AsyncLoggingAdvisor(IAsyncAdvisor):
         try:
             result = await joinpoint(*args, **kwargs)
         except Exception as e:
-            error: str = f"[Log] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__}"
+            error: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__}"
             self.__logger.error(
                 mask.sub(self.MASKING_TEXT, error) if annotation.enable_masking else error
             )
             raise
-        after: str = f"[Log] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r}"
+        after: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r}"
         self.__logger.info(
             mask.sub(self.MASKING_TEXT, after) if annotation.enable_masking else after
         )
