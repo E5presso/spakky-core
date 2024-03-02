@@ -8,7 +8,9 @@ from spakky.aop.aspect import AsyncAspect
 from spakky.bean.autowired import autowired
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc
-from spakky.domain.interfaces.transaction import AbstractAsyncTranasction
+from spakky.domain.infrastructures.persistency.transaction import (
+    AbstractAsyncTranasction,
+)
 
 
 @dataclass

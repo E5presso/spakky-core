@@ -4,6 +4,7 @@ from dataclasses import field, dataclass
 from spakky.aop.advice import After, AfterRaising, AfterReturning, Around, Before
 from spakky.aop.advisor import AdvisorT, AsyncAdvisorT, IAdvisor, IAsyncAdvisor
 from spakky.bean.bean import Bean
+from spakky.core.annotation import AnnotationNotFoundError
 
 
 @dataclass
@@ -14,27 +15,18 @@ class Aspect(Bean):
         self.advisor = obj
         return super().__call__(obj)
 
-    def is_matched(self, bean: object) -> bool:
+    def matches(self, bean: object) -> bool:
         for _, method in getmembers(bean, ismethod):
-            if (advice := Before.single_or_none(self.advisor.before)) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (
-                advice := AfterReturning.single_or_none(self.advisor.after_returning)
-            ) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (
-                advice := AfterRaising.single_or_none(self.advisor.after_raising)
-            ) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (advice := After.single_or_none(self.advisor.after)) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (advice := Around.single_or_none(self.advisor.around)) is not None:
-                if advice.is_matched(method):
-                    return True
+            try:
+                return (
+                    Before.single(self.advisor.before).matches(method)
+                    or AfterReturning.single(self.advisor.after_returning).matches(method)
+                    or AfterRaising.single(self.advisor.after_raising).matches(method)
+                    or After.single(self.advisor.after).matches(method)
+                    or Around.single(self.advisor.around).matches(method)
+                )
+            except AnnotationNotFoundError:
+                return False
         return False
 
 
@@ -46,27 +38,20 @@ class AsyncAspect(Bean):
         self.advisor = obj
         return super().__call__(obj)
 
-    def is_matched(self, bean: object) -> bool:
+    def matches(self, bean: object) -> bool:
         for _, method in getmembers(bean, ismethod):
-            if (advice := Before.single_or_none(self.advisor.before_async)) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (
-                advice := AfterReturning.single_or_none(
-                    self.advisor.after_returning_async
+            try:
+                return (
+                    Before.single(self.advisor.before_async).matches(method)
+                    or AfterReturning.single(self.advisor.after_returning_async).matches(
+                        method
+                    )
+                    or AfterRaising.single(self.advisor.after_raising_async).matches(
+                        method
+                    )
+                    or After.single(self.advisor.after_async).matches(method)
+                    or Around.single(self.advisor.around_async).matches(method)
                 )
-            ) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (
-                advice := AfterRaising.single_or_none(self.advisor.after_raising_async)
-            ) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (advice := After.single_or_none(self.advisor.after_async)) is not None:
-                if advice.is_matched(method):
-                    return True
-            if (advice := Around.single_or_none(self.advisor.around_async)) is not None:
-                if advice.is_matched(method):
-                    return True
+            except AnnotationNotFoundError:
+                return False
         return False

@@ -33,16 +33,16 @@ class IBeanContainer(Protocol):
 
     @overload
     @abstractmethod
-    def get(self, *, required_type: type[AnyT]) -> AnyT:
+    def single(self, *, required_type: type[AnyT]) -> AnyT:
         ...
 
     @overload
     @abstractmethod
-    def get(self, *, name: str) -> Any:
+    def single(self, *, name: str) -> Any:
         ...
 
     @abstractmethod
-    def get(
+    def single(
         self, required_type: type[AnyT] | None = None, name: str | None = None
     ) -> AnyT | Any:
         ...
