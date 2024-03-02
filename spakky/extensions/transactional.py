@@ -31,12 +31,12 @@ class AsyncTransactionalAdvisor(IAsyncAdvisor):
 
     @Around(AsyncTransactional.contains)
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-        self.__logger.info("[Transaction] BEGIN TRANSACTION")
+        self.__logger.info(f"[{type(self).__name__}] BEGIN TRANSACTION")
         try:
             async with self.__transacntion:
                 result = await joinpoint(*args, **kwargs)
         except:
-            self.__logger.info("[Transaction] ROLLBACK")
+            self.__logger.info(f"[{type(self).__name__}] ROLLBACK")
             raise
-        self.__logger.info("[Transaction] COMMIT")
+        self.__logger.info(f"[{type(self).__name__}] COMMIT")
         return result

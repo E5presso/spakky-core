@@ -52,12 +52,12 @@ async def test_logging_with_masking() -> None:
         assert await advice.around_async(authenticate, "Mike", "1234") is False
 
     assert console.log_records == [
-        "[INFO]: [Log] test_logging_with_masking.<locals>.authenticate(username='John', password='******')",
-        "[INFO]: [Log] test_logging_with_masking.<locals>.authenticate(username='John', password='******') -> True",
-        "[INFO]: [Log] test_logging_with_masking.<locals>.authenticate('John', '12345')",
-        "[INFO]: [Log] test_logging_with_masking.<locals>.authenticate('John', '12345') -> False",
-        "[INFO]: [Log] test_logging_with_masking.<locals>.authenticate('Mike', '1234')",
-        "[ERROR]: [Log] test_logging_with_masking.<locals>.authenticate('Mike', '1234') raised ValueError",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_with_masking.<locals>.authenticate(username='John', password='******')",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_with_masking.<locals>.authenticate(username='John', password='******') -> True",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_with_masking.<locals>.authenticate('John', '12345')",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_with_masking.<locals>.authenticate('John', '12345') -> False",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_with_masking.<locals>.authenticate('Mike', '1234')",
+        "[ERROR]: [AsyncLoggingAdvisor] test_logging_with_masking.<locals>.authenticate('Mike', '1234') raised ValueError",
     ]
 
 
@@ -106,10 +106,10 @@ async def test_logging_without_masking() -> None:
         assert await advice.around_async(authenticate, "Mike", "1234") is False
 
     assert console.log_records == [
-        "[INFO]: [Log] test_logging_without_masking.<locals>.authenticate(username='John', password='1234')",
-        "[INFO]: [Log] test_logging_without_masking.<locals>.authenticate(username='John', password='1234') -> True",
-        "[INFO]: [Log] test_logging_without_masking.<locals>.authenticate('John', '12345')",
-        "[INFO]: [Log] test_logging_without_masking.<locals>.authenticate('John', '12345') -> False",
-        "[INFO]: [Log] test_logging_without_masking.<locals>.authenticate('Mike', '1234')",
-        "[ERROR]: [Log] test_logging_without_masking.<locals>.authenticate('Mike', '1234') raised ValueError",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_without_masking.<locals>.authenticate(username='John', password='1234')",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_without_masking.<locals>.authenticate(username='John', password='1234') -> True",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_without_masking.<locals>.authenticate('John', '12345')",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_without_masking.<locals>.authenticate('John', '12345') -> False",
+        "[INFO]: [AsyncLoggingAdvisor] test_logging_without_masking.<locals>.authenticate('Mike', '1234')",
+        "[ERROR]: [AsyncLoggingAdvisor] test_logging_without_masking.<locals>.authenticate('Mike', '1234') raised ValueError",
     ]
