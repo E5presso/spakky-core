@@ -23,7 +23,7 @@ class Gcm(ICryptor):
         self.__key = key
 
     def encrypt(self, message: str) -> str:
-        plain_bytes: bytes = pad(message.encode("UTF-8"), AES.block_size)
+        plain_bytes: bytes = pad(message.encode(), AES.block_size)
         aad: Key = Key(size=16)
         iv: Key = Key(size=12)
         cryptor: GcmMode = AES.new(  # type: ignore
@@ -54,6 +54,6 @@ class Gcm(ICryptor):
             )
             cryptor.update(aad_bytes)
             plain_bytes: bytes = cryptor.decrypt_and_verify(cipher_bytes, tag_bytes)
-            return unpad(plain_bytes, AES.block_size).decode("UTF-8")
+            return unpad(plain_bytes, AES.block_size).decode()
         except Exception as e:
             raise DecryptionFailedError from e

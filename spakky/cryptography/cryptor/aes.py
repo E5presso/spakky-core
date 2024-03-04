@@ -23,7 +23,7 @@ class Aes(ICryptor):
         self.__key = key
 
     def encrypt(self, message: str) -> str:
-        plain_bytes: bytes = pad(message.encode("UTF-8"), AES.block_size)
+        plain_bytes: bytes = pad(message.encode(), AES.block_size)
         iv: Key = Key(size=16)
         cryptor: CbcMode = AES.new(  # type: ignore
             key=self.__key.binary,
@@ -39,14 +39,14 @@ class Aes(ICryptor):
     def decrypt(self, cipher: str) -> str:
         try:
             [iv, cipher] = cipher.split(":")
-            iv_bytes: bytes = Base64Encoder.get_bytes(iv, True)
-            cipher_bytes: bytes = Base64Encoder.get_bytes(cipher, True)
+            iv_bytes: bytes = Base64Encoder.get_bytes(iv, self.url_safe)
+            cipher_bytes: bytes = Base64Encoder.get_bytes(cipher, self.url_safe)
             cryptor: CbcMode = AES.new(  # type: ignore
                 key=self.__key.binary,
                 mode=AES.MODE_CBC,
                 iv=iv_bytes,
             )
             plain_bytes: bytes = cryptor.decrypt(cipher_bytes)
-            return unpad(plain_bytes, AES.block_size).decode("UTF-8")
+            return unpad(plain_bytes, AES.block_size).decode()
         except Exception as e:
             raise DecryptionFailedError from e
