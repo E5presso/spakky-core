@@ -54,26 +54,34 @@ class _AsyncRunnable:
 
 
 class AspectMethodInterceptor(IMethodInterceptor):
-    __advisors: Sequence[IAdvisor | IAsyncAdvisor]
+    __container: IBeanContainer
+    __advisors: Sequence[type[IAdvisor | IAsyncAdvisor]]
 
-    def __init__(self, advisors: Sequence[IAdvisor | IAsyncAdvisor]) -> None:
+    def __init__(
+        self,
+        container: IBeanContainer,
+        advisors: Sequence[type[IAdvisor | IAsyncAdvisor]],
+    ) -> None:
         super().__init__()
+        self.__container = container
         self.__advisors = advisors
 
     def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any:
         runnable: Func = method
         for advisor in self.__advisors:
-            if not isinstance(advisor, IAdvisor):  # pragma: no cover
+            if not issubclass(advisor, IAdvisor):  # pragma: no cover
                 continue
-            runnable = _Runnable(advisor, runnable)
+            runnable = _Runnable(self.__container.single(required_type=advisor), runnable)
         return runnable(*args, **kwargs)
 
     async def intercept_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         runnable: AsyncFunc = method
         for advisor in self.__advisors:
-            if not isinstance(advisor, IAsyncAdvisor):  # pragma: no cover
+            if not issubclass(advisor, IAsyncAdvisor):  # pragma: no cover
                 continue
-            runnable = _AsyncRunnable(advisor, runnable)
+            runnable = _AsyncRunnable(
+                self.__container.single(required_type=advisor), runnable
+            )
         return await runnable(*args, **kwargs)
 
 
@@ -90,24 +98,23 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         annotation: Bean | None = Bean.single_or_none(bean)
         if annotation is None:
             return bean
-        advisors: Sequence[object] = container.where(
+        matched_advisors: Sequence[type[IAdvisor | IAsyncAdvisor]] = []
+        for advisor in container.filter_bean_types(
             lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
-        )
-        matched_advisors: Sequence[IAdvisor | IAsyncAdvisor] = []
-        for advisor in advisors:
+        ):
             aspect: Aspect | None = Aspect.single_or_none(advisor)
             async_aspect: AsyncAspect | None = AsyncAspect.single_or_none(advisor)
             if aspect is not None and aspect.matches(bean):
                 self.__logger.info(
                     f"[{type(self).__name__}] {type(advisor).__name__} -> {type(bean).__name__}"
                 )
-                matched_advisors.append(cast(IAdvisor, advisor))
+                matched_advisors.append(cast(type[IAdvisor], advisor))
                 break
             if async_aspect is not None and async_aspect.matches(bean):
                 self.__logger.info(
                     f"[{type(self).__name__}] {type(advisor).__name__} -> {type(bean).__name__}"
                 )
-                matched_advisors.append(cast(IAsyncAdvisor, advisor))
+                matched_advisors.append(cast(type[IAsyncAdvisor], advisor))
                 break
         if not any(matched_advisors):
             return bean
@@ -119,5 +126,5 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
             dependencies[name] = container.single(required_type=required_type)
         return Enhancer(
             superclass=type(bean),
-            callback=AspectMethodInterceptor(advisors=matched_advisors),
+            callback=AspectMethodInterceptor(container, matched_advisors),
         ).create(**dependencies)

@@ -345,11 +345,13 @@ def test_application_context_where() -> None:
     context.register_bean(SecondSampleClass)
     context.register_bean(ThirdSampleClassMarked)
 
-    queried: list[object] = list(context.where(lambda x: x.__name__.endswith("Marked")))
+    queried: list[object] = list(
+        context.filter_beans(lambda x: x.__name__.endswith("Marked"))
+    )
     assert isinstance(queried[0], FirstSampleClassMarked)
     assert isinstance(queried[1], ThirdSampleClassMarked)
 
-    queried = list(context.where(Customized.contains))
+    queried = list(context.filter_beans(Customized.contains))
     assert isinstance(queried[0], SecondSampleClass)
     assert isinstance(queried[1], ThirdSampleClassMarked)
 
