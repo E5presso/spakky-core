@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from spakky.bean.bean import Bean
+from spakky.bean.bean import BeanFactory
 
 
 @dataclass
-class Configuration(Bean):
+class Configuration(BeanFactory):
     ...
