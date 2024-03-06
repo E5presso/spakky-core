@@ -106,13 +106,13 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
             async_aspect: AsyncAspect | None = AsyncAspect.single_or_none(advisor)
             if aspect is not None and aspect.matches(bean):
                 self.__logger.info(
-                    f"[{type(self).__name__}] {type(advisor).__name__} -> {type(bean).__name__}"
+                    f"[{type(self).__name__}] {advisor.__name__} -> {type(bean).__name__}"
                 )
                 matched_advisors.append(cast(type[IAdvisor], advisor))
                 break
             if async_aspect is not None and async_aspect.matches(bean):
                 self.__logger.info(
-                    f"[{type(self).__name__}] {type(advisor).__name__} -> {type(bean).__name__}"
+                    f"[{type(self).__name__}] {advisor.__name__} -> {type(bean).__name__}"
                 )
                 matched_advisors.append(cast(type[IAsyncAdvisor], advisor))
                 break
