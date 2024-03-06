@@ -1,20 +1,20 @@
 from abc import abstractmethod
-from types import MethodType, new_class
+from types import new_class
 from typing import Any, Generic, Protocol, runtime_checkable
 from inspect import iscoroutinefunction
 from functools import wraps
 
-from spakky.core.types import ObjectT
+from spakky.core.types import AsyncFunc, Func, ObjectT
 
 
 @runtime_checkable
 class IMethodInterceptor(Protocol):
     @abstractmethod
-    def intercept(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
+    def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any:
         ...
 
     @abstractmethod
-    async def intercept_async(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
+    async def intercept_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         ...
 
 
@@ -26,7 +26,7 @@ class Enhancer(Generic[ObjectT]):
         self.__superclass = superclass
         self.__callback = callback
 
-    def create(self) -> ObjectT:
+    def create(self, *args: Any, **kwargs: Any) -> ObjectT:
         def __getattribute__(instance: ObjectT, name: str) -> Any:
             attribute: Any = object.__getattribute__(instance, name)
             if callable(attribute):
@@ -58,5 +58,5 @@ class Enhancer(Generic[ObjectT]):
                 __dir__=__dir__,
             ),
         )
-        instance: Any = proxy_type()
+        instance: Any = proxy_type(*args, **kwargs)
         return instance

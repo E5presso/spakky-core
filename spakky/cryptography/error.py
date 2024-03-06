@@ -14,6 +14,11 @@ class KeySizeError(SpakkyCoreError):
 
 
 @final
+class InvalidAsymmetricKeyFormatError(SpakkyCoreError):
+    message = "Invalid asymmetric key format."
+
+
+@final
 class InvalidJWTFormatError(SpakkyCoreError):
     message = "parameter 'token' is not a valid data (which has 3 separated values.)"
 

@@ -1,11 +1,12 @@
-from types import MethodType
 from typing import Any, Sequence, cast
 from logging import Logger
 
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.bean.autowired import Unknown
+from spakky.bean.bean import Bean
 from spakky.bean.interfaces.bean_container import IBeanContainer
-from spakky.bean.interfaces.post_processor import IBeanPostProcessor
+from spakky.bean.interfaces.bean_processor import IBeanPostProcessor
 from spakky.core.proxy import Enhancer, IMethodInterceptor
 from spakky.core.types import AsyncFunc, Func
 
@@ -59,7 +60,7 @@ class AspectMethodInterceptor(IMethodInterceptor):
         super().__init__()
         self.__advisors = advisors
 
-    def intercept(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
+    def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any:
         runnable: Func = method
         for advisor in self.__advisors:
             if not isinstance(advisor, IAdvisor):  # pragma: no cover
@@ -67,7 +68,7 @@ class AspectMethodInterceptor(IMethodInterceptor):
             runnable = _Runnable(advisor, runnable)
         return runnable(*args, **kwargs)
 
-    async def intercept_async(self, method: MethodType, *args: Any, **kwargs: Any) -> Any:
+    async def intercept_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         runnable: AsyncFunc = method
         for advisor in self.__advisors:
             if not isinstance(advisor, IAsyncAdvisor):  # pragma: no cover
@@ -85,6 +86,9 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
 
     def post_process_bean(self, container: IBeanContainer, bean: object) -> object:
         if Aspect.contains(bean) or AsyncAspect.contains(bean):
+            return bean
+        annotation: Bean | None = Bean.single_or_none(bean)
+        if annotation is None:
             return bean
         advisors: Sequence[object] = container.where(
             lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
@@ -107,7 +111,13 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
                 break
         if not any(matched_advisors):
             return bean
+        dependencies: dict[str, object] = {}
+        for name, required_type in annotation.dependencies.items():
+            if required_type == Unknown:
+                dependencies[name] = container.single(name=name)
+                continue
+            dependencies[name] = container.single(required_type=required_type)
         return Enhancer(
             superclass=type(bean),
             callback=AspectMethodInterceptor(advisors=matched_advisors),
-        ).create()
+        ).create(**dependencies)
