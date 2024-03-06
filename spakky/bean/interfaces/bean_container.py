@@ -48,5 +48,9 @@ class IBeanContainer(Protocol):
         ...
 
     @abstractmethod
-    def where(self, clause: Callable[[type], bool]) -> Sequence[object]:
+    def filter_bean_types(self, clause: Callable[[type], bool]) -> Sequence[type]:
+        ...
+
+    @abstractmethod
+    def filter_beans(self, clause: Callable[[type], bool]) -> Sequence[object]:
         ...

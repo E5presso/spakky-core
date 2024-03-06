@@ -167,7 +167,10 @@ class ApplicationContext(
             raise ValueError("'name' and 'required_type' both cannot be None")
         return self.__retrieve_bean_by_name(name)
 
-    def where(self, clause: Callable[[type], bool]) -> Sequence[object]:
+    def filter_bean_types(self, clause: Callable[[type], bool]) -> Sequence[type]:
+        return [x for x in self.__bean_type_map if clause(x)]
+
+    def filter_beans(self, clause: Callable[[type], bool]) -> Sequence[object]:
         filtered: list[type[object]] = [x for x in self.__bean_type_map if clause(x)]
         return [self.single(required_type=x) for x in filtered]
 
