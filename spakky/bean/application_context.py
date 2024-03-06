@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from uuid import UUID, uuid4
 from types import ModuleType
 from typing import Any, Callable, Sequence, overload
@@ -20,6 +21,11 @@ from spakky.bean.interfaces.bean_scanner import IBeanScanner
 from spakky.bean.primary import Primary
 from spakky.core.importing import list_classes, list_functions, list_modules
 from spakky.core.types import AnyT
+
+
+class BeanType(Enum):
+    CLASS = auto()
+    FACTORY = auto()
 
 
 class ApplicationContext(
@@ -96,11 +102,11 @@ class ApplicationContext(
             dependencies[name] = self.__retrieve_bean_by_type(required_type)
         return dependencies
 
-    def __instaniate_bean(self, bean_id: UUID) -> object:
+    def __instaniate_bean(self, bean_id: UUID) -> tuple[object, BeanType]:
         bean = self.__bean_map[bean_id]
         if isinstance(bean, type):
-            return bean(**self.__get_dependencies(bean))
-        return bean()
+            return bean(**self.__get_dependencies(bean)), BeanType.CLASS
+        return bean(), BeanType.FACTORY
 
     def __post_process_bean(self, bean: object) -> object:
         for post_processor in self.__post_processors:
@@ -109,8 +115,10 @@ class ApplicationContext(
 
     def __get_bean_by_id(self, bean_id: UUID) -> object:
         if bean_id not in self.__singleton_cache:
-            instance = self.__instaniate_bean(bean_id)
-            self.__singleton_cache[bean_id] = self.__post_process_bean(instance)
+            bean, bean_type = self.__instaniate_bean(bean_id)
+            if bean_type == BeanType.CLASS:
+                bean = self.__post_process_bean(bean)
+            self.__singleton_cache[bean_id] = bean
         return self.__singleton_cache[bean_id]
 
     def __retrieve_bean_by_type(self, bean_type: type) -> object:
