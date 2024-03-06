@@ -1,19 +1,22 @@
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import Any, Generic, TypeVar, Protocol, runtime_checkable
 
-from spakky.core.interfaces.equatable import EquatableT
 from spakky.domain.models.aggregate_root import AggregateRoot
+
+AggregateRootT_contra = TypeVar(
+    "AggregateRootT_contra", bound=AggregateRoot[Any], contravariant=True
+)
 
 
 @runtime_checkable
-class IEventPublisher(Protocol[EquatableT]):
+class IEventPublisher(Generic[AggregateRootT_contra], Protocol):
     @abstractmethod
-    def publish(self, aggregate: AggregateRoot[EquatableT]) -> None:
+    def publish(self, aggregate: AggregateRootT_contra) -> None:
         ...
 
 
 @runtime_checkable
-class IAsyncEventPublisher(Protocol[EquatableT]):
+class IAsyncEventPublisher(Generic[AggregateRootT_contra], Protocol):
     @abstractmethod
-    async def publish(self, aggregate: AggregateRoot[EquatableT]) -> None:
+    async def publish(self, aggregate: AggregateRootT_contra) -> None:
         ...

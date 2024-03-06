@@ -9,7 +9,8 @@ from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.post_processor import AspectBeanPostProcessor
 from spakky.bean.application_context import ApplicationContext
-from spakky.bean.bean import Bean
+from spakky.bean.autowired import autowired
+from spakky.bean.bean import Bean, BeanFactory
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, AsyncFuncT, Func
 
@@ -463,6 +464,93 @@ def test_aop_with_no_method() -> None:
     service: EchoService = context.single(required_type=EchoService)
     assert service.message == "Hello World!"
     assert len(logs) == 0
+
+
+def test_aop_with_dependencies() -> None:
+    logs: list[str] = []
+
+    @dataclass
+    class Log(FunctionAnnotation):
+        ...
+
+    @Aspect()
+    class LogAdvisor(IAdvisor):
+        @Before(Log.contains)
+        def before(self, *args: Any, **kwargs: Any) -> None:
+            nonlocal logs
+            logs.append(f"before {args}, {kwargs}")
+
+        @AfterRaising(Log.contains)
+        def after_raising(self, error: Exception) -> None:
+            nonlocal logs
+            logs.append(f"after_raising {error}")
+
+        @AfterReturning(Log.contains)
+        def after_returning(self, result: Any) -> None:
+            nonlocal logs
+            logs.append(f"after_returning {result}")
+
+        @After(Log.contains)
+        def after(self) -> None:
+            nonlocal logs
+            logs.append(f"after")
+
+        @Around(Log.contains)
+        def around(
+            self,
+            joinpoint: Func,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
+            nonlocal logs
+            try:
+                result = joinpoint(*args, **kwargs)
+            except Exception as e:
+                logs.append(f"around {args}, {kwargs} {e}")
+                raise
+            else:
+                logs.append(f"around {args}, {kwargs} {result}")
+                return result
+
+    @Bean()
+    class EchoService:
+        message: str
+
+        @autowired
+        def __init__(self, message: str) -> None:
+            self.message = message
+
+        @Log()
+        def echo(self) -> str:
+            return self.message
+
+    context: ApplicationContext = ApplicationContext()
+
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger: logging.Logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
+
+    @BeanFactory(bean_name="message")
+    def get_message() -> str:
+        return "Hello World!"
+
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
+    context.register_bean_factory(get_message)
+    context.register_bean(EchoService)
+    context.register_bean(LogAdvisor)
+
+    context.start()
+
+    service: EchoService = context.single(required_type=EchoService)
+    assert service.message == "Hello World!"
+    assert service.echo() == "Hello World!"
+    assert logs[0] == "before (), {}"
+    assert logs[1] == "around (), {} Hello World!"
+    assert logs[2] == "after_returning Hello World!"
+    assert logs[3] == "after"
 
 
 @pytest.mark.asyncio
