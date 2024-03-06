@@ -2,12 +2,15 @@ from spakky.stereotype.configuration import Configuration
 
 
 def test_configuration() -> None:
-    @Configuration()
     class SampleEnvironment:
         ...
 
-    class NonAnnotated:
-        ...
+    @Configuration()
+    def sample_environment() -> SampleEnvironment:
+        return SampleEnvironment()
 
-    assert Configuration.single_or_none(SampleEnvironment) is not None
-    assert Configuration.single_or_none(NonAnnotated) is None
+    def non_annotated() -> SampleEnvironment:
+        return SampleEnvironment()
+
+    assert Configuration.single_or_none(sample_environment) is not None
+    assert Configuration.single_or_none(non_annotated) is None
