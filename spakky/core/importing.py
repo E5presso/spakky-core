@@ -11,11 +11,15 @@ class CannotScanNonPackageModuleError(SpakkyCoreError):
     message = "Module that you specified is not a package module."
 
 
-def list_modules(package: ModuleType) -> set[ModuleType]:
+def list_modules(package: str | ModuleType) -> set[ModuleType]:
+    if isinstance(package, str):
+        package = importlib.import_module(package)
     if not hasattr(package, "__path__"):
         raise CannotScanNonPackageModuleError(package)
     modules: set[ModuleType] = set()
     for _, name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        if name.startswith("src."):
+            name = name.removeprefix("src.")
         modules.add(importlib.import_module(name))
     return modules
 
