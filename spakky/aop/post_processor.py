@@ -67,18 +67,26 @@ class AspectMethodInterceptor(IMethodInterceptor):
         self.__advisors = advisors
 
     def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any:
+        advisors: Sequence[type[IAdvisor]] = [
+            x for x in self.__advisors if issubclass(x, IAdvisor)
+        ]
+        matched: Sequence[type[IAdvisor]] = [
+            x for x in advisors if Aspect.single(x).matches(method)
+        ]
         runnable: Func = method
-        for advisor in self.__advisors:
-            if not issubclass(advisor, IAdvisor):  # pragma: no cover
-                continue
+        for advisor in matched:
             runnable = _Runnable(self.__container.single(required_type=advisor), runnable)
         return runnable(*args, **kwargs)
 
     async def intercept_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-        runnable: AsyncFunc = method
-        for advisor in self.__advisors:
-            if not issubclass(advisor, IAsyncAdvisor):  # pragma: no cover
-                continue
+        advisors: Sequence[type[IAsyncAdvisor]] = [
+            x for x in self.__advisors if issubclass(x, IAsyncAdvisor)
+        ]
+        matched: Sequence[type[IAsyncAdvisor]] = [
+            x for x in advisors if AsyncAspect.single(x).matches(method)
+        ]
+        runnable: Func = method
+        for advisor in matched:
             runnable = _AsyncRunnable(
                 self.__container.single(required_type=advisor), runnable
             )
