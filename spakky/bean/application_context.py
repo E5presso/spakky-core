@@ -41,7 +41,7 @@ class ApplicationContext(
     __singleton_cache: dict[UUID, object]
     __post_processors: list[IBeanPostProcessor]
 
-    def __init__(self, package: ModuleType | None = None) -> None:
+    def __init__(self, package: ModuleType | str | None = None) -> None:
         self.__bean_map = {}
         self.__type_map = {}
         self.__bean_type_map = {}
@@ -190,7 +190,7 @@ class ApplicationContext(
     def register_bean_post_processor(self, post_processor: IBeanPostProcessor) -> None:
         self.__post_processors.append(post_processor)
 
-    def scan(self, package: ModuleType) -> None:
+    def scan(self, package: ModuleType | str) -> None:
         modules: set[ModuleType] = list_modules(package)
         for module in modules:
             beans: set[type] = list_classes(module, Bean.contains)
