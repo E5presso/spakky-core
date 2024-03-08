@@ -1,15 +1,15 @@
-from types import MethodType
 from typing import Callable
 from dataclasses import dataclass
 
 from spakky.core.annotation import FunctionAnnotation
+from spakky.core.types import Func
 
 
 @dataclass
 class _Advice(FunctionAnnotation):
-    pointcut: Callable[[MethodType], bool]
+    pointcut: Callable[[Func], bool]
 
-    def matches(self, method: MethodType) -> bool:
+    def matches(self, method: Func) -> bool:
         return self.pointcut(method)
 
 
