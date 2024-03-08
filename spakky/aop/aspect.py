@@ -15,7 +15,7 @@ class Aspect(Bean):
         return super().__call__(obj)
 
     def matches(self, bean: object) -> bool:
-        for _, method in getmembers(bean):
+        for _, method in getmembers(bean, callable):
             if (advice := Before.single_or_none(self.advisor.before)) is not None:
                 if advice.matches(method):
                     return True
@@ -47,7 +47,7 @@ class AsyncAspect(Bean):
         return super().__call__(obj)
 
     def matches(self, bean: object) -> bool:
-        for _, method in getmembers(bean):
+        for _, method in getmembers(bean, callable):
             if (advice := Before.single_or_none(self.advisor.before_async)) is not None:
                 if advice.matches(method):
                     return True
