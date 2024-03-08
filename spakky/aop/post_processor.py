@@ -107,23 +107,30 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         if annotation is None:
             return bean
         matched_advisors: Sequence[type[IAdvisor | IAsyncAdvisor]] = []
-        for advisor in container.filter_bean_types(
+        advisors: Sequence[type] = container.filter_bean_types(
             lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
-        ):
+        )
+        self.__logger.info(
+            f"[{type(self).__name__}] Advisors found: {[x.__name__ for x in advisors]!r}"
+        )
+        self.__logger.info(
+            f"[{type(self).__name__}] Searching advisors for '{type(bean).__name__}'"
+        )
+        for advisor in advisors:
             aspect: Aspect | None = Aspect.single_or_none(advisor)
             async_aspect: AsyncAspect | None = AsyncAspect.single_or_none(advisor)
+            self.__logger.info(
+                f"[{type(self).__name__}] {advisor.__name__} -> ({type(aspect).__name__}, {type(async_aspect).__name__})"
+            )
             if aspect is not None and aspect.matches(bean):
-                self.__logger.info(
-                    f"[{type(self).__name__}] {advisor.__name__} -> {type(bean).__name__}"
-                )
                 matched_advisors.append(cast(type[IAdvisor], advisor))
-                break
+                continue
             if async_aspect is not None and async_aspect.matches(bean):
-                self.__logger.info(
-                    f"[{type(self).__name__}] {advisor.__name__} -> {type(bean).__name__}"
-                )
                 matched_advisors.append(cast(type[IAsyncAdvisor], advisor))
-                break
+                continue
+        self.__logger.info(
+            f"[{type(self).__name__}] Matched advisors found for '{type(bean).__name__}': {[x.__name__ for x in matched_advisors]!r}"
+        )
         if not any(matched_advisors):
             return bean
         dependencies: dict[str, object] = {}
