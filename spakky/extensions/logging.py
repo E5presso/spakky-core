@@ -6,6 +6,7 @@ from dataclasses import field, dataclass
 from spakky.aop.advice import Around
 from spakky.aop.advisor import IAsyncAdvisor
 from spakky.aop.aspect import AsyncAspect
+from spakky.aop.order import Order
 from spakky.bean.autowired import autowired
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc
@@ -17,6 +18,7 @@ class AsyncLogging(FunctionAnnotation):
     masking_keys: list[str] = field(default_factory=lambda: ["secret", "key", "password"])
 
 
+@Order(0)
 @AsyncAspect()
 class AsyncLoggingAdvisor(IAsyncAdvisor):
     MASKING_TEXT: ClassVar[str] = r"\2'******'"
