@@ -17,6 +17,7 @@ from tests.dummy_package import module_a, module_b, module_c
 
 def test_list_modules_expect_success() -> None:
     assert list_modules(dummy_package) == {module_a, module_b, module_c}
+    assert list_modules("tests.dummy_package") == {module_a, module_b, module_c}
 
 
 def test_list_modules_expect_fail() -> None:

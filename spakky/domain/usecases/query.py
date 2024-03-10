@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Protocol, runtime_checkable
+from typing import Any, TypeVar, Protocol, runtime_checkable
 
 from spakky.core.mutability import immutable
 
@@ -21,7 +21,7 @@ class IQueryUseCase(Protocol[QueryT_contra, ResultT_co]):
 
 
 @runtime_checkable
-class IAsyncQueryUseCase(Generic[QueryT_contra, ResultT_co]):
+class IAsyncQueryUseCase(Protocol[QueryT_contra, ResultT_co]):
     @abstractmethod
     async def execute(self, query: QueryT_contra) -> ResultT_co:
         ...

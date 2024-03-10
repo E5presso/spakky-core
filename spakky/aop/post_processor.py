@@ -107,33 +107,36 @@ class AspectMethodInterceptor(IMethodInterceptor):
 
 class AspectBeanPostProcessor(IBeanPostProcessor):
     __logger: Logger
+    __cache: dict[type, object]
 
     def __init__(self, logger: Logger) -> None:
         super().__init__()
         self.__logger = logger
+        self.__cache = {}
+
+    def __set_cache(self, type_: type, bean: object) -> None:
+        self.__cache[type_] = bean
+
+    def __get_cache(self, type_: type) -> object | None:
+        return self.__cache.get(type_, None)
 
     def post_process_bean(self, container: IBeanContainer, bean: object) -> object:
+        if (cached := self.__get_cache(type(bean))) is not None:
+            return cached
         if Aspect.contains(bean) or AsyncAspect.contains(bean):
+            self.__set_cache(type(bean), bean)
             return bean
         annotation: Bean | None = Bean.single_or_none(bean)
         if annotation is None:
+            self.__set_cache(type(bean), bean)
             return bean
         matched_advisors: Sequence[type[IAdvisor | IAsyncAdvisor]] = []
         advisors: Sequence[type] = container.filter_bean_types(
             lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
         )
-        self.__logger.info(
-            f"[{type(self).__name__}] Advisors found: {[x.__name__ for x in advisors]!r}"
-        )
-        self.__logger.info(
-            f"[{type(self).__name__}] Searching advisors for '{type(bean).__name__}'"
-        )
         for advisor in advisors:
             aspect: Aspect | None = Aspect.single_or_none(advisor)
             async_aspect: AsyncAspect | None = AsyncAspect.single_or_none(advisor)
-            self.__logger.info(
-                f"[{type(self).__name__}] {advisor.__name__} -> ({type(aspect).__name__}, {type(async_aspect).__name__})"
-            )
             if aspect is not None and aspect.matches(bean):
                 matched_advisors.append(cast(type[IAdvisor], advisor))
                 continue
@@ -141,9 +144,10 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
                 matched_advisors.append(cast(type[IAsyncAdvisor], advisor))
                 continue
         self.__logger.info(
-            f"[{type(self).__name__}] Matched advisors found for '{type(bean).__name__}': {[x.__name__ for x in matched_advisors]!r}"
+            f"[{type(self).__name__}] {[x.__name__ for x in matched_advisors]!r} -> {type(bean).__name__}"
         )
         if not any(matched_advisors):
+            self.__cache[type(bean)] = bean
             return bean
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
@@ -151,7 +155,9 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
                 dependencies[name] = container.single(name=name)
                 continue
             dependencies[name] = container.single(required_type=required_type)
-        return Enhancer(
+        proxy: object = Enhancer(
             superclass=type(bean),
             callback=AspectMethodInterceptor(container, matched_advisors),
         ).create(**dependencies)
+        self.__set_cache(type(bean), proxy)
+        return proxy
