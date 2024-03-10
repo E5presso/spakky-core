@@ -5,12 +5,11 @@ from dataclasses import dataclass
 from spakky.aop.advice import Around
 from spakky.aop.advisor import IAsyncAdvisor
 from spakky.aop.aspect import AsyncAspect
+from spakky.aop.order import Order
 from spakky.bean.autowired import autowired
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc
-from spakky.domain.ports.persistency.transaction import (
-    AbstractAsyncTranasction,
-)
+from spakky.domain.ports.persistency.transaction import AbstractAsyncTranasction
 
 
 @dataclass
@@ -18,6 +17,7 @@ class AsyncTransactional(FunctionAnnotation):
     ...
 
 
+@Order(0)
 @AsyncAspect()
 class AsyncTransactionalAdvisor(IAsyncAdvisor):
     __transacntion: AbstractAsyncTranasction

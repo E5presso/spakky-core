@@ -70,6 +70,16 @@ class Annotation(ABC):
 
     @final
     @classmethod
+    def single_or_default(cls, obj: Any, default: Self) -> Self:
+        annotations: list[Self] = cls.all(obj)
+        if len(annotations) > 1:
+            raise MultipleAnnotationFoundError(cls, obj)
+        if len(annotations) == 0:
+            return default
+        return annotations[0]
+
+    @final
+    @classmethod
     def contains(cls, obj: Any) -> bool:
         annotations: list[Self] = cls.all(obj)
         return len(annotations) > 0

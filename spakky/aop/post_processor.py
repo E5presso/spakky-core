@@ -1,8 +1,10 @@
+import sys
 from typing import Any, Sequence, cast
 from logging import Logger
 
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.order import Order
 from spakky.bean.autowired import Unknown
 from spakky.bean.bean import Bean
 from spakky.bean.interfaces.bean_container import IBeanContainer
@@ -149,6 +151,12 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         if not any(matched_advisors):
             self.__cache[type(bean)] = bean
             return bean
+
+        matched_advisors = sorted(
+            matched_advisors,
+            key=lambda x: Order.single_or_default(x, Order(sys.maxsize)).order,
+        )
+
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
             if required_type == Unknown:
