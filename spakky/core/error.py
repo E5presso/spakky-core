@@ -1,8 +1,5 @@
-from typing import ClassVar
+from abc import ABC
 
 
-class SpakkyCoreError(Exception):
-    message: ClassVar[str]
-
-    def __repr__(self) -> str:
-        return self.message
+class SpakkyCoreError(Exception, ABC):
+    message: str
