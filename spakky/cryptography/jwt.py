@@ -67,9 +67,7 @@ class JWT:
     @property
     def is_expired(self) -> bool:
         exp: int | None = self.__payload.get("exp")
-        return (
-            self.__convert_datetime(exp) < datetime.utcnow() if exp is not None else False
-        )
+        return self.__convert_datetime(exp) < datetime.now() if exp is not None else False
 
     @property
     def is_signed(self) -> bool:
@@ -91,7 +89,7 @@ class JWT:
             self.__signature = signature
             self.__is_signed = False
         else:
-            current_time: datetime = datetime.utcnow()
+            current_time: datetime = datetime.now()
             self.__header = {
                 "typ": "JWT",
                 "alg": HMACType.HS256,
@@ -154,13 +152,13 @@ class JWT:
         iat: datetime = self.__convert_datetime(iat_value)
         exp: int = self.__convert_unixtime(iat + expire_after)
         self.__payload["exp"] = exp
-        self.__payload["updated_at"] = self.__convert_unixtime(datetime.utcnow())
+        self.__payload["updated_at"] = self.__convert_unixtime(datetime.now())
         if self.__is_signed:
             self.__sign()
         return self
 
     def refresh(self, expire_after: timedelta) -> Self:
-        current_time: datetime = datetime.utcnow()
+        current_time: datetime = datetime.now()
         self.__payload["exp"] = self.__convert_unixtime(current_time + expire_after)
         self.__payload["updated_at"] = self.__convert_unixtime(current_time)
         if self.__is_signed:
@@ -192,7 +190,7 @@ class JWT:
             url_safe=True,
         )
         if verification_result:
-            self.__payload["auth_time"] = self.__convert_unixtime(datetime.utcnow())
+            self.__payload["auth_time"] = self.__convert_unixtime(datetime.now())
             self.__is_signed = verification_result
         return verification_result
 
