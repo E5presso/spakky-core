@@ -145,18 +145,16 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
             if async_aspect is not None and async_aspect.matches(bean):
                 matched_advisors.append(cast(type[IAsyncAdvisor], advisor))
                 continue
-        self.__logger.info(
-            f"[{type(self).__name__}] {[x.__name__ for x in matched_advisors]!r} -> {type(bean).__name__}"
-        )
         if not any(matched_advisors):
             self.__cache[type(bean)] = bean
             return bean
-
-        matched_advisors = sorted(
-            matched_advisors,
+        matched_advisors.sort(
             key=lambda x: Order.single_or_default(x, Order(sys.maxsize)).order,
+            reverse=True,
         )
-
+        self.__logger.info(
+            f"[{type(self).__name__}] {[f'{x.__name__}({Order.single_or_default(x, Order(sys.maxsize)).order})' for x in matched_advisors]!r} -> {type(bean).__name__}"
+        )
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
             if required_type == Unknown:
