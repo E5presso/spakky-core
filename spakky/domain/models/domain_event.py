@@ -2,7 +2,7 @@ import sys
 from abc import ABC
 from copy import deepcopy
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import field
 
 from spakky.core.interfaces.cloneable import ICloneable
@@ -19,7 +19,7 @@ else:
 @immutable
 class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
     event_id: UUID = field(default_factory=uuid4)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def clone(self) -> Self:
         return deepcopy(self)

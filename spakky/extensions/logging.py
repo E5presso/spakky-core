@@ -1,4 +1,5 @@
 import re
+from time import perf_counter
 from typing import Any, ClassVar
 from logging import Logger
 from dataclasses import field, dataclass
@@ -34,6 +35,7 @@ class AsyncLoggingAdvisor(IAsyncAdvisor):
 
     @Around(AsyncLogging.contains)
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+        start: float = perf_counter()
         annotation: AsyncLogging = AsyncLogging.single(joinpoint)
         masking_keys: str = "|".join(annotation.masking_keys)
         masking_regex: str = self.MASKING_REGEX.format(keys=masking_keys)
@@ -45,22 +47,17 @@ class AsyncLoggingAdvisor(IAsyncAdvisor):
             else ""
         )
 
-        before: str = (
-            f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs})"
-        )
-        self.__logger.info(
-            mask.sub(self.MASKING_TEXT, before) if annotation.enable_masking else before
-        )
-
         try:
             result = await joinpoint(*args, **kwargs)
         except Exception as e:
-            error: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__}"
+            end: float = perf_counter()
+            error: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__} ({end - start:.2f}s)"
             self.__logger.error(
                 mask.sub(self.MASKING_TEXT, error) if annotation.enable_masking else error
             )
             raise
-        after: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r}"
+        end: float = perf_counter()
+        after: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r} ({end - start:.2f}s)"
         self.__logger.info(
             mask.sub(self.MASKING_TEXT, after) if annotation.enable_masking else after
         )
