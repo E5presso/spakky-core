@@ -1,7 +1,8 @@
 from io import BufferedReader
 from enum import Enum
 from typing import final
-from hashlib import md5, sha1, sha224, sha256, sha384, sha512
+
+from Crypto.Hash import MD5, SHA1, SHA224, SHA256, SHA384, SHA512
 
 from spakky.cryptography.base64_encoder import Base64Encoder
 
@@ -26,17 +27,17 @@ class Hash:
         self.__hash_type = hash_type
         match self.__hash_type:
             case HashType.MD5:
-                self.__hash = md5()
+                self.__hash = MD5.new()
             case HashType.SHA1:
-                self.__hash = sha1()
+                self.__hash = SHA1.new()
             case HashType.SHA224:
-                self.__hash = sha224()
+                self.__hash = SHA224.new()
             case HashType.SHA256:
-                self.__hash = sha256()
+                self.__hash = SHA256.new()
             case HashType.SHA384:
-                self.__hash = sha384()
+                self.__hash = SHA384.new()
             case HashType.SHA512:  # pragma: no cover
-                self.__hash = sha512()
+                self.__hash = SHA512.new()
         if isinstance(data, str):
             self.__hash.update(data.encode("UTF-8"))
         if isinstance(data, BufferedReader):
@@ -60,4 +61,11 @@ class Hash:
 
     @property
     def bytes(self) -> bytes:
+        return self.__hash.digest()
+
+    @property
+    def oid(self) -> str:
+        return self.__hash.oid
+
+    def digest(self) -> "bytes":
         return self.__hash.digest()

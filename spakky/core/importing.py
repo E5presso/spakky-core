@@ -19,7 +19,7 @@ def list_modules(package: str | ModuleType) -> set[ModuleType]:
     modules: set[ModuleType] = set()
     for _, name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
         if name.startswith("src."):
-            name = name.removeprefix("src.")
+            name = name.removeprefix("src.")  # pragma: no cover
         modules.add(importlib.import_module(name))
     return modules
 
