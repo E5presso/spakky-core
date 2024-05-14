@@ -36,6 +36,7 @@ def test_proxy() -> None:
     proxy: Subject = Enhancer(Subject, MyMethodInterceptor()).create()
     assert proxy.call() == "Hello World!"
     assert proxy.name == "John"
+    assert dir(proxy) == dir(Subject())
 
 
 def test_proxy_with_parameter() -> None:
@@ -63,7 +64,7 @@ def test_proxy_with_parameter() -> None:
         ) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()
-            result: Any = method(*args, **kwargs)
+            result: Any = await method(*args, **kwargs)
             end_time = perf_counter_ns()
             result_time = end_time - start_time
             print(f"TimeProxy 종료 result_time = {result_time}ns")
@@ -72,3 +73,4 @@ def test_proxy_with_parameter() -> None:
     proxy: Subject = Enhancer(Subject, MyMethodInterceptor()).create(name="John")
     assert proxy.call() == "Hello John!"
     assert proxy.name == "John"
+    assert dir(proxy) == dir(Subject("John"))

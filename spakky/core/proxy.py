@@ -47,8 +47,8 @@ class Enhancer(Generic[ObjectT]):
                 return wrapper
             return attribute
 
-        def __dir__(_: ObjectT) -> list[str]:
-            return dir(self.__superclass)
+        def __dir__(instance: ObjectT) -> list[str]:
+            return list(set(dir(self.__superclass) + list(instance.__dict__.keys())))
 
         proxy_type: type = new_class(
             name=f"{self.__superclass.__name__}DynamicProxyByEnhancer",

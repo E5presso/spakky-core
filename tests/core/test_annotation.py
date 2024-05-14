@@ -20,6 +20,7 @@ def test_class_annotation_expect_success() -> None:
 
     assert ClassAnnotation.contains(Dummy)
     assert ClassAnnotation.single_or_none(Dummy) is not None
+    assert ClassAnnotation.single_or_default(Dummy, ClassAnnotation()) is not None
     assert ClassAnnotation.single(Dummy)
 
 
@@ -67,6 +68,8 @@ def test_same_class_annotation_multiple_times_expect_error() -> None:
         DummyAnnotation.single(Dummy)
     with pytest.raises(MultipleAnnotationFoundError):
         DummyAnnotation.single_or_none(Dummy)
+    with pytest.raises(MultipleAnnotationFoundError):
+        DummyAnnotation.single_or_default(Dummy, DummyAnnotation(age=30))
 
     assert DummyAnnotation.all(Dummy) == [
         DummyAnnotation(age=30),

@@ -17,19 +17,17 @@ typing-extensions = "^4.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.2"
-black = "^23.11.0"
+black = "^24.4.2"
 isort = "^5.12.0"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
-pytest-xdist = "^3.5.0"
 
 [tool.poetry.group.ci.dependencies]
 pylint = "^3.0.2"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
-pytest-xdist = "^3.5.0"
 
 [tool.black]
 line-length = 90
@@ -72,7 +70,6 @@ testpaths = "tests"
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
 addopts = """
-    -n auto
     --cov
     --cov-report=term
     --cov-report=xml

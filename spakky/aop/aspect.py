@@ -16,25 +16,16 @@ class Aspect(Bean):
 
     def matches(self, bean: object) -> bool:
         for _, method in getmembers(bean, callable):
-            if (advice := Before.single_or_none(self.advisor.before)) is not None:
-                if advice.matches(method):
-                    return True
-            if (
-                advice := AfterReturning.single_or_none(self.advisor.after_returning)
-            ) is not None:
-                if advice.matches(method):
-                    return True
-            if (
-                advice := AfterRaising.single_or_none(self.advisor.after_raising)
-            ) is not None:
-                if advice.matches(method):
-                    return True
-            if (advice := After.single_or_none(self.advisor.after)) is not None:
-                if advice.matches(method):
-                    return True
-            if (advice := Around.single_or_none(self.advisor.around)) is not None:
-                if advice.matches(method):
-                    return True
+            for annotation, target_method in {
+                Before: self.advisor.before,
+                AfterReturning: self.advisor.after_returning,
+                AfterRaising: self.advisor.after_raising,
+                After: self.advisor.after,
+                Around: self.advisor.around,
+            }.items():
+                if (advice := annotation.single_or_none(target_method)) is not None:
+                    if advice.matches(method):
+                        return True
         return False
 
 
@@ -48,25 +39,14 @@ class AsyncAspect(Bean):
 
     def matches(self, bean: object) -> bool:
         for _, method in getmembers(bean, callable):
-            if (advice := Before.single_or_none(self.advisor.before_async)) is not None:
-                if advice.matches(method):
-                    return True
-            if (
-                advice := AfterReturning.single_or_none(
-                    self.advisor.after_returning_async
-                )
-            ) is not None:
-                if advice.matches(method):
-                    return True
-            if (
-                advice := AfterRaising.single_or_none(self.advisor.after_raising_async)
-            ) is not None:
-                if advice.matches(method):
-                    return True
-            if (advice := After.single_or_none(self.advisor.after_async)) is not None:
-                if advice.matches(method):
-                    return True
-            if (advice := Around.single_or_none(self.advisor.around_async)) is not None:
-                if advice.matches(method):
-                    return True
+            for annotation, target_method in {
+                Before: self.advisor.before_async,
+                AfterReturning: self.advisor.after_returning_async,
+                AfterRaising: self.advisor.after_raising_async,
+                After: self.advisor.after_async,
+                Around: self.advisor.around_async,
+            }.items():
+                if (advice := annotation.single_or_none(target_method)) is not None:
+                    if advice.matches(method):
+                        return True
         return False
