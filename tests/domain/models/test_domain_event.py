@@ -7,8 +7,7 @@ from spakky.domain.models.domain_event import DomainEvent
 
 def test_domain_event_equals() -> None:
     @immutable
-    class SampleEvent(DomainEvent):
-        ...
+    class SampleEvent(DomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -23,8 +22,7 @@ def test_domain_event_equals() -> None:
 
 def test_domain_event_not_equals() -> None:
     @immutable
-    class SampleEvent(DomainEvent):
-        ...
+    class SampleEvent(DomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -39,12 +37,10 @@ def test_domain_event_not_equals() -> None:
 
 def test_domain_event_not_equals_with_wrong_type() -> None:
     @immutable
-    class SampleEvent(DomainEvent):
-        ...
+    class SampleEvent(DomainEvent): ...
 
     @immutable
-    class AnotherEvent(DomainEvent):
-        ...
+    class AnotherEvent(DomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -59,8 +55,7 @@ def test_domain_event_not_equals_with_wrong_type() -> None:
 
 def test_domain_event_clone() -> None:
     @immutable
-    class SampleEvent(DomainEvent):
-        ...
+    class SampleEvent(DomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -72,8 +67,7 @@ def test_domain_event_clone() -> None:
 
 def test_domain_event_hash() -> None:
     @immutable
-    class SampleEvent(DomainEvent):
-        ...
+    class SampleEvent(DomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -88,8 +82,7 @@ def test_domain_event_hash() -> None:
 
 def test_domain_event_compare() -> None:
     @immutable
-    class SampleEvent(DomainEvent):
-        ...
+    class SampleEvent(DomainEvent): ...
 
     events: list[SampleEvent] = [
         SampleEvent(

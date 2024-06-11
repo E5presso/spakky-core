@@ -10,18 +10,15 @@ from spakky.bean.inject import inject
 def test_inject_to_function_by_type() -> None:
     class IA(Protocol):
         @abstractmethod
-        def a(self) -> str:
-            ...
+        def a(self) -> str: ...
 
     class IB(Protocol):
         @abstractmethod
-        def b(self) -> str:
-            ...
+        def b(self) -> str: ...
 
     class IC(Protocol):
         @abstractmethod
-        def c(self) -> str:
-            ...
+        def c(self) -> str: ...
 
     @Bean()
     class A(IA):
@@ -60,18 +57,15 @@ def test_inject_to_function_by_type() -> None:
 def test_inject_to_function_by_name() -> None:
     class IA(Protocol):
         @abstractmethod
-        def a(self) -> str:
-            ...
+        def a(self) -> str: ...
 
     class IB(Protocol):
         @abstractmethod
-        def b(self) -> str:
-            ...
+        def b(self) -> str: ...
 
     class IC(Protocol):
         @abstractmethod
-        def c(self) -> str:
-            ...
+        def c(self) -> str: ...
 
     @Bean()
     class A(IA):

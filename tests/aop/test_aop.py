@@ -19,8 +19,7 @@ def test_aop_with_no_implementations() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):
@@ -74,8 +73,7 @@ def test_aop() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):
@@ -149,8 +147,7 @@ def test_aop_with_another_bean() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):
@@ -216,8 +213,7 @@ def test_aop_with_no_implementations_raise_error() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):
@@ -274,8 +270,7 @@ def test_aop_raise_error() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):
@@ -350,8 +345,7 @@ def test_aop_that_does_not_have_any_aspects() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):
@@ -400,8 +394,7 @@ def test_aop_with_no_method() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):
@@ -470,8 +463,7 @@ def test_aop_with_dependencies() -> None:
     logs: list[str] = []
 
     @dataclass
-    class Log(FunctionAnnotation):
-        ...
+    class Log(FunctionAnnotation): ...
 
     @Aspect()
     class LogAdvisor(IAdvisor):

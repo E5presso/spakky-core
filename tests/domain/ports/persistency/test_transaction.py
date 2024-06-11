@@ -15,8 +15,7 @@ def test_tranasction_auto_commit() -> None:
             self.committed = False
             self.rolled_back = False
 
-        def dispose(self) -> None:
-            ...
+        def dispose(self) -> None: ...
 
         def commit(self) -> None:
             self.committed = True
@@ -42,8 +41,7 @@ def test_tranasction_manual_commit() -> None:
             self.committed = False
             self.rolled_back = False
 
-        def dispose(self) -> None:
-            ...
+        def dispose(self) -> None: ...
 
         def commit(self) -> None:
             self.committed = True
@@ -76,8 +74,7 @@ def test_tranasction_rollback_when_raised() -> None:
             self.committed = False
             self.rolled_back = False
 
-        def dispose(self) -> None:
-            ...
+        def dispose(self) -> None: ...
 
         def commit(self) -> None:
             self.committed = True
@@ -105,8 +102,7 @@ async def test_async_tranasction_auto_commit() -> None:
             self.committed = False
             self.rolled_back = False
 
-        async def dispose(self) -> None:
-            ...
+        async def dispose(self) -> None: ...
 
         async def commit(self) -> None:
             self.committed = True
@@ -133,8 +129,7 @@ async def test_async_tranasction_manual_commit() -> None:
             self.committed = False
             self.rolled_back = False
 
-        async def dispose(self) -> None:
-            ...
+        async def dispose(self) -> None: ...
 
         async def commit(self) -> None:
             self.committed = True
@@ -168,8 +163,7 @@ async def test_async_tranasction_rollback_when_raised() -> None:
             self.committed = False
             self.rolled_back = False
 
-        async def dispose(self) -> None:
-            ...
+        async def dispose(self) -> None: ...
 
         async def commit(self) -> None:
             self.committed = True

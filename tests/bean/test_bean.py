@@ -44,8 +44,7 @@ def test_bean_without_autowired() -> None:
 
 
 def test_bean_factory_with_return_annotation() -> None:
-    class A:
-        ...
+    class A: ...
 
     @BeanFactory()
     def get_a() -> A:
@@ -58,8 +57,7 @@ def test_bean_factory_with_return_annotation() -> None:
 
 
 def test_bean_factory_without_return_annotation() -> None:
-    class A:
-        ...
+    class A: ...
 
     with pytest.raises(ReturnAnnotationNotFoundInBeanFactoryError):
 
@@ -70,8 +68,7 @@ def test_bean_factory_without_return_annotation() -> None:
 
 def test_bean_with_name() -> None:
     @Bean(bean_name="asdf")
-    class A:
-        ...
+    class A: ...
 
     assert Bean.contains(A) is True
     assert Bean.single(A) is not None
@@ -79,8 +76,7 @@ def test_bean_with_name() -> None:
 
 
 def test_bean_factory_with_name() -> None:
-    class A:
-        ...
+    class A: ...
 
     @BeanFactory(bean_name="a")
     def get_a() -> A:
