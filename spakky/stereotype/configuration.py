@@ -4,5 +4,4 @@ from spakky.bean.bean import Bean
 
 
 @dataclass
-class Configuration(Bean):
-    ...
+class Configuration(Bean): ...

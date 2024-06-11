@@ -4,5 +4,4 @@ from spakky.core.annotation import ClassAnnotation
 
 
 @dataclass
-class Primary(ClassAnnotation):
-    ...
+class Primary(ClassAnnotation): ...

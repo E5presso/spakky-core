@@ -61,7 +61,8 @@ disable = """
     too-few-public-methods,
     unnecessary-ellipsis,
     redefined-builtin,
-    too-many-locals
+    too-many-locals,
+    multiple-statements,
 """
 
 [tool.pytest.ini_options]

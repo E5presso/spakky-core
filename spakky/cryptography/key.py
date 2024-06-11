@@ -9,16 +9,13 @@ class Key:
     __binary: bytes
 
     @overload
-    def __init__(self, *, size: int) -> None:
-        ...
+    def __init__(self, *, size: int) -> None: ...
 
     @overload
-    def __init__(self, *, binary: bytes) -> None:
-        ...
+    def __init__(self, *, binary: bytes) -> None: ...
 
     @overload
-    def __init__(self, *, base64: str, url_safe: bool = False) -> None:
-        ...
+    def __init__(self, *, base64: str, url_safe: bool = False) -> None: ...
 
     def __init__(
         self,

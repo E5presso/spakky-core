@@ -11,8 +11,7 @@ else:
 @runtime_checkable
 class ICloneable(Protocol):
     @abstractmethod
-    def clone(self) -> Self:
-        ...
+    def clone(self) -> Self: ...
 
 
 CloneableT = TypeVar("CloneableT", bound=ICloneable)

@@ -13,8 +13,7 @@ from spakky.domain.ports.persistency.transaction import AbstractAsyncTranasction
 
 
 @dataclass
-class AsyncTransactional(FunctionAnnotation):
-    ...
+class AsyncTransactional(FunctionAnnotation): ...
 
 
 @Order(0)

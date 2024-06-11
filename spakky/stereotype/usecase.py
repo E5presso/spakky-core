@@ -4,5 +4,4 @@ from spakky.bean.bean import Bean
 
 
 @dataclass
-class UseCase(Bean):
-    ...
+class UseCase(Bean): ...

@@ -7,5 +7,6 @@ from spakky.bean.interfaces.bean_processor import IBeanPostProcessor
 @runtime_checkable
 class IBeanPostProcessorRegistry(Protocol):
     @abstractmethod
-    def register_bean_post_processor(self, post_processor: IBeanPostProcessor) -> None:
-        ...
+    def register_bean_post_processor(
+        self, post_processor: IBeanPostProcessor
+    ) -> None: ...

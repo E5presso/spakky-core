@@ -131,12 +131,10 @@ class ApplicationContext(
         return self.__get_bean_by_id(bean_id)
 
     @overload
-    def contains(self, *, required_type: type) -> bool:
-        ...
+    def contains(self, *, required_type: type) -> bool: ...
 
     @overload
-    def contains(self, *, name: str) -> bool:
-        ...
+    def contains(self, *, name: str) -> bool: ...
 
     def contains(
         self, required_type: type | None = None, name: str | None = None
@@ -151,12 +149,10 @@ class ApplicationContext(
         return name in self.__bean_name_map
 
     @overload
-    def single(self, *, required_type: type[AnyT]) -> AnyT:
-        ...
+    def single(self, *, required_type: type[AnyT]) -> AnyT: ...
 
     @overload
-    def single(self, *, name: str) -> Any:
-        ...
+    def single(self, *, name: str) -> Any: ...
 
     def single(
         self, required_type: type[AnyT] | None = None, name: str | None = None

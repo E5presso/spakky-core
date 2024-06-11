@@ -6,5 +6,4 @@ from typing import Protocol, runtime_checkable
 @runtime_checkable
 class IBeanScanner(Protocol):
     @abstractmethod
-    def scan(self, package: ModuleType) -> None:
-        ...
+    def scan(self, package: ModuleType) -> None: ...

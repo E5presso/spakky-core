@@ -7,8 +7,7 @@ from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import FuncT
 
 
-class Unknown:
-    ...
+class Unknown: ...
 
 
 class CannotAutowiringNonConstructorMethodError(SpakkyBeanError):
