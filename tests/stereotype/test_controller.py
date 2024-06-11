@@ -3,11 +3,9 @@ from spakky.stereotype.controller import Controller
 
 def test_controller() -> None:
     @Controller(prefix="/dummy")
-    class SampleController:
-        ...
+    class SampleController: ...
 
-    class NonAnnotated:
-        ...
+    class NonAnnotated: ...
 
     assert Controller.single_or_none(SampleController) is not None
     assert Controller.single(SampleController).prefix == "/dummy"

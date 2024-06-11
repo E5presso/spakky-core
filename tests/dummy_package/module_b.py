@@ -3,17 +3,14 @@ from spakky.core.annotation import ClassAnnotation
 
 
 @ClassAnnotation()
-class DummyB:
-    ...
+class DummyB: ...
 
 
 @Bean()
-class ComponentB:
-    ...
+class ComponentB: ...
 
 
-class UnmanagedB:
-    ...
+class UnmanagedB: ...
 
 
 @BeanFactory()

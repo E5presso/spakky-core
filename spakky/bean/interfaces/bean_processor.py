@@ -7,5 +7,4 @@ from spakky.bean.interfaces.bean_container import IBeanContainer
 @runtime_checkable
 class IBeanPostProcessor(Protocol):
     @abstractmethod
-    def post_process_bean(self, container: IBeanContainer, bean: object) -> object:
-        ...
+    def post_process_bean(self, container: IBeanContainer, bean: object) -> object: ...

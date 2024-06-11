@@ -13,8 +13,7 @@ class IEventHandlerCallaback(Protocol):
         self_,  # type: ignore
         self: Any,
         event: DomainEvent,
-    ) -> Awaitable[None]:
-        ...
+    ) -> Awaitable[None]: ...
 
 
 @dataclass
@@ -35,5 +34,4 @@ def on_event(
 
 
 @dataclass
-class EventHandler(Bean):
-    ...
+class EventHandler(Bean): ...

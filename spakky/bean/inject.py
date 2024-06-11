@@ -5,13 +5,11 @@ from spakky.core.types import AnyT
 
 
 @overload
-def inject(context: IBeanContainer, *, required_type: type[AnyT]) -> AnyT:
-    ...
+def inject(context: IBeanContainer, *, required_type: type[AnyT]) -> AnyT: ...
 
 
 @overload
-def inject(context: IBeanContainer, *, name: str) -> object:
-    ...
+def inject(context: IBeanContainer, *, name: str) -> object: ...
 
 
 def inject(

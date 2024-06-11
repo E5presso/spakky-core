@@ -23,9 +23,9 @@ class AsyncLogging(FunctionAnnotation):
 @AsyncAspect()
 class AsyncLoggingAdvisor(IAsyncAdvisor):
     MASKING_TEXT: ClassVar[str] = r"\2'******'"
-    MASKING_REGEX: ClassVar[
-        str
-    ] = r"((['\"]?(?={keys})[^'\"]*['\"]?[:=]\s*)['\"][^'\"]*['\"])"
+    MASKING_REGEX: ClassVar[str] = (
+        r"((['\"]?(?={keys})[^'\"]*['\"]?[:=]\s*)['\"][^'\"]*['\"])"
+    )
     __logger: Logger
 
     @autowired
@@ -51,13 +51,17 @@ class AsyncLoggingAdvisor(IAsyncAdvisor):
             result = await joinpoint(*args, **kwargs)
         except Exception as e:
             end: float = perf_counter()
-            error: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__} ({end - start:.2f}s)"
+            error: str = (
+                f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__} ({end - start:.2f}s)"
+            )
             self.__logger.error(
                 mask.sub(self.MASKING_TEXT, error) if annotation.enable_masking else error
             )
             raise
         end: float = perf_counter()
-        after: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r} ({end - start:.2f}s)"
+        after: str = (
+            f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r} ({end - start:.2f}s)"
+        )
         self.__logger.info(
             mask.sub(self.MASKING_TEXT, after) if annotation.enable_masking else after
         )

@@ -7,8 +7,7 @@ from spakky.core.mutability import mutable
 from spakky.domain.error import SpakkyDomainError
 
 
-class CannotMonkeyPatchEntityError(SpakkyDomainError):
-    ...
+class CannotMonkeyPatchEntityError(SpakkyDomainError): ...
 
 
 @mutable
@@ -18,8 +17,7 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
 
     @classmethod
     @abstractmethod
-    def next_id(cls) -> EquatableT:
-        ...
+    def next_id(cls) -> EquatableT: ...
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):

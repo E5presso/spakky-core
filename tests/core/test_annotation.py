@@ -15,8 +15,7 @@ from spakky.core.annotation import (
 
 def test_class_annotation_expect_success() -> None:
     @ClassAnnotation()
-    class Dummy:
-        ...
+    class Dummy: ...
 
     assert ClassAnnotation.contains(Dummy)
     assert ClassAnnotation.single_or_none(Dummy) is not None
@@ -25,8 +24,7 @@ def test_class_annotation_expect_success() -> None:
 
 
 def test_class_annotation_expect_fail() -> None:
-    class Dummy:
-        ...
+    class Dummy: ...
 
     with pytest.raises(AssertionError):
         assert ClassAnnotation.contains(Dummy)
@@ -38,17 +36,14 @@ def test_class_annotation_expect_fail() -> None:
 
 def test_multiple_class_annotation_expect_success() -> None:
     @dataclass
-    class DummyAnnotation(ClassAnnotation):
-        ...
+    class DummyAnnotation(ClassAnnotation): ...
 
     @dataclass
-    class AnotherAnnotation(ClassAnnotation):
-        ...
+    class AnotherAnnotation(ClassAnnotation): ...
 
     @DummyAnnotation()
     @AnotherAnnotation()
-    class Dummy:
-        ...
+    class Dummy: ...
 
     assert DummyAnnotation.contains(Dummy)
     assert AnotherAnnotation.contains(Dummy)
@@ -61,8 +56,7 @@ def test_same_class_annotation_multiple_times_expect_error() -> None:
 
     @DummyAnnotation(age=29)
     @DummyAnnotation(age=30)
-    class Dummy:
-        ...
+    class Dummy: ...
 
     with pytest.raises(MultipleAnnotationFoundError):
         DummyAnnotation.single(Dummy)
@@ -79,8 +73,7 @@ def test_same_class_annotation_multiple_times_expect_error() -> None:
 
 def test_function_passing_type_hint() -> None:
     @dataclass
-    class CustomAnnotation(FunctionAnnotation):
-        ...
+    class CustomAnnotation(FunctionAnnotation): ...
 
     def func(name: str, age: int) -> tuple[str, int]:
         return name, age
@@ -95,8 +88,7 @@ def test_function_passing_type_hint() -> None:
 
 def test_function_annotation_expect_success() -> None:
     @FunctionAnnotation()
-    def function() -> None:
-        ...
+    def function() -> None: ...
 
     assert FunctionAnnotation.contains(function)
     assert FunctionAnnotation.single_or_none(function) is not None
@@ -109,8 +101,7 @@ def test_function_annotation_expect_success() -> None:
 
     @CustomAnnotation(name="John", age=30)
     @CustomAnnotation(name="Sarah", age=28)
-    def sample() -> None:
-        ...
+    def sample() -> None: ...
 
     annotations: list[CustomAnnotation] = CustomAnnotation.all(sample)
     assert annotations == [
@@ -120,8 +111,7 @@ def test_function_annotation_expect_success() -> None:
 
 
 def test_function_annotation_expect_fail() -> None:
-    def function() -> None:
-        ...
+    def function() -> None: ...
 
     with pytest.raises(AssertionError):
         assert FunctionAnnotation.contains(function)
@@ -133,17 +123,14 @@ def test_function_annotation_expect_fail() -> None:
 
 def test_multiple_function_annotation_expect_success() -> None:
     @dataclass
-    class DummyAnnotation(FunctionAnnotation):
-        ...
+    class DummyAnnotation(FunctionAnnotation): ...
 
     @dataclass
-    class AnotherAnnotation(FunctionAnnotation):
-        ...
+    class AnotherAnnotation(FunctionAnnotation): ...
 
     @DummyAnnotation()
     @AnotherAnnotation()
-    def function() -> None:
-        ...
+    def function() -> None: ...
 
     assert DummyAnnotation.contains(function)
     assert AnotherAnnotation.contains(function)
@@ -156,8 +143,7 @@ def test_same_function_annotation_multiple_times_expect_error() -> None:
 
     @DummyAnnotation(name="John")
     @DummyAnnotation(name="Sarah")
-    def dummy() -> None:
-        ...
+    def dummy() -> None: ...
 
     with pytest.raises(MultipleAnnotationFoundError):
         DummyAnnotation.single(dummy)
@@ -182,12 +168,10 @@ def test_class_annotation_inheritance() -> None:
         name: str
 
     @dataclass(kw_only=True)
-    class Baz(Bar):
-        ...
+    class Baz(Bar): ...
 
     @Baz(uid=uid, name="John")
-    class Dummy:
-        ...
+    class Dummy: ...
 
     assert Baz.contains(Dummy)
     assert Bar.contains(Dummy)
@@ -210,12 +194,10 @@ def test_class_annotation_inheritance_expect_fail() -> None:
         name: str
 
     @dataclass(kw_only=True)
-    class Baz(Bar):
-        ...
+    class Baz(Bar): ...
 
     @Bar(uid=uuid4(), name="John")
-    class Dummy2:
-        ...
+    class Dummy2: ...
 
     assert Bar.contains(Dummy2)
     assert Foo.contains(Dummy2)

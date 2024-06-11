@@ -11,12 +11,10 @@ AggregateRootT_contra = TypeVar(
 @runtime_checkable
 class IEventPublisher(Generic[AggregateRootT_contra], Protocol):
     @abstractmethod
-    def publish(self, aggregate: AggregateRootT_contra) -> None:
-        ...
+    def publish(self, aggregate: AggregateRootT_contra) -> None: ...
 
 
 @runtime_checkable
 class IAsyncEventPublisher(Generic[AggregateRootT_contra], Protocol):
     @abstractmethod
-    async def publish(self, aggregate: AggregateRootT_contra) -> None:
-        ...
+    async def publish(self, aggregate: AggregateRootT_contra) -> None: ...

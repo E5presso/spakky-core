@@ -10,12 +10,12 @@ from spakky.core.types import AsyncFunc, Func, ObjectT
 @runtime_checkable
 class IMethodInterceptor(Protocol):
     @abstractmethod
-    def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any:
-        ...
+    def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    async def intercept_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-        ...
+    async def intercept_async(
+        self, method: AsyncFunc, *args: Any, **kwargs: Any
+    ) -> Any: ...
 
 
 class Enhancer(Generic[ObjectT]):

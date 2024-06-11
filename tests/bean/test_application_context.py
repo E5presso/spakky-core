@@ -208,8 +208,7 @@ def test_application_context_contains_by_name_expect_false() -> None:
 def test_application_context_get_primary_expect_success() -> None:
     class ISampleComponent(Protocol):
         @abstractmethod
-        def do(self) -> None:
-            ...
+        def do(self) -> None: ...
 
     @Primary()
     @Bean()
@@ -234,8 +233,7 @@ def test_application_context_get_primary_expect_success() -> None:
 def test_application_context_get_primary_expect_no_unique_error() -> None:
     class ISampleComponent(Protocol):
         @abstractmethod
-        def do(self) -> None:
-            ...
+        def do(self) -> None: ...
 
     @Primary()
     @Bean()
@@ -323,22 +321,18 @@ def test_application_context_get_dependency_recursive_by_type() -> None:
 
 def test_application_context_where() -> None:
     @dataclass
-    class Customized(ClassAnnotation):
-        ...
+    class Customized(ClassAnnotation): ...
 
     @Bean()
-    class FirstSampleClassMarked:
-        ...
-
-    @Bean()
-    @Customized()
-    class SecondSampleClass:
-        ...
+    class FirstSampleClassMarked: ...
 
     @Bean()
     @Customized()
-    class ThirdSampleClassMarked:
-        ...
+    class SecondSampleClass: ...
+
+    @Bean()
+    @Customized()
+    class ThirdSampleClassMarked: ...
 
     context: ApplicationContext = ApplicationContext()
     context.register_bean(FirstSampleClassMarked)
