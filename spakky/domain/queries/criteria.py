@@ -8,7 +8,7 @@ from spakky.domain.queries.where import Where
 
 
 @immutable
-class Query(ValueObject, Generic[PageableT]):
+class Criteria(ValueObject, Generic[PageableT]):
     where: Where
     order_by: OrderBy
     pageable: PageableT
