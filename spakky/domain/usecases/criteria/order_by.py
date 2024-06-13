@@ -1,5 +1,4 @@
-from enum import Enum
-from typing import Sequence
+from enum import Enum, auto
 from dataclasses import field
 
 from spakky.core.mutability import immutable
@@ -7,16 +6,17 @@ from spakky.domain.models.value_object import ValueObject
 
 
 class OrderByOption(str, Enum):
-    ASC = "asc"
-    DESC = "desc"
+    DEFAULT = auto()
+    ASC = auto()
+    DESC = auto()
 
 
 @immutable
 class OrderByClause(ValueObject):
-    field: str
-    order: OrderByOption
+    column: str
+    order: OrderByOption = field(default=OrderByOption.DEFAULT)
 
 
 @immutable
 class OrderBy(ValueObject):
-    clauses: Sequence[OrderByClause] = field(default_factory=list[OrderByClause])
+    clauses: list[OrderByClause] = field(default_factory=list[OrderByClause])

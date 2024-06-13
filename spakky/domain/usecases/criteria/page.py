@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from spakky.core.interfaces.equatable import EquatableT
 from spakky.core.mutability import immutable
@@ -13,17 +13,17 @@ class Pageable(ValueObject, ABC):
 
 @immutable
 class OffsetBasedPage(Pageable, ValueObject):
-    offset: int
+    offset: int = 0
 
 
 @immutable
 class CursorBasedPage(Pageable, ValueObject):
-    cursor: str
+    cursor: dict[str, Any] | None
 
 
 @immutable
 class KeysetBasedPage(Pageable, ValueObject, Generic[EquatableT]):
-    last_key: EquatableT
+    last_key: EquatableT | None
 
 
 PageableT = TypeVar("PageableT", bound=Pageable)
