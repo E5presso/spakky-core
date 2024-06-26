@@ -70,6 +70,14 @@ class ProxyFactory(Generic[ObjectT]):
             value: Any = object.__getattribute__(instance, name)
             if is_function(value):
 
+                if is_async_function(value):
+
+                    @wraps(value)
+                    async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                        return await __call_async__(value, *args, **kwargs)
+
+                    return async_wrapper
+
                 @wraps(value)
                 def wrapper(*args: Any, **kwargs: Any) -> Any:
                     return __call__(value, *args, **kwargs)
@@ -80,10 +88,11 @@ class ProxyFactory(Generic[ObjectT]):
                 return value
             return __getattr__(name, value)
 
-        def __call__(method: Func | AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-            if is_async_function(method):
-                return self.__handler.call_async(method, *args, **kwargs)
+        def __call__(method: Func, *args: Any, **kwargs: Any) -> Any:
             return self.__handler.call(method, *args, **kwargs)
+
+        async def __call_async__(method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+            return await self.__handler.call_async(method, *args, **kwargs)
 
         def __getattr__(name: str, value: Any) -> Any:
             return self.__handler.get(name, value)
