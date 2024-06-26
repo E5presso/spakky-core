@@ -9,7 +9,7 @@ from spakky.bean.autowired import Unknown
 from spakky.bean.bean import Bean
 from spakky.bean.interfaces.bean_container import IBeanContainer
 from spakky.bean.interfaces.bean_processor import IBeanPostProcessor
-from spakky.core.proxy import Enhancer, IMethodInterceptor
+from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
 
 
@@ -20,12 +20,6 @@ class _Runnable:
     def __init__(self, instance: IAdvisor, next: Func) -> None:
         self.instance = instance
         self.next = next
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.next, name)
-
-    def __dir__(self) -> list[str]:
-        return dir(self.next)
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         self.instance.before(*args, **kwargs)
@@ -48,12 +42,6 @@ class _AsyncRunnable:
         self.instance = instance
         self.next = next
 
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.next, name)
-
-    def __dir__(self) -> list[str]:
-        return dir(self.next)
-
     async def __call__(self, *args: Any, **kwargs: Any) -> Any:
         await self.instance.before_async(*args, **kwargs)
         try:
@@ -67,7 +55,7 @@ class _AsyncRunnable:
             await self.instance.after_async()
 
 
-class AspectMethodInterceptor(IMethodInterceptor):
+class AspectProxyHandler(AbstractProxyHandler):
     __container: IBeanContainer
     __advisors: Sequence[type[IAdvisor | IAsyncAdvisor]]
 
@@ -80,7 +68,7 @@ class AspectMethodInterceptor(IMethodInterceptor):
         self.__container = container
         self.__advisors = advisors
 
-    def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any:
+    def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
         advisors: Sequence[type[IAdvisor]] = [
             x for x in self.__advisors if issubclass(x, IAdvisor)
         ]
@@ -92,14 +80,14 @@ class AspectMethodInterceptor(IMethodInterceptor):
             runnable = _Runnable(self.__container.single(required_type=advisor), runnable)
         return runnable(*args, **kwargs)
 
-    async def intercept_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+    async def call_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         advisors: Sequence[type[IAsyncAdvisor]] = [
             x for x in self.__advisors if issubclass(x, IAsyncAdvisor)
         ]
         matched: Sequence[type[IAsyncAdvisor]] = [
             x for x in advisors if AsyncAspect.single(x).matches(method)
         ]
-        runnable: Func = method
+        runnable: AsyncFunc = method
         for advisor in matched:
             runnable = _AsyncRunnable(
                 self.__container.single(required_type=advisor), runnable
@@ -116,8 +104,9 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         self.__logger = logger
         self.__cache = {}
 
-    def __set_cache(self, type_: type, bean: object) -> None:
+    def __set_cache(self, type_: type, bean: object) -> object:
         self.__cache[type_] = bean
+        return bean
 
     def __get_cache(self, type_: type) -> object | None:
         return self.__cache.get(type_, None)
@@ -126,12 +115,10 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         if (cached := self.__get_cache(type(bean))) is not None:
             return cached
         if Aspect.contains(bean) or AsyncAspect.contains(bean):
-            self.__set_cache(type(bean), bean)
-            return bean
+            return self.__set_cache(type(bean), bean)
         annotation: Bean | None = Bean.single_or_none(bean)
         if annotation is None:
-            self.__set_cache(type(bean), bean)
-            return bean
+            return self.__set_cache(type(bean), bean)
         matched_advisors: Sequence[type[IAdvisor | IAsyncAdvisor]] = []
         advisors: Sequence[type] = container.filter_bean_types(
             lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
@@ -161,9 +148,10 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
                 dependencies[name] = container.single(name=name)
                 continue
             dependencies[name] = container.single(required_type=required_type)
-        proxy: object = Enhancer(
-            superclass=type(bean),
-            callback=AspectMethodInterceptor(container, matched_advisors),
-        ).create(**dependencies)
-        self.__set_cache(type(bean), proxy)
-        return proxy
+        return self.__set_cache(
+            type(bean),
+            ProxyFactory(
+                superclass=type(bean),
+                handler=AspectProxyHandler(container, matched_advisors),
+            ).create(**dependencies),
+        )

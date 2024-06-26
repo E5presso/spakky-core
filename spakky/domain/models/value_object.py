@@ -20,6 +20,9 @@ class ValueObject(IEquatable, ICloneable, ABC):
     def clone(self) -> Self:
         return deepcopy(self)
 
+    def validate(self) -> None:
+        return
+
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, type(self)):
             return False
@@ -32,8 +35,11 @@ class ValueObject(IEquatable, ICloneable, ABC):
             0,
         )
 
-    def validate(self) -> None:
-        return
-
     def __post_init__(self) -> None:
         self.validate()
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        for name, type in cls.__annotations__.items():
+            if getattr(type, "__hash__", None) is None:
+                raise TypeError(f"type of '{name}' is not hashable")
