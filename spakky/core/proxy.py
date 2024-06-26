@@ -1,62 +1,111 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from types import new_class
-from typing import Any, Generic, Protocol, runtime_checkable
-from inspect import iscoroutinefunction
+from typing import Any, Generic, ClassVar, Iterable, Protocol, runtime_checkable
 from functools import wraps
 
-from spakky.core.types import AsyncFunc, Func, ObjectT
+from spakky.core.types import AsyncFunc, Func, ObjectT, is_async_function, is_function
 
 
 @runtime_checkable
-class IMethodInterceptor(Protocol):
+class _IProxyHandler(Protocol):
     @abstractmethod
-    def intercept(self, method: Func, *args: Any, **kwargs: Any) -> Any: ...
+    def call(self, method: Func, *args: Any, **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    async def intercept_async(
-        self, method: AsyncFunc, *args: Any, **kwargs: Any
-    ) -> Any: ...
+    async def call_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any: ...
+
+    @abstractmethod
+    def get(self, name: str, value: Any) -> Any: ...
+
+    @abstractmethod
+    def set(self, name: str, value: Any) -> Any: ...
+
+    @abstractmethod
+    def delete(self, name: str, value: Any) -> Any: ...
 
 
-class Enhancer(Generic[ObjectT]):
+class AbstractProxyHandler(ABC, _IProxyHandler):
+    def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
+        return method(*args, **kwargs)
+
+    async def call_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+        return await method(*args, **kwargs)
+
+    def get(self, name: str, value: Any) -> Any:
+        return value
+
+    def set(self, name: str, value: Any) -> Any:
+        return value
+
+    def delete(self, name: str, value: Any) -> Any:
+        return value
+
+
+class ProxyFactory(Generic[ObjectT]):
+    __PROXY_CLASS_NAME_SUFFIX: ClassVar[str] = "ProxyByFactory"
+    __ATTRIBUTES_TO_IGNORE: ClassVar[Iterable[str]] = [
+        "__dict__",
+        "__class__",
+        "__weakref__",
+        "__base__",
+        "__bases__",
+        "__mro__",
+        "__subclasses__",
+        "__name__",
+        "__qualname__",
+        "__module__",
+        "__annotations__",
+        "__doc__",
+    ]
+
     __superclass: type[ObjectT]
-    __callback: IMethodInterceptor
+    __handler: _IProxyHandler
 
-    def __init__(self, superclass: type[ObjectT], callback: IMethodInterceptor) -> None:
+    def __init__(self, superclass: type[ObjectT], handler: _IProxyHandler) -> None:
         self.__superclass = superclass
-        self.__callback = callback
+        self.__handler = handler
 
     def create(self, *args: Any, **kwargs: Any) -> ObjectT:
         def __getattribute__(instance: ObjectT, name: str) -> Any:
-            attribute: Any = object.__getattribute__(instance, name)
-            if callable(attribute):
-                if iscoroutinefunction(attribute):
+            value: Any = object.__getattribute__(instance, name)
+            if is_function(value):
 
-                    @wraps(attribute)
-                    async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-                        return await self.__callback.intercept_async(
-                            attribute, *args, **kwargs
-                        )
-
-                    return async_wrapper
-
-                @wraps(attribute)
+                @wraps(value)
                 def wrapper(*args: Any, **kwargs: Any) -> Any:
-                    return self.__callback.intercept(attribute, *args, **kwargs)
+                    return __call__(value, *args, **kwargs)
 
                 return wrapper
-            return attribute
 
-        def __dir__(instance: ObjectT) -> list[str]:
-            return list(set(dir(self.__superclass) + list(instance.__dict__.keys())))
+            if name in self.__ATTRIBUTES_TO_IGNORE:
+                return value
+            return __getattr__(name, value)
 
-        proxy_type: type = new_class(
-            name=f"{self.__superclass.__name__}DynamicProxyByEnhancer",
+        def __call__(method: Func | AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+            if is_async_function(method):
+                return self.__handler.call_async(method, *args, **kwargs)
+            return self.__handler.call(method, *args, **kwargs)
+
+        def __getattr__(name: str, value: Any) -> Any:
+            return self.__handler.get(name, value)
+
+        def __setattr__(instance: ObjectT, name: str, value: Any) -> None:
+            return object.__setattr__(instance, name, self.__handler.set(name, value))
+
+        def __delattr__(instance: ObjectT, name: str) -> None:
+            value: Any = object.__getattribute__(instance, name)
+            object.__delattr__(instance, name)
+            self.__handler.delete(name, value)
+
+        def __dir__(instance: ObjectT) -> Iterable[str]:
+            return sorted(set(dir(self.__superclass) + list(instance.__dict__.keys())))
+
+        return new_class(
+            name=self.__superclass.__name__ + self.__PROXY_CLASS_NAME_SUFFIX,
             bases=(self.__superclass,),
-            exec_body=lambda x: x.update(
+            exec_body=lambda ns: ns.update(
                 __getattribute__=__getattribute__,
+                __setattr__=__setattr__,
+                __delattr__=__delattr__,
                 __dir__=__dir__,
             ),
-        )
-        instance: Any = proxy_type(*args, **kwargs)
-        return instance
+        )(*args, **kwargs)

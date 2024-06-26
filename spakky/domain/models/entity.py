@@ -7,7 +7,8 @@ from spakky.core.mutability import mutable
 from spakky.domain.error import SpakkyDomainError
 
 
-class CannotMonkeyPatchEntityError(SpakkyDomainError): ...
+class CannotMonkeyPatchEntityError(SpakkyDomainError):
+    message: str = "Cannot monkey patch an entity."
 
 
 @mutable
@@ -18,6 +19,9 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
     @classmethod
     @abstractmethod
     def next_id(cls) -> EquatableT: ...
+
+    def validate(self) -> None:
+        return
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -42,6 +46,3 @@ class Entity(IEquatable, Generic[EquatableT], ABC):
             except:
                 super().__setattr__(__name, __old)
                 raise
-
-    def validate(self) -> None:
-        return

@@ -22,26 +22,7 @@ def test_aop_with_no_implementations() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
-        def before(self, *args: Any, **kwargs: Any) -> None:
-            return super().before(*args, **kwargs)
-
-        @AfterReturning(Log.contains)
-        def after_returning(self, result: Any) -> None:
-            return super().after_returning(result)
-
-        @AfterRaising(Log.contains)
-        def after_raising(self, error: Exception) -> None:
-            return super().after_raising(error)
-
-        @After(Log.contains)
-        def after(self) -> None:
-            return super().after()
-
-        @Around(Log.contains)
-        def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
-            return super().around(joinpoint, *args, **kwargs)
+    class LogAdvisor(IAdvisor): ...
 
     @Bean()
     class EchoService:
@@ -208,6 +189,8 @@ def test_aop_with_another_bean() -> None:
     )
     assert len(logs) == 0
 
+    assert dir(context.single(required_type=EchoService)) == dir(EchoService())
+
 
 def test_aop_with_no_implementations_raise_error() -> None:
     logs: list[str] = []
@@ -216,26 +199,7 @@ def test_aop_with_no_implementations_raise_error() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
-        def before(self, *args: Any, **kwargs: Any) -> None:
-            return super().before(*args, **kwargs)
-
-        @AfterReturning(Log.contains)
-        def after_returning(self, result: Any) -> None:
-            return super().after_returning(result)
-
-        @AfterRaising(Log.contains)
-        def after_raising(self, error: Exception) -> None:
-            return super().after_raising(error)
-
-        @After(Log.contains)
-        def after(self) -> None:
-            return super().after()
-
-        @Around(Log.contains)
-        def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
-            return super().around(joinpoint, *args, **kwargs)
+    class LogAdvisor(IAdvisor): ...
 
     @Bean()
     class EchoService:
@@ -264,9 +228,49 @@ def test_aop_with_no_implementations_raise_error() -> None:
     assert len(logs) == 0
 
 
-def test_aop_raise_error() -> None:
+def test_aop_with_implementations_raise_error() -> None:
     logs: list[str] = []
 
+    @dataclass
+    class Log(FunctionAnnotation): ...
+
+    @Aspect()
+    class LogAdvisor(IAdvisor):
+        @AfterRaising(Log.contains)
+        def after_raising(self, error: Exception) -> None:
+            nonlocal logs
+            logs.append(f"after_raising {type(error).__name__}")
+            return super().after_raising(error)
+
+    @Bean()
+    class EchoService:
+        @Log()
+        def echo(self, message: str) -> str:
+            raise RuntimeError
+
+    context: ApplicationContext = ApplicationContext()
+
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger: logging.Logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
+
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
+    context.register_bean(EchoService)
+    context.register_bean(LogAdvisor)
+
+    context.start()
+
+    service: EchoService = context.single(required_type=EchoService)
+    with pytest.raises(RuntimeError):
+        assert service.echo(message="Hello World!") == "Hello World!"
+
+    assert logs[0] == "after_raising RuntimeError"
+
+
+def test_aop_raise_error() -> None:
     logs: list[str] = []
 
     @dataclass
@@ -545,6 +549,92 @@ def test_aop_with_dependencies() -> None:
     assert logs[3] == "after"
 
 
+def test_aop_with_dependencies_no_typing() -> None:
+    logs: list[str] = []
+
+    @dataclass
+    class Log(FunctionAnnotation): ...
+
+    @Aspect()
+    class LogAdvisor(IAdvisor):
+        @Before(Log.contains)
+        def before(self, *args: Any, **kwargs: Any) -> None:
+            nonlocal logs
+            logs.append(f"before {args}, {kwargs}")
+
+        @AfterRaising(Log.contains)
+        def after_raising(self, error: Exception) -> None:
+            nonlocal logs
+            logs.append(f"after_raising {error}")
+
+        @AfterReturning(Log.contains)
+        def after_returning(self, result: Any) -> None:
+            nonlocal logs
+            logs.append(f"after_returning {result}")
+
+        @After(Log.contains)
+        def after(self) -> None:
+            nonlocal logs
+            logs.append(f"after")
+
+        @Around(Log.contains)
+        def around(
+            self,
+            joinpoint: Func,
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
+            nonlocal logs
+            try:
+                result = joinpoint(*args, **kwargs)
+            except Exception as e:
+                logs.append(f"around {args}, {kwargs} {e}")
+                raise
+            else:
+                logs.append(f"around {args}, {kwargs} {result}")
+                return result
+
+    @Bean()
+    class EchoService:
+        message: str
+
+        @autowired
+        def __init__(self, message) -> None:  # type: ignore
+            self.message = message
+
+        @Log()
+        def echo(self) -> str:
+            return self.message
+
+    context: ApplicationContext = ApplicationContext()
+
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger: logging.Logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
+
+    @BeanFactory(bean_name="message")
+    def get_message() -> str:
+        return "Hello World!"
+
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
+    context.register_bean_factory(get_message)
+    context.register_bean(EchoService)
+    context.register_bean(LogAdvisor)
+
+    context.start()
+
+    service: EchoService = context.single(required_type=EchoService)
+    assert service.message == "Hello World!"
+    assert service.echo() == "Hello World!"
+    assert logs[0] == "before (), {}"
+    assert logs[1] == "around (), {} Hello World!"
+    assert logs[2] == "after_returning Hello World!"
+    assert logs[3] == "after"
+
+
 @pytest.mark.asyncio
 async def test_async_aop_with_no_implementations() -> None:
     logs: list[str] = []
@@ -555,28 +645,7 @@ async def test_async_aop_with_no_implementations() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
-        @Before(AsyncLog.contains)
-        async def before_async(self, *args: Any, **kwargs: Any) -> None:
-            return await super().before_async(*args, **kwargs)
-
-        @AfterRaising(AsyncLog.contains)
-        async def after_raising_async(self, error: Exception) -> None:
-            return await super().after_raising_async(error)
-
-        @AfterReturning(AsyncLog.contains)
-        async def after_returning_async(self, result: Any) -> None:
-            return await super().after_returning_async(result)
-
-        @After(AsyncLog.contains)
-        async def after_async(self) -> None:
-            return await super().after_async()
-
-        @Around(AsyncLog.contains)
-        async def around_async(
-            self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any
-        ) -> Any:
-            return await super().around_async(joinpoint, *args, **kwargs)
+    class AsyncLogAdvisor(IAsyncAdvisor): ...
 
     @Bean()
     class EchoService:
@@ -751,6 +820,8 @@ async def test_async_aop_with_another_bean() -> None:
     )
     assert len(logs) == 0
 
+    assert dir(context.single(required_type=EchoService)) == dir(EchoService())
+
 
 @pytest.mark.asyncio
 async def test_async_aop_with_no_implementations_raise_error() -> None:
@@ -762,28 +833,7 @@ async def test_async_aop_with_no_implementations_raise_error() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
-        @Before(AsyncLog.contains)
-        async def before_async(self, *args: Any, **kwargs: Any) -> None:
-            return await super().before_async(*args, **kwargs)
-
-        @AfterRaising(AsyncLog.contains)
-        async def after_raising_async(self, error: Exception) -> None:
-            return await super().after_raising_async(error)
-
-        @AfterReturning(AsyncLog.contains)
-        async def after_returning_async(self, result: Any) -> None:
-            return await super().after_returning_async(result)
-
-        @After(AsyncLog.contains)
-        async def after_async(self) -> None:
-            return await super().after_async()
-
-        @Around(AsyncLog.contains)
-        async def around_async(
-            self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any
-        ) -> Any:
-            return await super().around_async(joinpoint, *args, **kwargs)
+    class AsyncLogAdvisor(IAsyncAdvisor): ...
 
     @Bean()
     class EchoService:
@@ -810,6 +860,50 @@ async def test_async_aop_with_no_implementations_raise_error() -> None:
     with pytest.raises(RuntimeError):
         assert await service.echo(message="Hello World!") == "Hello World!"
     assert len(logs) == 0
+
+
+@pytest.mark.asyncio
+async def test_async_aop_with_implementations_raise_error() -> None:
+    logs: list[str] = []
+
+    @dataclass
+    class AsyncLog(FunctionAnnotation):
+        def __call__(self, obj: AsyncFuncT) -> AsyncFuncT:
+            return super().__call__(obj)
+
+    @AsyncAspect()
+    class AsyncLogAdvisor(IAsyncAdvisor):
+        @AfterRaising(AsyncLog.contains)
+        async def after_raising_async(self, error: Exception) -> None:
+            nonlocal logs
+            logs.append(f"after_raising {type(error).__name__}")
+            return await super().after_raising_async(error)
+
+    @Bean()
+    class EchoService:
+        @AsyncLog()
+        async def echo(self, message: str) -> str:
+            raise RuntimeError
+
+    context: ApplicationContext = ApplicationContext()
+
+    console = logging.StreamHandler()
+    console.setLevel(level=logging.DEBUG)
+    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
+    logger: logging.Logger = logging.getLogger("debug")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console)
+
+    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
+    context.register_bean(EchoService)
+    context.register_bean(AsyncLogAdvisor)
+
+    context.start()
+
+    service: EchoService = context.single(required_type=EchoService)
+    with pytest.raises(RuntimeError):
+        assert await service.echo(message="Hello World!") == "Hello World!"
+    assert logs[0] == "after_raising RuntimeError"
 
 
 @pytest.mark.asyncio
