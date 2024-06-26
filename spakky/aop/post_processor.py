@@ -21,6 +21,12 @@ class _Runnable:
         self.instance = instance
         self.next = next
 
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.next, name)
+
+    def __dir__(self) -> list[str]:
+        return dir(self.next)
+
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         self.instance.before(*args, **kwargs)
         try:
@@ -41,6 +47,12 @@ class _AsyncRunnable:
     def __init__(self, instance: IAsyncAdvisor, next: AsyncFunc) -> None:
         self.instance = instance
         self.next = next
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.next, name)
+
+    def __dir__(self) -> list[str]:
+        return dir(self.next)
 
     async def __call__(self, *args: Any, **kwargs: Any) -> Any:
         await self.instance.before_async(*args, **kwargs)
