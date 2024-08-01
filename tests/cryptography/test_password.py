@@ -37,13 +37,14 @@ def test_password_string() -> None:
         hash_type=HashType.SHA256,
         iteration=100000,
     )
-    assert p1.export == f"pbkdf2:sha256:100000:{key.b64_urlsafe}:{p1.hash}"
+    assert p1.export == f"pbkdf2:sha256:100000:{key.b64}:{p1.hash}"
 
 
 def test_password_decompose() -> None:
     key: Key = Key(base64="KBNyamQIZoDvYzgMqteB6kqlFldYRxHOrgWg_J4lxxs", url_safe=True)
     assert Password.decompose(
-        "pbkdf2:sha256:100000:KBNyamQIZoDvYzgMqteB6kqlFldYRxHOrgWg_J4lxxs:sa1AUpPXKEAzgEsn35QaLbV_wNxovW6cgRwuCk2IyYs"
+        "pbkdf2:sha256:100000:KBNyamQIZoDvYzgMqteB6kqlFldYRxHOrgWg_J4lxxs:sa1AUpPXKEAzgEsn35QaLbV_wNxovW6cgRwuCk2IyYs",
+        url_safe=True,
     ) == (
         key,
         HashType.SHA256,
