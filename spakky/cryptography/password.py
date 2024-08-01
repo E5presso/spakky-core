@@ -12,6 +12,7 @@ class Password:
     __iteration: int
     __hash_type: HashType
     __hash: str
+    __url_safe: bool
 
     @property
     def salt(self) -> Key:
@@ -34,20 +35,22 @@ class Password:
         return str(self)
 
     @overload
-    def __init__(self, *, password_hash: str) -> None: ...
-
-    @overload
-    def __init__(self, *, password: str) -> None: ...
-
-    @overload
-    def __init__(self, *, password: str, salt: Key) -> None: ...
-
-    @overload
-    def __init__(self, *, password: str, salt: Key, hash_type: HashType) -> None: ...
+    def __init__(
+        self,
+        *,
+        password_hash: str,
+        url_safe: bool = False,
+    ) -> None: ...
 
     @overload
     def __init__(
-        self, *, password: str, salt: Key, hash_type: HashType, iteration: int
+        self,
+        *,
+        password: str,
+        salt: Key | None = None,
+        hash_type: HashType = HashType.SHA256,
+        iteration: int = 100000,
+        url_safe: bool = False,
     ) -> None: ...
 
     def __init__(
@@ -57,14 +60,16 @@ class Password:
         salt: Key | None = None,
         hash_type: HashType = HashType.SHA256,
         iteration: int = 100000,
+        url_safe: bool = False,
     ) -> None:
+        self.__url_safe = url_safe
         if password_hash is not None:
             components: list[str] = password_hash.split(":")
             components.pop(0)
             self.__hash_type = HashType(components[0].upper())
             self.__iteration = int(components[1])
             self.__salt = Key(
-                binary=Base64Encoder.get_bytes(components[2], url_safe=True)
+                binary=Base64Encoder.get_bytes(components[2], url_safe=self.__url_safe)
             )
             self.__hash = components[3]
         else:
@@ -83,14 +88,19 @@ class Password:
                     self.__salt.binary,
                     self.__iteration,
                 ),
-                url_safe=True,
+                url_safe=self.__url_safe,
             )
 
-    def __repr__(self) -> str:
-        return f"pbkdf2:{self.__hash_type.lower()}:{self.__iteration}:{self.__salt.b64_urlsafe}:{self.__hash}"
-
     def __str__(self) -> str:
-        return repr(self)
+        return "pbkdf2:{hash_type}:{iteration}:{salt}:{hash}".format(
+            hash_type=self.__hash_type.lower(),
+            iteration=self.__iteration,
+            salt=self.__salt.b64_urlsafe if self.__url_safe else self.__salt.b64,
+            hash=self.__hash,
+        )
+
+    def __repr__(self) -> str:
+        return str(self)
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Password):
@@ -101,8 +111,10 @@ class Password:
         return not self == other
 
     @classmethod
-    def decompose(cls, password_hash: str) -> tuple[Key, HashType, int, str]:
-        password: Password = Password(password_hash=password_hash)
+    def decompose(
+        cls, password_hash: str, url_safe: bool = False
+    ) -> tuple[Key, HashType, int, str]:
+        password: Password = Password(password_hash=password_hash, url_safe=url_safe)
         return (
             password.salt,
             password.hash_type,

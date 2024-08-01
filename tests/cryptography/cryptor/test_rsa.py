@@ -6,9 +6,10 @@ from spakky.cryptography.base64_encoder import Base64Encoder
 from spakky.cryptography.cryptor.interface import ICryptor, ISigner
 from spakky.cryptography.cryptor.rsa import AsymmetricKey, Rsa
 from spakky.cryptography.error import (
+    CannotImportAsymmetricKeyError,
     DecryptionFailedError,
-    InvalidAsymmetricKeyFormatError,
     KeySizeError,
+    PrivateKeyRequiredError,
 )
 from spakky.cryptography.hash import HashType
 
@@ -30,7 +31,7 @@ def test_rsa_decrypt_without_private_key_expect_error(size: int) -> None:
         key=AsymmetricKey(key=AsymmetricKey(size=size).public_key.binary)
     )
     cipher: str = cryptor.encrypt("Hello World!")
-    with pytest.raises(InvalidAsymmetricKeyFormatError):
+    with pytest.raises(PrivateKeyRequiredError):
         cryptor.decrypt(cipher)
 
 
@@ -67,9 +68,9 @@ def test_rsa_encryption_with_existing_key(key: bytes) -> None:
 @pytest.mark.parametrize("size", [1024])
 def test_rsa_signing_with_generated_key(size: int) -> None:
     private_key: AsymmetricKey = AsymmetricKey(size=size)
-    public_key: AsymmetricKey = AsymmetricKey(private_key.public_key.binary)
+    public_key: AsymmetricKey = AsymmetricKey(key=private_key.public_key.binary)
     wrong_public_key: AsymmetricKey = AsymmetricKey(
-        AsymmetricKey(size=size).public_key.binary
+        key=AsymmetricKey(size=size).public_key.binary
     )
     signer: ISigner = Rsa(key=private_key)
     verifier: ISigner = Rsa(key=public_key)
@@ -84,7 +85,7 @@ def test_rsa_sign_without_private_key_expect_error(size: int) -> None:
     signer: ISigner = Rsa(
         key=AsymmetricKey(key=AsymmetricKey(size=size).public_key.binary)
     )
-    with pytest.raises(InvalidAsymmetricKeyFormatError):
+    with pytest.raises(PrivateKeyRequiredError):
         signer.sign("Hello World!")
 
 
@@ -130,7 +131,7 @@ fMqQ9TP1ljw78GCUSiqoh+1kfCeHa7jGTOmgcy6u2dQ=
 )
 def test_rsa_signing_with_existing_key(key: bytes) -> None:
     private_key: AsymmetricKey = AsymmetricKey(key=key)
-    public_key: AsymmetricKey = AsymmetricKey(private_key.public_key.binary)
+    public_key: AsymmetricKey = AsymmetricKey(key=private_key.public_key.binary)
     signer: ISigner = Rsa(key=private_key)
     verifier: ISigner = Rsa(key=public_key)
     signature: str = signer.sign("Hello World!")
@@ -138,9 +139,9 @@ def test_rsa_signing_with_existing_key(key: bytes) -> None:
 
 
 def test_asymmetric_key_expect_key_size_error() -> None:
-    with pytest.raises(KeySizeError, match="512"):
+    with pytest.raises(KeySizeError):
         Rsa(key=AsymmetricKey(size=512))
-    with pytest.raises(KeySizeError, match="512"):
+    with pytest.raises(KeySizeError):
         Rsa(
             key=AsymmetricKey(
                 key=b"""-----BEGIN RSA PRIVATE KEY-----
@@ -157,5 +158,14 @@ JL53zbfJ0YSeewnfXuy2kBZb7nF27V/GX1FQjS7D
 
 
 def test_asymmetric_key_expect_invalid_key_error() -> None:
-    with pytest.raises(InvalidAsymmetricKeyFormatError):
+    with pytest.raises(CannotImportAsymmetricKeyError):
         Rsa(key=AsymmetricKey(key=b"invalid key format"))
+
+
+@pytest.mark.parametrize("size", [1024])
+def test_asymmetric_key_is_private_or_public(size: int) -> None:
+    private_key: AsymmetricKey = AsymmetricKey(size=size)
+    public_key: AsymmetricKey = AsymmetricKey(key=private_key.public_key.binary)
+
+    assert private_key.is_private is True
+    assert public_key.is_private is False

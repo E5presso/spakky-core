@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spakky-core"
-version = "0.9.2"
+version = "0.10.0"
 description = "Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc..."
 authors = ["Spakky <sejong418@icloud.com>"]
 packages = [{ include = "spakky" }]
@@ -63,6 +63,8 @@ disable = """
     redefined-builtin,
     too-many-locals,
     multiple-statements,
+    consider-using-f-string,
+    duplicate-code,
 """
 
 [tool.pytest.ini_options]

@@ -1,4 +1,4 @@
-from typing import final
+from typing import ClassVar, final, overload
 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
@@ -8,9 +8,10 @@ from Crypto.Signature import PKCS1_v1_5
 from spakky.cryptography.base64_encoder import Base64Encoder
 from spakky.cryptography.cryptor.interface import ICryptor, ISigner
 from spakky.cryptography.error import (
+    CannotImportAsymmetricKeyError,
     DecryptionFailedError,
-    InvalidAsymmetricKeyFormatError,
     KeySizeError,
+    PrivateKeyRequiredError,
 )
 from spakky.cryptography.hash import Hash, HashType
 from spakky.cryptography.key import Key
@@ -18,9 +19,14 @@ from spakky.cryptography.key import Key
 
 @final
 class AsymmetricKey:
+    KEY_SIZES: ClassVar[list[int]] = [1024, 2048, 4096, 8192]
     __key: RsaKey
-    __private_key: Key | None
+    __private_key: Key | None = None
     __public_key: Key
+
+    @property
+    def is_private(self) -> bool:
+        return self.__private_key is not None
 
     @property
     def private_key(self) -> Key | None:
@@ -30,38 +36,38 @@ class AsymmetricKey:
     def public_key(self) -> Key:
         return self.__public_key
 
+    @overload
+    def __init__(self, *, key: str, passphrase: str | None = None) -> None: ...
+
+    @overload
+    def __init__(self, *, key: bytes, passphrase: str | None = None) -> None: ...
+
+    @overload
+    def __init__(self, *, size: int, passphrase: str | None = None) -> None: ...
+
     def __init__(
         self,
-        key: bytes | None = None,
-        passphrase: str | None = None,
+        key: str | bytes | None = None,
         size: int | None = None,
+        passphrase: str | None = None,
     ) -> None:
         if key is None and size is None:  # pragma: no cover
             raise ValueError("'key' or 'size' must be specified")
         if key is not None:
             try:
                 imported_key = RSA.import_key(key, passphrase)
-                if (key_size := imported_key.size_in_bytes()) not in (128, 256):
+                if (key_size := imported_key.size_in_bits()) not in self.KEY_SIZES:
                     raise KeySizeError(key_size * 8)
                 self.__key = imported_key
             except (ValueError, IndexError, TypeError) as e:
-                raise InvalidAsymmetricKeyFormatError from e
+                raise CannotImportAsymmetricKeyError from e
         if size is not None:
-            if size not in (1024, 2048):
+            if size not in self.KEY_SIZES:
                 raise KeySizeError(size)
             self.__key = RSA.generate(size)
         if self.__key.has_private():
-            self.__private_key = Key(binary=self.__key.export_key())
-        else:
-            self.__private_key = None
+            self.__private_key = Key(binary=self.__key.export_key(passphrase=passphrase))
         self.__public_key = Key(binary=self.__key.public_key().export_key())
-
-    def __repr__(self) -> str:
-        return (
-            self.private_key.binary.decode()
-            if self.private_key is not None
-            else self.public_key.binary.decode()
-        )
 
 
 @final
@@ -80,7 +86,7 @@ class Rsa(ICryptor, ISigner):
 
     def decrypt(self, cipher: str) -> str:
         if self.__key.private_key is None:
-            raise InvalidAsymmetricKeyFormatError
+            raise PrivateKeyRequiredError
         try:
             cipher_bytes: bytes = Base64Encoder.get_bytes(cipher, self.url_safe)
             cryptor = PKCS1_OAEP.new(RSA.import_key(self.__key.private_key.binary))
@@ -90,7 +96,7 @@ class Rsa(ICryptor, ISigner):
 
     def sign(self, message: str, hash_type: HashType = HashType.SHA256) -> str:
         if self.__key.private_key is None:
-            raise InvalidAsymmetricKeyFormatError
+            raise PrivateKeyRequiredError
         signer = PKCS1_v1_5.new(RSA.import_key(self.__key.private_key.binary))
         signature_bytes: bytes = signer.sign(Hash(message, hash_type))
         return Base64Encoder.from_bytes(signature_bytes, self.url_safe)
