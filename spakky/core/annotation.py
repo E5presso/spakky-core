@@ -26,13 +26,14 @@ class Annotation(ABC):
     def __set_annotation(self, obj: AnyT) -> AnyT:
         typemap: dict[type, set[type[Self]]] = self.__get_typemap(obj)
         metadata: dict[type[Self], list[Self]] = self.__get_metadata(obj)
-        for parent in type(self).mro():
-            if parent not in typemap:
-                typemap[parent] = set()
-            typemap[parent].add(type(self))
-        if type(self) not in metadata:
-            metadata[type(self)] = []
-        metadata[type(self)].append(self)
+        type_: type[Self] = type(self)
+        for base_type in type_.mro():
+            if base_type not in typemap:
+                typemap[base_type] = set()
+            typemap[base_type].add(type_)
+        if type_ not in metadata:
+            metadata[type_] = []
+        metadata[type_].append(self)
         setattr(obj, __ANNOTATION_TYPEMAP__, typemap)
         setattr(obj, __ANNOTATION_METADATA__, metadata)
         return obj
