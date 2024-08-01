@@ -14,8 +14,13 @@ class KeySizeError(SpakkyCoreError):
 
 
 @final
-class InvalidAsymmetricKeyFormatError(SpakkyCoreError):
-    message = "Invalid asymmetric key format."
+class PrivateKeyRequiredError(SpakkyCoreError):
+    message = "Private key is required to decrypt or sign."
+
+
+@final
+class CannotImportAsymmetricKeyError(SpakkyCoreError):
+    message = "Cannot import asymmetric key."
 
 
 @final
