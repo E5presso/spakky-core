@@ -37,7 +37,7 @@ include = '\.pyi?$'
 [tool.isort]
 py_version = 312
 src_paths = ["spakky", "tests"]
-skip = [".gitignore", ".dockerignore"]
+skip = [".venv", ".gitignore", ".dockerignore"]
 extend_skip = [".md", ".json", ".txt"]
 profile = "black"
 combine_as_imports = true
