@@ -13,8 +13,8 @@ class CannotMonkeyPatchEntityError(SpakkyDomainError):
 
 @mutable
 class Entity(IEquatable, Generic[EquatableT], ABC):
-    uid: EquatableT
     __initialized: bool = field(init=False, repr=False, default=False)
+    uid: EquatableT
 
     @classmethod
     @abstractmethod
