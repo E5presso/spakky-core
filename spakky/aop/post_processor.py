@@ -24,9 +24,6 @@ class _Runnable:
     def __getattr__(self, name: str) -> Any:
         return getattr(self.next, name)
 
-    def __dir__(self) -> list[str]:
-        return dir(self.next)
-
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         self.instance.before(*args, **kwargs)
         try:
@@ -50,9 +47,6 @@ class _AsyncRunnable:
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.next, name)
-
-    def __dir__(self) -> list[str]:
-        return dir(self.next)
 
     async def __call__(self, *args: Any, **kwargs: Any) -> Any:
         await self.instance.before_async(*args, **kwargs)
@@ -128,9 +122,7 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
             return cached
         if Aspect.contains(bean) or AsyncAspect.contains(bean):
             return self.__set_cache(type(bean), bean)
-        annotation: Bean | None = Bean.single_or_none(bean)
-        if annotation is None:
-            return self.__set_cache(type(bean), bean)
+        annotation: Bean = Bean.single(bean)
         matched_advisors: Sequence[type[IAdvisor | IAsyncAdvisor]] = []
         advisors: Sequence[type] = container.filter_bean_types(
             lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
@@ -151,6 +143,7 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
             key=lambda x: Order.single_or_default(x, Order(sys.maxsize)).order,
             reverse=True,
         )
+        # pylint: disable=line-too-long
         self.__logger.info(
             f"[{type(self).__name__}] {[f'{x.__name__}({Order.single_or_default(x, Order(sys.maxsize)).order})' for x in matched_advisors]!r} -> {type(bean).__name__}"
         )
