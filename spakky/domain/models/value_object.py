@@ -1,9 +1,9 @@
 import sys
 from abc import ABC
 from copy import deepcopy
-from typing import Hashable
 from functools import reduce
 from dataclasses import astuple
+from collections.abc import Hashable
 
 from spakky.core.interfaces.cloneable import ICloneable
 from spakky.core.interfaces.equatable import IEquatable

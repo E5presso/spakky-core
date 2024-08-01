@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spakky-core"
-version = "0.10.1"
+version = "0.10.2"
 description = "Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc..."
 authors = ["Spakky <sejong418@icloud.com>"]
 packages = [{ include = "spakky" }]
@@ -31,11 +31,11 @@ pytest-asyncio = "^0.21.1"
 
 [tool.black]
 line-length = 90
-target-version = ["py310"]
+target-version = ["py312"]
 include = '\.pyi?$'
 
 [tool.isort]
-py_version = 311
+py_version = 312
 src_paths = ["spakky", "tests"]
 skip = [".gitignore", ".dockerignore"]
 extend_skip = [".md", ".json", ".txt"]
@@ -44,8 +44,8 @@ combine_as_imports = true
 remove_redundant_aliases = true
 length_sort_sections = ["future", "stdlib"]
 
-[tool.pylint.MASTER]
-ignore-patterns = "test_.*?py"
+[tool.pylint]
+ignore-paths = ["tests"]
 
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length = 90
