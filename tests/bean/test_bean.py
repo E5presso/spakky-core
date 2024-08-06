@@ -1,6 +1,12 @@
+from typing import Any
+
 import pytest
 
-from spakky.bean.bean import Bean, CannotDetermineBeanTypeError
+from spakky.bean.bean import (
+    Bean,
+    CannotDetermineBeanTypeError,
+    CannotUseVarArgsInBeanError,
+)
 
 
 def test_bean() -> None:
@@ -18,6 +24,27 @@ def test_bean() -> None:
     sample: SampleClass = SampleClass(name="John", age=30)
     assert sample.name == "John"
     assert sample.age == 30
+
+
+def test_bean_with_var_args() -> None:
+    with pytest.raises(CannotUseVarArgsInBeanError):
+
+        @Bean()
+        class _:
+            name: str
+            age: int
+
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                self.name = args[0] or kwargs["name"]
+                self.age = args[1] or kwargs["age"]
+
+
+def test_bean_factory_with_var_args() -> None:
+    with pytest.raises(CannotUseVarArgsInBeanError):
+
+        @Bean()
+        def _(*args: Any, **kwargs: Any) -> Any:
+            return args[0] or kwargs["name"]
 
 
 def test_bean_factory_with_return_annotation() -> None:

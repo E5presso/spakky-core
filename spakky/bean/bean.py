@@ -21,6 +21,10 @@ class CannotDetermineBeanTypeError(SpakkyBeanError):
     message = "Cannot determine bean type"
 
 
+class CannotUseVarArgsInBeanError(SpakkyBeanError):
+    message = "Cannot use var args in bean"
+
+
 @dataclass
 class Bean(Annotation):
     bean_name: str = field(kw_only=True, default="")
@@ -38,7 +42,10 @@ class Bean(Annotation):
         if is_instance_method(obj):
             # Remove self parameter if obj is an instance method
             parameters = parameters[1:]
+
         for parameter in parameters:
+            if parameter.kind in (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD):
+                raise CannotUseVarArgsInBeanError
             if parameter.annotation == Parameter.empty:
                 dependencies[parameter.name] = UnknownType
                 continue
