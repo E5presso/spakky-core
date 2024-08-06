@@ -48,7 +48,7 @@ class AbstractTransaction(IDisposable, ABC):
     def rollback(self) -> None: ...
 
 
-class AbstractAsyncTranasction(IAsyncDisposable, ABC):
+class AbstractAsyncTransaction(IAsyncDisposable, ABC):
     autocommit_enabled: bool
 
     def __init__(self, autocommit: bool = True) -> None:

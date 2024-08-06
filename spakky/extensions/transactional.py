@@ -10,7 +10,7 @@ from spakky.aop.order import Order
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
 from spakky.domain.ports.persistency.transaction import (
-    AbstractAsyncTranasction,
+    AbstractAsyncTransaction,
     AbstractTransaction,
 )
 
@@ -22,10 +22,10 @@ class Transactional(FunctionAnnotation): ...
 @Order(0)
 @AsyncAspect()
 class AsyncTransactionalAdvisor(IAsyncAdvisor):
-    __transacntion: AbstractAsyncTranasction
+    __transacntion: AbstractAsyncTransaction
     __logger: Logger
 
-    def __init__(self, transaction: AbstractAsyncTranasction, logger: Logger) -> None:
+    def __init__(self, transaction: AbstractAsyncTransaction, logger: Logger) -> None:
         super().__init__()
         self.__transacntion = transaction
         self.__logger = logger

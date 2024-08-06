@@ -1,7 +1,7 @@
 import pytest
 
 from spakky.domain.ports.persistency.transaction import (
-    AbstractAsyncTranasction,
+    AbstractAsyncTransaction,
     AbstractTransaction,
 )
 
@@ -94,7 +94,7 @@ def test_tranasction_rollback_when_raised() -> None:
 
 @pytest.mark.asyncio
 async def test_async_tranasction_auto_commit() -> None:
-    class AsyncInMemoryTransaction(AbstractAsyncTranasction):
+    class AsyncInMemoryTransaction(AbstractAsyncTransaction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -121,7 +121,7 @@ async def test_async_tranasction_auto_commit() -> None:
 
 @pytest.mark.asyncio
 async def test_async_tranasction_manual_commit() -> None:
-    class AsyncInMemoryTransaction(AbstractAsyncTranasction):
+    class AsyncInMemoryTransaction(AbstractAsyncTransaction):
         committed: bool = False
         rolled_back: bool = False
 
@@ -155,7 +155,7 @@ async def test_async_tranasction_manual_commit() -> None:
 
 @pytest.mark.asyncio
 async def test_async_tranasction_rollback_when_raised() -> None:
-    class AsyncInMemoryTransaction(AbstractAsyncTranasction):
+    class AsyncInMemoryTransaction(AbstractAsyncTransaction):
         committed: bool = False
         rolled_back: bool = False
 
