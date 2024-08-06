@@ -15,12 +15,14 @@ from spakky.bean.bean import Bean
 from spakky.bean.primary import Primary
 from spakky.core.annotation import ClassAnnotation
 from tests import dummy_package, second_dummy_package
+from tests.dummy_package import module_a
 from tests.dummy_package.module_a import ComponentA, DummyA
 from tests.dummy_package.module_b import ComponentB, DummyB, UnmanagedB
 from tests.dummy_package.module_c import ComponentC, DummyC
-from tests.second_dummy_package.module_a import SecondComponentA, SecondDummyA
-from tests.second_dummy_package.module_b import SecondComponentB, SecondDummyB
-from tests.second_dummy_package.module_c import SecondComponentC, SecondDummyC
+from tests.second_dummy_package import second_module_a
+from tests.second_dummy_package.second_module_a import SecondComponentA, SecondDummyA
+from tests.second_dummy_package.second_module_b import SecondComponentB, SecondDummyB
+from tests.second_dummy_package.second_module_c import SecondComponentC, SecondDummyC
 
 
 def test_application_context_register_expect_success() -> None:
@@ -374,6 +376,13 @@ def test_application_context_initialize_with_pacakge() -> None:
     assert context.contains(required_type=DummyC) is False
 
 
+def test_application_context_initialize_with_module() -> None:
+    context: ApplicationContext = ApplicationContext(package=module_a)
+
+    assert context.contains(required_type=ComponentA) is True
+    assert context.contains(required_type=DummyA) is False
+
+
 def test_application_context_initialize_with_multiple_pacakges() -> None:
     context: ApplicationContext = ApplicationContext(
         package=[
@@ -395,6 +404,21 @@ def test_application_context_initialize_with_multiple_pacakges() -> None:
     assert context.contains(required_type=SecondDummyA) is False
     assert context.contains(required_type=SecondDummyB) is False
     assert context.contains(required_type=SecondDummyC) is False
+
+
+def test_application_context_initialize_with_multiple_pacakges_and_modules() -> None:
+    context: ApplicationContext = ApplicationContext(
+        package=[
+            dummy_package,
+            second_module_a,
+        ]
+    )
+
+    assert context.contains(required_type=ComponentA) is True
+    assert context.contains(required_type=ComponentB) is True
+    assert context.contains(required_type=ComponentC) is True
+
+    assert context.contains(required_type=SecondComponentA) is True
 
 
 def test_application_context_register_unmanaged_factory() -> None:

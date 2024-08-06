@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from uuid import UUID, uuid4
 from types import ModuleType
-from typing import Any, Callable, Sequence, TypeAlias, overload
+from typing import Any, Callable, Sequence, overload
 
 from spakky.bean.bean import Bean, BeanFactoryType, UnknownType
 from spakky.bean.interfaces.bean_container import (
@@ -17,10 +17,15 @@ from spakky.bean.interfaces.bean_registry import (
 )
 from spakky.bean.interfaces.bean_scanner import IBeanScanner
 from spakky.bean.primary import Primary
-from spakky.core.importing import list_classes, list_functions, list_modules
+from spakky.core.importing import (
+    Module,
+    is_package,
+    list_classes,
+    list_functions,
+    list_modules,
+    resolve_module,
+)
 from spakky.core.types import AnyT
-
-Module: TypeAlias = ModuleType | str
 
 
 class BeanType(Enum):
@@ -191,8 +196,14 @@ class ApplicationContext(
     def register_bean_post_processor(self, post_processor: IBeanPostProcessor) -> None:
         self.__post_processors.append(post_processor)
 
-    def scan(self, package: ModuleType | str) -> None:
-        modules: set[ModuleType] = list_modules(package)
+    def scan(self, package: Module) -> None:
+        modules: set[ModuleType]
+
+        if is_package(package):
+            modules = list_modules(package)
+        else:
+            modules = {resolve_module(package)}
+
         for module in modules:
             beans: set[type] = list_classes(module, Bean.contains)
             factories: set[BeanFactoryType] = list_functions(module, Bean.contains)

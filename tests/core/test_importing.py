@@ -7,9 +7,11 @@ from spakky.bean.bean import Bean
 from spakky.core.annotation import Annotation, ClassAnnotation
 from spakky.core.importing import (
     CannotScanNonPackageModuleError,
+    is_package,
     list_classes,
     list_functions,
     list_modules,
+    resolve_module,
 )
 from tests import dummy_package
 from tests.dummy_package import module_a, module_b, module_c
@@ -70,3 +72,17 @@ def test_list_functions_with_selector_expect_success() -> None:
     assert set(chain(*(list_functions(module, Bean.contains) for module in modules))) == {
         module_b.unmanaged_b
     }
+
+
+def test_resolve_module() -> None:
+    module_path: str = "tests.dummy_package.module_a"
+    assert resolve_module(module_path) == module_a
+    assert resolve_module(module_a) == module_a
+
+
+def test_is_package() -> None:
+    assert is_package("tests.dummy_package") is True
+    assert is_package("tests.dummy_package.module_a") is False
+
+    assert is_package(dummy_package) is True
+    assert is_package(module_a) is False
