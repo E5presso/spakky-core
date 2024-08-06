@@ -10,7 +10,7 @@ from spakky.aop.advice import After, AfterRaising, AfterReturning, Around, Befor
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.post_processor import AspectBeanPostProcessor
-from spakky.bean.application_context import ApplicationContext
+from spakky.application.application_context import ApplicationContext
 from spakky.bean.bean import Bean
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, AsyncFuncT, Func

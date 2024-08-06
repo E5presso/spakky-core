@@ -5,7 +5,7 @@ from logging import Logger, Formatter, StreamHandler, getLogger
 import pytest
 
 from spakky.aop.post_processor import AspectBeanPostProcessor
-from spakky.bean.application_context import ApplicationContext
+from spakky.application.application_context import ApplicationContext
 from spakky.bean.bean import Bean
 from spakky.cryptography.key import Key
 from spakky.extensions.logging import AsyncLoggingAdvisor, LoggingAdvisor
