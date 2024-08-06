@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 import logging
 from typing import Any
 from dataclasses import dataclass
@@ -9,8 +11,7 @@ from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.post_processor import AspectBeanPostProcessor
 from spakky.bean.application_context import ApplicationContext
-from spakky.bean.autowired import autowired
-from spakky.bean.bean import Bean, BeanFactory
+from spakky.bean.bean import Bean
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, AsyncFuncT, Func
 
@@ -512,7 +513,6 @@ def test_aop_with_dependencies() -> None:
     class EchoService:
         message: str
 
-        @autowired
         def __init__(self, message: str) -> None:
             self.message = message
 
@@ -529,7 +529,7 @@ def test_aop_with_dependencies() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    @BeanFactory(bean_name="message")
+    @Bean(bean_name="message")
     def get_message() -> str:
         return "Hello World!"
 
@@ -598,7 +598,6 @@ def test_aop_with_dependencies_no_typing() -> None:
     class EchoService:
         message: str
 
-        @autowired
         def __init__(self, message) -> None:  # type: ignore
             self.message = message
 
@@ -615,7 +614,7 @@ def test_aop_with_dependencies_no_typing() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    @BeanFactory(bean_name="message")
+    @Bean(bean_name="message")
     def get_message() -> str:
         return "Hello World!"
 

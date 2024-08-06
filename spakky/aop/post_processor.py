@@ -5,8 +5,7 @@ from logging import Logger
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.order import Order
-from spakky.bean.autowired import Unknown
-from spakky.bean.bean import Bean
+from spakky.bean.bean import Bean, UnknownType
 from spakky.bean.interfaces.bean_container import IBeanContainer
 from spakky.bean.interfaces.bean_processor import IBeanPostProcessor
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
@@ -149,7 +148,7 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         )
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
-            if required_type == Unknown:
+            if required_type == UnknownType:
                 dependencies[name] = container.single(name=name)
                 continue
             dependencies[name] = container.single(required_type=required_type)

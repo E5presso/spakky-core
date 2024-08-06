@@ -3,8 +3,7 @@ from uuid import UUID, uuid4
 from types import ModuleType
 from typing import Any, Callable, Sequence, overload
 
-from spakky.bean.autowired import Unknown
-from spakky.bean.bean import Bean, BeanFactory, BeanFactoryType
+from spakky.bean.bean import Bean, BeanFactoryType, UnknownType
 from spakky.bean.interfaces.bean_container import (
     IBeanContainer,
     NoSuchBeanError,
@@ -13,8 +12,7 @@ from spakky.bean.interfaces.bean_container import (
 from spakky.bean.interfaces.bean_processor import IBeanPostProcessor
 from spakky.bean.interfaces.bean_processor_registry import IBeanPostProcessorRegistry
 from spakky.bean.interfaces.bean_registry import (
-    CannotRegisterNonBeanError,
-    CannotRegisterNonBeanFactoryError,
+    CannotRegisterNonBeanObjectError,
     IBeanRegistry,
 )
 from spakky.bean.interfaces.bean_scanner import IBeanScanner
@@ -66,7 +64,7 @@ class ApplicationContext(
         return bean_id
 
     def __set_bean_factory(self, factory: BeanFactoryType) -> UUID:
-        annotation: BeanFactory = BeanFactory.single(factory)
+        annotation: Bean = Bean.single(factory)
         bean_id: UUID = uuid4()
         self.__bean_type_map[annotation.bean_type] = bean_id
         self.__bean_name_map[annotation.bean_name] = bean_id
@@ -96,7 +94,7 @@ class ApplicationContext(
         annotation: Bean = Bean.single(bean_type)
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
-            if required_type == Unknown:
+            if required_type == UnknownType:
                 dependencies[name] = self.__retrieve_bean_by_name(name)
                 continue
             dependencies[name] = self.__retrieve_bean_by_type(required_type)
@@ -172,14 +170,14 @@ class ApplicationContext(
 
     def register_bean(self, bean: type) -> None:
         if not Bean.contains(bean):
-            raise CannotRegisterNonBeanError(bean)
+            raise CannotRegisterNonBeanObjectError(bean)
         self.__set_target_type(bean)
         self.__set_bean(bean)
 
     def register_bean_factory(self, factory: BeanFactoryType) -> None:
-        if not BeanFactory.contains(factory):
-            raise CannotRegisterNonBeanFactoryError(factory)
-        annotation: BeanFactory = BeanFactory.single(factory)
+        if not Bean.contains(factory):
+            raise CannotRegisterNonBeanObjectError(factory)
+        annotation: Bean = Bean.single(factory)
         self.__set_target_type(annotation.bean_type)
         self.__set_bean_factory(factory)
 
@@ -190,7 +188,7 @@ class ApplicationContext(
         modules: set[ModuleType] = list_modules(package)
         for module in modules:
             beans: set[type] = list_classes(module, Bean.contains)
-            factories: set[BeanFactoryType] = list_functions(module, BeanFactory.contains)
+            factories: set[BeanFactoryType] = list_functions(module, Bean.contains)
             for bean in beans:
                 self.register_bean(bean)
             for factory in factories:

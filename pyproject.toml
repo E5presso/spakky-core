@@ -84,7 +84,6 @@ addopts = """
 
 [tool.coverage.run]
 omit = ["tests/*"]
-traceback = "short"
 branch = true
 
 [tool.coverage.report]

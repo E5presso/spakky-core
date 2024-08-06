@@ -5,12 +5,8 @@ from spakky.bean.bean import BeanFactoryType
 from spakky.bean.error import SpakkyBeanError
 
 
-class CannotRegisterNonBeanError(SpakkyBeanError):
-    message = "Cannot register non-bean class."
-
-
-class CannotRegisterNonBeanFactoryError(SpakkyBeanError):
-    message = "Cannot register non bean-factory function."
+class CannotRegisterNonBeanObjectError(SpakkyBeanError):
+    message = "Cannot register non-bean object."
 
 
 @runtime_checkable

@@ -3,8 +3,8 @@ from itertools import chain
 
 import pytest
 
-from spakky.bean.bean import Bean, BeanFactory
-from spakky.core.annotation import ClassAnnotation
+from spakky.bean.bean import Bean
+from spakky.core.annotation import Annotation, ClassAnnotation
 from spakky.core.importing import (
     CannotScanNonPackageModuleError,
     list_classes,
@@ -35,7 +35,7 @@ def test_list_classes_with_selector_expect_success() -> None:
     assert set(chain(*(list_classes(module) for module in modules))) == {
         ClassAnnotation,
         Bean,
-        BeanFactory,
+        Bean,
         module_a.DummyA,
         module_a.ComponentA,
         module_b.DummyB,
@@ -45,7 +45,7 @@ def test_list_classes_with_selector_expect_success() -> None:
         module_c.ComponentC,
     }
     assert set(
-        chain(*(list_classes(module, ClassAnnotation.contains) for module in modules))
+        chain(*(list_classes(module, Annotation.contains) for module in modules))
     ) == {
         module_b.DummyB,
         module_a.ComponentA,
@@ -67,6 +67,6 @@ def test_list_functions_with_selector_expect_success() -> None:
         module_b.unmanaged_b,
         module_b.hello_world,
     }
-    assert set(
-        chain(*(list_functions(module, BeanFactory.contains) for module in modules))
-    ) == {module_b.unmanaged_b}
+    assert set(chain(*(list_functions(module, Bean.contains) for module in modules))) == {
+        module_b.unmanaged_b
+    }
