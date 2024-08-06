@@ -8,7 +8,6 @@ from spakky.aop.advice import Around
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.order import Order
-from spakky.bean.autowired import autowired
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
 
@@ -34,7 +33,6 @@ class AsyncLoggingAdvisor(IAsyncAdvisor):
     )
     __logger: Logger
 
-    @autowired
     def __init__(self, logger: Logger) -> None:
         super().__init__()
         self.__logger = logger
@@ -85,7 +83,6 @@ class LoggingAdvisor(IAdvisor):
     )
     __logger: Logger
 
-    @autowired
     def __init__(self, logger: Logger) -> None:
         super().__init__()
         self.__logger = logger

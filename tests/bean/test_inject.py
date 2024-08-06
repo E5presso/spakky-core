@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Protocol
 
 from spakky.bean.application_context import ApplicationContext
-from spakky.bean.autowired import autowired
 from spakky.bean.bean import Bean
 from spakky.bean.inject import inject
 
@@ -35,7 +34,6 @@ def test_inject_to_function_by_type() -> None:
         __a: IA
         __b: IB
 
-        @autowired
         def __init__(self, a: IA, b: IB) -> None:
             self.__a = a
             self.__b = b
@@ -82,7 +80,6 @@ def test_inject_to_function_by_name() -> None:
         __a: IA
         __b: IB
 
-        @autowired
         def __init__(self, a, b) -> None:  # type: ignore
             self.__a = a
             self.__b = b

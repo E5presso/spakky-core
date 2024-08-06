@@ -5,7 +5,6 @@ from spakky.aop.advice import Around
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.order import Order
-from spakky.bean.autowired import autowired
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
 from spakky.cryptography.key import Key
@@ -24,7 +23,6 @@ class AsyncDummy(FunctionAnnotation): ...
 @Order(0)
 @Aspect()
 class DummyAdvisor(IAdvisor):
-    @autowired
     def __init__(self) -> None:
         super().__init__()
 
@@ -37,7 +35,6 @@ class DummyAdvisor(IAdvisor):
 @Order(0)
 @AsyncAspect()
 class AsyncDummyAdvisor(IAsyncAdvisor):
-    @autowired
     def __init__(self) -> None:
         super().__init__()
 
@@ -55,7 +52,6 @@ class DummyUseCase:
     def key(self) -> Key:
         return self.__key
 
-    @autowired
     def __init__(self, key: Key) -> None:
         self.__key = key
 
@@ -73,7 +69,6 @@ class AsyncDummyUseCase:
     def key(self) -> Key:
         return self.__key
 
-    @autowired
     def __init__(self, key: Key) -> None:
         self.__key = key
 

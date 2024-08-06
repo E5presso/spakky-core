@@ -1,4 +1,4 @@
-from spakky.bean.bean import Bean, BeanFactory
+from spakky.bean.bean import Bean
 from spakky.core.annotation import ClassAnnotation
 
 
@@ -13,7 +13,7 @@ class ComponentB: ...
 class UnmanagedB: ...
 
 
-@BeanFactory()
+@Bean()
 def unmanaged_b() -> UnmanagedB:
     return UnmanagedB()
 
