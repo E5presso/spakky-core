@@ -8,7 +8,7 @@ from spakky.aop.order import Order
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
 from spakky.cryptography.key import Key
-from spakky.extensions.logging import AsyncLogging, Logging
+from spakky.extensions.logging import Logging
 from spakky.stereotype.usecase import UseCase
 
 
@@ -72,7 +72,7 @@ class AsyncDummyUseCase:
     def __init__(self, key: Key) -> None:
         self.__key = key
 
-    @AsyncLogging()
+    @Logging()
     @AsyncDummy()
     async def execute(self) -> str:
         return "Hello, World!"

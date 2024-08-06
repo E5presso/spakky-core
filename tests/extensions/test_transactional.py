@@ -3,12 +3,14 @@ from logging import Logger, Handler, Formatter, LogRecord
 
 import pytest
 
+from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.domain.ports.persistency.transaction import (
     AbstractAsyncTranasction,
     AbstractTransaction,
 )
 from spakky.extensions.transactional import (
     AsyncTransactionalAdvisor,
+    Transactional,
     TransactionalAdvisor,
 )
 
@@ -53,15 +55,21 @@ def test_transactional_commit() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Transactional()
+        def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = TransactionalAdvisor(InMemoryTransaction(), logger)
+    class Unmatched:
+        def none(self) -> None:
+            pass
+
+    advisor = TransactionalAdvisor(InMemoryTransaction(), logger)
     assert (
-        advice.around(
-            authenticate,
+        advisor.around(
+            Dummy().authenticate,
             username="John",
             password="1234",
         )
@@ -72,6 +80,9 @@ def test_transactional_commit() -> None:
         "[INFO]: [TransactionalAdvisor] BEGIN TRANSACTION",
         "[INFO]: [TransactionalAdvisor] COMMIT",
     ]
+
+    assert Aspect.single(advisor).matches(Dummy) is True
+    assert Aspect.single(advisor).matches(Unmatched) is False
 
 
 def test_transactional_rollback() -> None:
@@ -114,15 +125,21 @@ def test_transactional_rollback() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Transactional()
+        def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = TransactionalAdvisor(InMemoryTransaction(), logger)
+    class Unmatched:
+        def none(self) -> None:
+            pass
+
+    advisor = TransactionalAdvisor(InMemoryTransaction(), logger)
     with pytest.raises(ValueError, match="Mike?"):
-        assert advice.around(
-            authenticate,
+        assert advisor.around(
+            Dummy().authenticate,
             "Mike",
             "1234",
         )
@@ -131,6 +148,9 @@ def test_transactional_rollback() -> None:
         "[INFO]: [TransactionalAdvisor] BEGIN TRANSACTION",
         "[INFO]: [TransactionalAdvisor] ROLLBACK",
     ]
+
+    assert Aspect.single(advisor).matches(Dummy) is True
+    assert Aspect.single(advisor).matches(Unmatched) is False
 
 
 @pytest.mark.asyncio
@@ -174,15 +194,21 @@ async def test_async_transactional_commit() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    async def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Transactional()
+        async def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = AsyncTransactionalAdvisor(InMemoryTransaction(), logger)
+    class Unmatched:
+        async def none(self) -> None:
+            pass
+
+    advisor = AsyncTransactionalAdvisor(InMemoryTransaction(), logger)
     assert (
-        await advice.around_async(
-            authenticate,
+        await advisor.around_async(
+            Dummy().authenticate,
             username="John",
             password="1234",
         )
@@ -193,6 +219,8 @@ async def test_async_transactional_commit() -> None:
         "[INFO]: [AsyncTransactionalAdvisor] BEGIN TRANSACTION",
         "[INFO]: [AsyncTransactionalAdvisor] COMMIT",
     ]
+    assert AsyncAspect.single(advisor).matches(Dummy) is True
+    assert AsyncAspect.single(advisor).matches(Unmatched) is False
 
 
 @pytest.mark.asyncio
@@ -236,15 +264,21 @@ async def test_async_transactional_rollback() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    async def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Transactional()
+        async def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = AsyncTransactionalAdvisor(InMemoryTransaction(), logger)
+    class Unmatched:
+        async def none(self) -> None:
+            pass
+
+    advisor = AsyncTransactionalAdvisor(InMemoryTransaction(), logger)
     with pytest.raises(ValueError, match="Mike?"):
-        assert await advice.around_async(
-            authenticate,
+        assert await advisor.around_async(
+            Dummy().authenticate,
             "Mike",
             "1234",
         )
@@ -253,3 +287,5 @@ async def test_async_transactional_rollback() -> None:
         "[INFO]: [AsyncTransactionalAdvisor] BEGIN TRANSACTION",
         "[INFO]: [AsyncTransactionalAdvisor] ROLLBACK",
     ]
+    assert AsyncAspect.single(advisor).matches(Dummy) is True
+    assert AsyncAspect.single(advisor).matches(Unmatched) is False
