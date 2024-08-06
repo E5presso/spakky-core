@@ -5,7 +5,7 @@ import pytest
 
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.domain.ports.persistency.transaction import (
-    AbstractAsyncTranasction,
+    AbstractAsyncTransaction,
     AbstractTransaction,
 )
 from spakky.extensions.transactional import (
@@ -155,7 +155,7 @@ def test_transactional_rollback() -> None:
 
 @pytest.mark.asyncio
 async def test_async_transactional_commit() -> None:
-    class InMemoryTransaction(AbstractAsyncTranasction):
+    class InMemoryTransaction(AbstractAsyncTransaction):
         committed: bool
         rolled_back: bool
 
@@ -225,7 +225,7 @@ async def test_async_transactional_commit() -> None:
 
 @pytest.mark.asyncio
 async def test_async_transactional_rollback() -> None:
-    class InMemoryTransaction(AbstractAsyncTranasction):
+    class InMemoryTransaction(AbstractAsyncTransaction):
         committed: bool
         rolled_back: bool
 
