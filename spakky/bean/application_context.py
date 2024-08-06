@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from uuid import UUID, uuid4
 from types import ModuleType
-from typing import Any, Callable, Sequence, overload
+from typing import Any, Callable, Sequence, TypeAlias, overload
 
 from spakky.bean.bean import Bean, BeanFactoryType, UnknownType
 from spakky.bean.interfaces.bean_container import (
@@ -19,6 +19,8 @@ from spakky.bean.interfaces.bean_scanner import IBeanScanner
 from spakky.bean.primary import Primary
 from spakky.core.importing import list_classes, list_functions, list_modules
 from spakky.core.types import AnyT
+
+Module: TypeAlias = ModuleType | str
 
 
 class BeanType(Enum):
@@ -39,15 +41,20 @@ class ApplicationContext(
     __singleton_cache: dict[UUID, object]
     __post_processors: list[IBeanPostProcessor]
 
-    def __init__(self, package: ModuleType | str | None = None) -> None:
+    def __init__(self, package: Module | Sequence[Module] | None = None) -> None:
         self.__bean_map = {}
         self.__type_map = {}
         self.__bean_type_map = {}
         self.__bean_name_map = {}
         self.__singleton_cache = {}
         self.__post_processors = []
-        if package is not None:
-            self.scan(package)
+        if package is None:
+            return
+        if isinstance(package, Sequence):
+            for package_item in package:
+                self.scan(package_item)
+            return
+        self.scan(package)
 
     def __set_target_type(self, target_type: type) -> None:
         for base in target_type.__mro__:
