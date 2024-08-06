@@ -5,9 +5,9 @@ from logging import Logger
 from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.order import Order
+from spakky.application.interfaces.bean_container import IBeanContainer
+from spakky.application.interfaces.bean_processor import IBeanPostProcessor
 from spakky.bean.bean import Bean, UnknownType
-from spakky.bean.interfaces.bean_container import IBeanContainer
-from spakky.bean.interfaces.bean_processor import IBeanPostProcessor
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
 

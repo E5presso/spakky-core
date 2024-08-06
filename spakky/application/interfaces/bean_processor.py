@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 
-from spakky.bean.interfaces.bean_container import IBeanContainer
+from spakky.application.interfaces.bean_container import IBeanContainer
 
 
 @runtime_checkable

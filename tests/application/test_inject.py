@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from spakky.bean.application_context import ApplicationContext
+from spakky.application.application_context import ApplicationContext
 from spakky.bean.bean import Bean
-from spakky.bean.inject import inject
+from spakky.application.inject import inject
 
 
 def test_inject_to_function_by_type() -> None:

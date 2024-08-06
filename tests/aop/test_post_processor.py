@@ -1,6 +1,6 @@
 import pytest
 
-from spakky.bean.application_context import ApplicationContext
+from spakky.application.application_context import ApplicationContext
 from spakky.cryptography.key import Key
 from tests.aop.apps.dummy import AsyncDummyUseCase, DummyUseCase
 

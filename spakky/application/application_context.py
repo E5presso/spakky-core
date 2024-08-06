@@ -3,19 +3,16 @@ from uuid import UUID, uuid4
 from types import ModuleType
 from typing import Any, Callable, Sequence, overload
 
-from spakky.bean.bean import Bean, BeanFactoryType, UnknownType
-from spakky.bean.interfaces.bean_container import (
+from spakky.application.interfaces.bean_container import (
     IBeanContainer,
     NoSuchBeanError,
     NoUniqueBeanError,
 )
-from spakky.bean.interfaces.bean_processor import IBeanPostProcessor
-from spakky.bean.interfaces.bean_processor_registry import IBeanPostProcessorRegistry
-from spakky.bean.interfaces.bean_registry import (
-    CannotRegisterNonBeanObjectError,
-    IBeanRegistry,
-)
-from spakky.bean.interfaces.bean_scanner import IBeanScanner
+from spakky.application.interfaces.bean_processor import IBeanPostProcessor
+from spakky.application.interfaces.bean_registry import CannotRegisterNonBeanObjectError
+from spakky.application.interfaces.bean_scanner import IBeanScanner
+from spakky.application.interfaces.pluggable import IPluggable, IRegistry
+from spakky.bean.bean import Bean, BeanFactoryType, UnknownType
 from spakky.bean.primary import Primary
 from spakky.core.importing import (
     Module,
@@ -35,9 +32,8 @@ class BeanType(Enum):
 
 class ApplicationContext(
     IBeanContainer,
-    IBeanRegistry,
-    IBeanPostProcessorRegistry,
     IBeanScanner,
+    IRegistry,
 ):
     __type_map: dict[type, set[type]]
     __bean_map: dict[UUID, type | BeanFactoryType]
@@ -45,6 +41,14 @@ class ApplicationContext(
     __bean_name_map: dict[str, UUID]
     __singleton_cache: dict[UUID, object]
     __post_processors: list[IBeanPostProcessor]
+
+    @property
+    def beans(self) -> set[type | BeanFactoryType]:
+        return set(self.__bean_map.values())
+
+    @property
+    def post_processors(self) -> set[type[IBeanPostProcessor]]:
+        return {type(post_processor) for post_processor in self.__post_processors}
 
     def __init__(self, package: Module | Sequence[Module] | None = None) -> None:
         self.__bean_map = {}
@@ -215,3 +219,6 @@ class ApplicationContext(
     def start(self) -> None:
         for bean_id in self.__bean_map:
             self.__get_bean_by_id(bean_id)
+
+    def register_plugin(self, pluggable: IPluggable) -> None:
+        pluggable.register(self)

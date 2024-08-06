@@ -1,6 +1,6 @@
 from typing import overload
 
-from spakky.bean.interfaces.bean_container import IBeanContainer
+from spakky.application.interfaces.bean_container import IBeanContainer
 from spakky.core.types import AnyT
 
 

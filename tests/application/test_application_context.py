@@ -5,12 +5,14 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.bean.application_context import (
+from spakky.application.application_context import (
     ApplicationContext,
     CannotRegisterNonBeanObjectError,
     NoSuchBeanError,
     NoUniqueBeanError,
 )
+from spakky.application.interfaces.pluggable import IPluggable
+from spakky.application.interfaces.registry import IRegistry
 from spakky.bean.bean import Bean
 from spakky.bean.primary import Primary
 from spakky.core.annotation import ClassAnnotation
@@ -450,3 +452,15 @@ def test_application_context_register_unmanaged_factory_expect_error() -> None:
     context: ApplicationContext = ApplicationContext()
     with pytest.raises(CannotRegisterNonBeanObjectError):
         context.register_bean_factory(get_a)
+
+
+def test_application_context_register_plugin() -> None:
+    class DummyPlugin(IPluggable):
+        def register(self, registry: IRegistry) -> None:
+            registry.register_bean(ComponentA)
+
+    context: ApplicationContext = ApplicationContext()
+    context.register_plugin(DummyPlugin())
+
+    assert context.contains(required_type=ComponentA) is True
+    assert context.contains(required_type=ComponentB) is False
