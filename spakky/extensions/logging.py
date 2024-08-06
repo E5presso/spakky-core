@@ -1,6 +1,7 @@
 import re
 from time import perf_counter
 from typing import Any, ClassVar
+from inspect import iscoroutinefunction
 from logging import Logger
 from dataclasses import field, dataclass
 
@@ -10,12 +11,6 @@ from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.order import Order
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
-
-
-@dataclass
-class AsyncLogging(FunctionAnnotation):
-    enable_masking: bool = True
-    masking_keys: list[str] = field(default_factory=lambda: ["secret", "key", "password"])
 
 
 @dataclass
@@ -37,10 +32,10 @@ class AsyncLoggingAdvisor(IAsyncAdvisor):
         super().__init__()
         self.__logger = logger
 
-    @Around(AsyncLogging.contains)
+    @Around(lambda x: Logging.contains(x) and iscoroutinefunction(x))
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         start: float = perf_counter()
-        annotation: AsyncLogging = AsyncLogging.single(joinpoint)
+        annotation: Logging = Logging.single(joinpoint)
         masking_keys: str = "|".join(annotation.masking_keys)
         masking_regex: str = self.MASKING_REGEX.format(keys=masking_keys)
         mask: re.Pattern[str] | None = re.compile(masking_regex)
@@ -87,7 +82,7 @@ class LoggingAdvisor(IAdvisor):
         super().__init__()
         self.__logger = logger
 
-    @Around(Logging.contains)
+    @Around(lambda x: Logging.contains(x) and not iscoroutinefunction(x))
     def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
         start: float = perf_counter()
         annotation: Logging = Logging.single(joinpoint)

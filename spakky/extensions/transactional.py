@@ -1,4 +1,5 @@
 from typing import Any
+from inspect import iscoroutinefunction
 from logging import Logger
 from dataclasses import dataclass
 
@@ -12,10 +13,6 @@ from spakky.domain.ports.persistency.transaction import (
     AbstractAsyncTranasction,
     AbstractTransaction,
 )
-
-
-@dataclass
-class AsyncTransactional(FunctionAnnotation): ...
 
 
 @dataclass
@@ -33,7 +30,7 @@ class AsyncTransactionalAdvisor(IAsyncAdvisor):
         self.__transacntion = transaction
         self.__logger = logger
 
-    @Around(AsyncTransactional.contains)
+    @Around(lambda x: Transactional.contains(x) and iscoroutinefunction(x))
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         self.__logger.info(f"[{type(self).__name__}] BEGIN TRANSACTION")
         try:
@@ -57,7 +54,7 @@ class TransactionalAdvisor(IAdvisor):
         self.__transacntion = transaction
         self.__logger = logger
 
-    @Around(Transactional.contains)
+    @Around(lambda x: Transactional.contains(x) and not iscoroutinefunction(x))
     def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
         self.__logger.info(f"[{type(self).__name__}] BEGIN TRANSACTION")
         try:

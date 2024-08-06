@@ -3,12 +3,8 @@ from logging import Logger, Formatter, LogRecord
 
 import pytest
 
-from spakky.extensions.logging import (
-    AsyncLogging,
-    AsyncLoggingAdvisor,
-    Logging,
-    LoggingAdvisor,
-)
+from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.extensions.logging import AsyncLoggingAdvisor, Logging, LoggingAdvisor
 
 
 def test_logging_with_masking() -> None:
@@ -29,41 +25,48 @@ def test_logging_with_masking() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    @Logging()
-    def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Logging()
+        def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = LoggingAdvisor(logger)
+    class Unmatched:
+        def none(self) -> None:
+            pass
+
+    advisor = LoggingAdvisor(logger)
     assert (
-        advice.around(
-            joinpoint=authenticate,
+        advisor.around(
+            joinpoint=Dummy().authenticate,
             username="John",
             password="1234",
         )
         is True
     )
     assert (
-        advice.around(
-            authenticate,
+        advisor.around(
+            Dummy().authenticate,
             "John",
             "12345",
         )
         is False
     )
     with pytest.raises(ValueError, match="Mike?"):
-        assert advice.around(authenticate, "Mike", "1234") is False
+        assert advisor.around(Dummy().authenticate, "Mike", "1234") is False
 
     assert console.log_records[0].startswith(
-        "[INFO]: [LoggingAdvisor] test_logging_with_masking.<locals>.authenticate(username='John', password='******') -> True"
+        "[INFO]: [LoggingAdvisor] test_logging_with_masking.<locals>.Dummy.authenticate(username='John', password='******') -> True"
     )
     assert console.log_records[1].startswith(
-        "[INFO]: [LoggingAdvisor] test_logging_with_masking.<locals>.authenticate('John', '12345') -> False"
+        "[INFO]: [LoggingAdvisor] test_logging_with_masking.<locals>.Dummy.authenticate('John', '12345') -> False"
     )
     assert console.log_records[2].startswith(
-        "[ERROR]: [LoggingAdvisor] test_logging_with_masking.<locals>.authenticate('Mike', '1234') raised ValueError"
+        "[ERROR]: [LoggingAdvisor] test_logging_with_masking.<locals>.Dummy.authenticate('Mike', '1234') raised ValueError"
     )
+    assert Aspect.single(advisor).matches(Dummy) is True
+    assert Aspect.single(advisor).matches(Unmatched) is False
 
 
 def test_logging_without_masking() -> None:
@@ -84,41 +87,48 @@ def test_logging_without_masking() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    @Logging(enable_masking=False)
-    def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Logging(enable_masking=False)
+        def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = LoggingAdvisor(logger)
+    class Unmatched:
+        def none(self) -> None:
+            pass
+
+    advisor = LoggingAdvisor(logger)
     assert (
-        advice.around(
-            joinpoint=authenticate,
+        advisor.around(
+            joinpoint=Dummy().authenticate,
             username="John",
             password="1234",
         )
         is True
     )
     assert (
-        advice.around(
-            authenticate,
+        advisor.around(
+            Dummy().authenticate,
             "John",
             "12345",
         )
         is False
     )
     with pytest.raises(ValueError, match="Mike?"):
-        assert advice.around(authenticate, "Mike", "1234") is False
+        assert advisor.around(Dummy().authenticate, "Mike", "1234") is False
 
     assert console.log_records[0].startswith(
-        "[INFO]: [LoggingAdvisor] test_logging_without_masking.<locals>.authenticate(username='John', password='1234') -> True"
+        "[INFO]: [LoggingAdvisor] test_logging_without_masking.<locals>.Dummy.authenticate(username='John', password='1234') -> True"
     )
     assert console.log_records[1].startswith(
-        "[INFO]: [LoggingAdvisor] test_logging_without_masking.<locals>.authenticate('John', '12345') -> False"
+        "[INFO]: [LoggingAdvisor] test_logging_without_masking.<locals>.Dummy.authenticate('John', '12345') -> False"
     )
     assert console.log_records[2].startswith(
-        "[ERROR]: [LoggingAdvisor] test_logging_without_masking.<locals>.authenticate('Mike', '1234') raised ValueError"
+        "[ERROR]: [LoggingAdvisor] test_logging_without_masking.<locals>.Dummy.authenticate('Mike', '1234') raised ValueError"
     )
+    assert Aspect.single(advisor).matches(Dummy) is True
+    assert Aspect.single(advisor).matches(Unmatched) is False
 
 
 @pytest.mark.asyncio
@@ -140,41 +150,48 @@ async def test_async_logging_with_masking() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    @AsyncLogging()
-    async def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Logging()
+        async def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = AsyncLoggingAdvisor(logger)
+    class Unmatched:
+        async def none(self) -> None:
+            pass
+
+    advisor = AsyncLoggingAdvisor(logger)
     assert (
-        await advice.around_async(
-            joinpoint=authenticate,
+        await advisor.around_async(
+            joinpoint=Dummy().authenticate,
             username="John",
             password="1234",
         )
         is True
     )
     assert (
-        await advice.around_async(
-            authenticate,
+        await advisor.around_async(
+            Dummy().authenticate,
             "John",
             "12345",
         )
         is False
     )
     with pytest.raises(ValueError, match="Mike?"):
-        assert await advice.around_async(authenticate, "Mike", "1234") is False
+        assert await advisor.around_async(Dummy().authenticate, "Mike", "1234") is False
 
     assert console.log_records[0].startswith(
-        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_with_masking.<locals>.authenticate(username='John', password='******') -> True"
+        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_with_masking.<locals>.Dummy.authenticate(username='John', password='******') -> True"
     )
     assert console.log_records[1].startswith(
-        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_with_masking.<locals>.authenticate('John', '12345') -> False"
+        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_with_masking.<locals>.Dummy.authenticate('John', '12345') -> False"
     )
     assert console.log_records[2].startswith(
-        "[ERROR]: [AsyncLoggingAdvisor] test_async_logging_with_masking.<locals>.authenticate('Mike', '1234') raised ValueError"
+        "[ERROR]: [AsyncLoggingAdvisor] test_async_logging_with_masking.<locals>.Dummy.authenticate('Mike', '1234') raised ValueError"
     )
+    assert AsyncAspect.single(advisor).matches(Dummy) is True
+    assert AsyncAspect.single(advisor).matches(Unmatched) is False
 
 
 @pytest.mark.asyncio
@@ -196,38 +213,45 @@ async def test_async_logging_without_masking() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    @AsyncLogging(enable_masking=False)
-    async def authenticate(username: str, password: str) -> bool:
-        if username == "Mike":
-            raise ValueError("Mike?")
-        return username == "John" and password == "1234"
+    class Dummy:
+        @Logging(enable_masking=False)
+        async def authenticate(self, username: str, password: str) -> bool:
+            if username == "Mike":
+                raise ValueError("Mike?")
+            return username == "John" and password == "1234"
 
-    advice = AsyncLoggingAdvisor(logger)
+    class Unmatched:
+        async def none(self) -> None:
+            pass
+
+    advisor = AsyncLoggingAdvisor(logger)
     assert (
-        await advice.around_async(
-            joinpoint=authenticate,
+        await advisor.around_async(
+            joinpoint=Dummy().authenticate,
             username="John",
             password="1234",
         )
         is True
     )
     assert (
-        await advice.around_async(
-            authenticate,
+        await advisor.around_async(
+            Dummy().authenticate,
             "John",
             "12345",
         )
         is False
     )
     with pytest.raises(ValueError, match="Mike?"):
-        assert await advice.around_async(authenticate, "Mike", "1234") is False
+        assert await advisor.around_async(Dummy().authenticate, "Mike", "1234") is False
 
     assert console.log_records[0].startswith(
-        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_without_masking.<locals>.authenticate(username='John', password='1234') -> True"
+        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_without_masking.<locals>.Dummy.authenticate(username='John', password='1234') -> True"
     )
     assert console.log_records[1].startswith(
-        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_without_masking.<locals>.authenticate('John', '12345') -> False"
+        "[INFO]: [AsyncLoggingAdvisor] test_async_logging_without_masking.<locals>.Dummy.authenticate('John', '12345') -> False"
     )
     assert console.log_records[2].startswith(
-        "[ERROR]: [AsyncLoggingAdvisor] test_async_logging_without_masking.<locals>.authenticate('Mike', '1234') raised ValueError"
+        "[ERROR]: [AsyncLoggingAdvisor] test_async_logging_without_masking.<locals>.Dummy.authenticate('Mike', '1234') raised ValueError"
     )
+    assert AsyncAspect.single(advisor).matches(Dummy) is True
+    assert AsyncAspect.single(advisor).matches(Unmatched) is False
