@@ -58,7 +58,7 @@ class ApplicationContext(
     def __set_bean(self, bean: type) -> UUID:
         annotation: Bean = Bean.single(bean)
         bean_id: UUID = uuid4()
-        self.__bean_type_map[bean] = bean_id
+        self.__bean_type_map[annotation.bean_type] = bean_id
         self.__bean_name_map[annotation.bean_name] = bean_id
         self.__bean_map[bean_id] = bean
         return bean_id
