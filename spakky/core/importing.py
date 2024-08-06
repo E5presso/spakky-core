@@ -16,20 +16,18 @@ class CannotScanNonPackageModuleError(SpakkyCoreError):
 
 
 def resolve_module(module: Module) -> ModuleType:
-    if isinstance(module, str):
-        return importlib.import_module(module)
-    return module
+    if not isinstance(module, str):
+        return module
+    return importlib.import_module(module)
 
 
 def is_package(module: Module) -> bool:
-    if isinstance(module, str):
-        module = importlib.import_module(module)
+    module = resolve_module(module)
     return hasattr(module, PATH)
 
 
 def list_modules(package: Module) -> set[ModuleType]:
-    if isinstance(package, str):
-        package = importlib.import_module(package)
+    package = resolve_module(package)
     if not is_package(package):
         raise CannotScanNonPackageModuleError(package)
     modules: set[ModuleType] = set()

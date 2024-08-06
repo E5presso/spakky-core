@@ -50,7 +50,7 @@ class ApplicationContext(
     def post_processors(self) -> set[type[IBeanPostProcessor]]:
         return {type(post_processor) for post_processor in self.__post_processors}
 
-    def __init__(self, package: Module | Sequence[Module] | None = None) -> None:
+    def __init__(self, package: Module | set[Module] | None = None) -> None:
         self.__bean_map = {}
         self.__type_map = {}
         self.__bean_type_map = {}
@@ -59,7 +59,7 @@ class ApplicationContext(
         self.__post_processors = []
         if package is None:
             return
-        if isinstance(package, Sequence):
+        if isinstance(package, set):
             for package_item in package:
                 self.scan(package_item)
             return
