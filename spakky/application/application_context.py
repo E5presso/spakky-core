@@ -106,7 +106,7 @@ class ApplicationContext(
             raise NoSuchBeanError(bean_name)
         return self.__bean_name_map[bean_name]
 
-    def __get_dependencies(self, bean_type: type) -> dict[str, object]:
+    def __get_dependencies(self, bean_type: type | BeanFactoryType) -> dict[str, object]:
         annotation: Bean = Bean.single(bean_type)
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
@@ -118,9 +118,8 @@ class ApplicationContext(
 
     def __instaniate_bean(self, bean_id: UUID) -> tuple[object, BeanType]:
         bean = self.__bean_map[bean_id]
-        if isinstance(bean, type):
-            return bean(**self.__get_dependencies(bean)), BeanType.CLASS
-        return bean(), BeanType.FACTORY
+        instance = bean(**self.__get_dependencies(bean))
+        return instance, BeanType.CLASS if isinstance(bean, type) else BeanType.FACTORY
 
     def __post_process_bean(self, bean: object) -> object:
         for post_processor in self.__post_processors:
