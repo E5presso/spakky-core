@@ -45,7 +45,7 @@ def get_application_context_fixture(
     def get_key() -> Key:
         return key
 
-    context: ApplicationContext = ApplicationContext([apps])
+    context: ApplicationContext = ApplicationContext({apps})
     context.register_bean_factory(get_logger)
     context.register_bean_factory(get_key)
     context.register_bean(DummyAdvisor)

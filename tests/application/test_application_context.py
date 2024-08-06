@@ -387,10 +387,10 @@ def test_application_context_initialize_with_module() -> None:
 
 def test_application_context_initialize_with_multiple_pacakges() -> None:
     context: ApplicationContext = ApplicationContext(
-        package=[
+        package={
             dummy_package,
             second_dummy_package,
-        ]
+        }
     )
 
     assert context.contains(required_type=ComponentA) is True
@@ -410,10 +410,10 @@ def test_application_context_initialize_with_multiple_pacakges() -> None:
 
 def test_application_context_initialize_with_multiple_pacakges_and_modules() -> None:
     context: ApplicationContext = ApplicationContext(
-        package=[
+        package={
             dummy_package,
             second_module_a,
-        ]
+        }
     )
 
     assert context.contains(required_type=ComponentA) is True
