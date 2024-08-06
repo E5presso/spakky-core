@@ -6,7 +6,7 @@ import pytest
 
 from spakky.aop.post_processor import AspectBeanPostProcessor
 from spakky.bean.application_context import ApplicationContext
-from spakky.bean.bean import BeanFactory
+from spakky.bean.bean import Bean
 from spakky.cryptography.key import Key
 from spakky.extensions.logging import AsyncLoggingAdvisor, LoggingAdvisor
 from tests.aop import apps
@@ -37,11 +37,11 @@ def get_logger_fixture() -> Generator[Logger, Any, None]:
 def get_application_context_fixture(
     key: Key, logger: Logger
 ) -> Generator[ApplicationContext, Any, None]:
-    @BeanFactory()
+    @Bean()
     def get_logger() -> Logger:
         return logger
 
-    @BeanFactory()
+    @Bean()
     def get_key() -> Key:
         return key
 

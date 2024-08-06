@@ -7,13 +7,11 @@ import pytest
 
 from spakky.bean.application_context import (
     ApplicationContext,
-    CannotRegisterNonBeanError,
+    CannotRegisterNonBeanObjectError,
     NoSuchBeanError,
     NoUniqueBeanError,
 )
-from spakky.bean.autowired import autowired
-from spakky.bean.bean import Bean, BeanFactory
-from spakky.bean.interfaces.bean_registry import CannotRegisterNonBeanFactoryError
+from spakky.bean.bean import Bean
 from spakky.bean.primary import Primary
 from spakky.core.annotation import ClassAnnotation
 from tests import dummy_package
@@ -50,7 +48,7 @@ def test_application_context_register_expect_error() -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    with pytest.raises(CannotRegisterNonBeanError):
+    with pytest.raises(CannotRegisterNonBeanObjectError):
         context.register_bean(NonComponent)
 
 
@@ -271,7 +269,6 @@ def test_application_context_get_dependency_recursive_by_name() -> None:
         __a: A
         __b: B
 
-        @autowired
         def __init__(self, a, b) -> None:  # type: ignore
             self.__a = a
             self.__b = b
@@ -303,7 +300,6 @@ def test_application_context_get_dependency_recursive_by_type() -> None:
         __a: A
         __b: B
 
-        @autowired
         def __init__(self, b: A, a: B) -> None:
             self.__a = b
             self.__b = a
@@ -380,7 +376,7 @@ def test_application_context_register_unmanaged_factory() -> None:
         def a(self) -> str:
             return "A"
 
-    @BeanFactory()
+    @Bean()
     def get_a() -> A:
         return A()
 
@@ -402,5 +398,5 @@ def test_application_context_register_unmanaged_factory_expect_error() -> None:
         return A()
 
     context: ApplicationContext = ApplicationContext()
-    with pytest.raises(CannotRegisterNonBeanFactoryError):
+    with pytest.raises(CannotRegisterNonBeanObjectError):
         context.register_bean_factory(get_a)
