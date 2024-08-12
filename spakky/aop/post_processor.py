@@ -2,21 +2,20 @@ import sys
 from typing import Any, Sequence, cast
 from logging import Logger
 
-from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
-from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.aop.order import Order
-from spakky.application.interfaces.bean_container import IBeanContainer
-from spakky.application.interfaces.bean_processor import IBeanPostProcessor
-from spakky.bean.bean import Bean, UnknownType
+from spakky.application.interfaces.container import IContainer
+from spakky.application.interfaces.processor import IPostProcessor
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
+from spakky.injectable.injectable import Injectable, UnknownType
 
 
 class _Runnable:
-    instance: IAdvisor
+    instance: IAspect
     next: Func
 
-    def __init__(self, instance: IAdvisor, next: Func) -> None:
+    def __init__(self, instance: IAspect, next: Func) -> None:
         self.instance = instance
         self.next = next
 
@@ -37,10 +36,10 @@ class _Runnable:
 
 
 class _AsyncRunnable:
-    instance: IAsyncAdvisor
+    instance: IAsyncAspect
     next: AsyncFunc
 
-    def __init__(self, instance: IAsyncAdvisor, next: AsyncFunc) -> None:
+    def __init__(self, instance: IAsyncAspect, next: AsyncFunc) -> None:
         self.instance = instance
         self.next = next
 
@@ -61,46 +60,44 @@ class _AsyncRunnable:
 
 
 class AspectProxyHandler(AbstractProxyHandler):
-    __container: IBeanContainer
-    __advisors: Sequence[type[IAdvisor | IAsyncAdvisor]]
+    __container: IContainer
+    __aspects: Sequence[type[IAspect | IAsyncAspect]]
 
     def __init__(
         self,
-        container: IBeanContainer,
-        advisors: Sequence[type[IAdvisor | IAsyncAdvisor]],
+        container: IContainer,
+        aspects: Sequence[type[IAspect | IAsyncAspect]],
     ) -> None:
         super().__init__()
         self.__container = container
-        self.__advisors = advisors
+        self.__aspects = aspects
 
     def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
-        advisors: Sequence[type[IAdvisor]] = [
-            x for x in self.__advisors if issubclass(x, IAdvisor)
+        aspects: Sequence[type[IAspect]] = [
+            x for x in self.__aspects if issubclass(x, IAspect)
         ]
-        matched: Sequence[type[IAdvisor]] = [
-            x for x in advisors if Aspect.single(x).matches(method)
+        matched: Sequence[type[IAspect]] = [
+            x for x in aspects if Aspect.get(x).matches(method)
         ]
         runnable: Func = method
-        for advisor in matched:
-            runnable = _Runnable(self.__container.single(required_type=advisor), runnable)
+        for aspect in matched:
+            runnable = _Runnable(self.__container.get(type_=aspect), runnable)
         return runnable(*args, **kwargs)
 
     async def call_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-        advisors: Sequence[type[IAsyncAdvisor]] = [
-            x for x in self.__advisors if issubclass(x, IAsyncAdvisor)
+        aspects: Sequence[type[IAsyncAspect]] = [
+            x for x in self.__aspects if issubclass(x, IAsyncAspect)
         ]
-        matched: Sequence[type[IAsyncAdvisor]] = [
-            x for x in advisors if AsyncAspect.single(x).matches(method)
+        matched: Sequence[type[IAsyncAspect]] = [
+            x for x in aspects if AsyncAspect.get(x).matches(method)
         ]
         runnable: AsyncFunc = method
-        for advisor in matched:
-            runnable = _AsyncRunnable(
-                self.__container.single(required_type=advisor), runnable
-            )
+        for aspect in matched:
+            runnable = _AsyncRunnable(self.__container.get(type_=aspect), runnable)
         return await runnable(*args, **kwargs)
 
 
-class AspectBeanPostProcessor(IBeanPostProcessor):
+class AspectPostProcessor(IPostProcessor):
     __logger: Logger
     __cache: dict[type, object]
 
@@ -109,53 +106,56 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         self.__logger = logger
         self.__cache = {}
 
-    def __set_cache(self, type_: type, bean: object) -> object:
-        self.__cache[type_] = bean
-        return bean
+    def __set_cache(self, type_: type, injectable: object) -> object:
+        self.__cache[type_] = injectable
+        return injectable
 
     def __get_cache(self, type_: type) -> object | None:
         return self.__cache.get(type_, None)
 
-    def post_process_bean(self, container: IBeanContainer, bean: object) -> object:
-        if (cached := self.__get_cache(type(bean))) is not None:
+    def post_process(self, container: IContainer, injectable: object) -> object:
+        if (cached := self.__get_cache(type(injectable))) is not None:
             return cached
-        if Aspect.contains(bean) or AsyncAspect.contains(bean):
-            return self.__set_cache(type(bean), bean)
-        annotation: Bean = Bean.single(bean)
-        matched_advisors: Sequence[type[IAdvisor | IAsyncAdvisor]] = []
-        advisors: Sequence[type] = container.filter_bean_types(
+        if Aspect.contains(injectable) or AsyncAspect.contains(injectable):
+            return self.__set_cache(type(injectable), injectable)
+        injectable_annotation: Injectable | None = Injectable.get_or_none(injectable)
+        if injectable_annotation is None:
+            self.__set_cache(type(injectable), injectable)
+            return injectable
+        matched_aspects: Sequence[type[IAspect | IAspect]] = []
+        aspects: Sequence[type] = container.filter_injectable_types(
             lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
         )
-        for advisor in advisors:
-            aspect: Aspect | None = Aspect.single_or_none(advisor)
-            async_aspect: AsyncAspect | None = AsyncAspect.single_or_none(advisor)
-            if aspect is not None and aspect.matches(bean):
-                matched_advisors.append(cast(type[IAdvisor], advisor))
+        for aspect in aspects:
+            aspect_annotation: Aspect | None = Aspect.get_or_none(aspect)
+            async_aspect: AsyncAspect | None = AsyncAspect.get_or_none(aspect)
+            if aspect_annotation is not None and aspect_annotation.matches(injectable):
+                matched_aspects.append(cast(type[IAspect], aspect))
                 continue
-            if async_aspect is not None and async_aspect.matches(bean):
-                matched_advisors.append(cast(type[IAsyncAdvisor], advisor))
+            if async_aspect is not None and async_aspect.matches(injectable):
+                matched_aspects.append(cast(type[IAspect], aspect))
                 continue
-        if not any(matched_advisors):
-            self.__cache[type(bean)] = bean
-            return bean
-        matched_advisors.sort(
-            key=lambda x: Order.single_or_default(x, Order(sys.maxsize)).order,
+        if not any(matched_aspects):
+            self.__cache[type(injectable)] = injectable
+            return injectable
+        matched_aspects.sort(
+            key=lambda x: Order.get_or_default(x, Order(sys.maxsize)).order,
             reverse=True,
         )
         # pylint: disable=line-too-long
         self.__logger.info(
-            f"[{type(self).__name__}] {[f'{x.__name__}({Order.single_or_default(x, Order(sys.maxsize)).order})' for x in matched_advisors]!r} -> {type(bean).__name__}"
+            f"[{type(self).__name__}] {[f'{x.__name__}({Order.get_or_default(x, Order(sys.maxsize)).order})' for x in matched_aspects]!r} -> {type(injectable).__name__}"
         )
         dependencies: dict[str, object] = {}
-        for name, required_type in annotation.dependencies.items():
+        for name, required_type in injectable_annotation.dependencies.items():
             if required_type == UnknownType:
-                dependencies[name] = container.single(name=name)
+                dependencies[name] = container.get(name=name)
                 continue
-            dependencies[name] = container.single(required_type=required_type)
+            dependencies[name] = container.get(type_=required_type)
         return self.__set_cache(
-            type(bean),
+            type(injectable),
             ProxyFactory(
-                superclass=type(bean),
-                handler=AspectProxyHandler(container, matched_advisors),
+                superclass=type(injectable),
+                handler=AspectProxyHandler(container, matched_aspects),
             ).create(**dependencies),
         )

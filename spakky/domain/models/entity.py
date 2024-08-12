@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from uuid import UUID, uuid4
 from typing import Any, Generic
+from datetime import UTC, datetime
 from dataclasses import field
 
 from spakky.core.interfaces.equatable import EquatableT, IEquatable
@@ -14,14 +16,18 @@ class CannotMonkeyPatchEntityError(SpakkyDomainError):
 @mutable
 class Entity(IEquatable, Generic[EquatableT], ABC):
     __initialized: bool = field(init=False, repr=False, default=False)
+
     uid: EquatableT
+    version: UUID = field(default_factory=uuid4)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     @abstractmethod
     def next_id(cls) -> EquatableT: ...
 
-    def validate(self) -> None:
-        return
+    @abstractmethod
+    def validate(self) -> None: ...
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):

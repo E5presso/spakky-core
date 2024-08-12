@@ -1,9 +1,9 @@
 from typing import Any, Callable, Protocol, Awaitable, runtime_checkable
 from dataclasses import dataclass
 
-from spakky.bean.bean import Bean
 from spakky.core.annotation import FunctionAnnotation
 from spakky.domain.models.domain_event import DomainEvent
+from spakky.injectable.injectable import Injectable
 
 
 @runtime_checkable
@@ -34,4 +34,4 @@ def on_event(
 
 
 @dataclass
-class EventHandler(Bean): ...
+class EventHandler(Injectable): ...

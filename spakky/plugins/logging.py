@@ -1,9 +1,9 @@
 from spakky.application.interfaces.pluggable import IPluggable
 from spakky.application.interfaces.registry import IRegistry
-from spakky.extensions.logging import AsyncLoggingAdvisor, LoggingAdvisor
+from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 
 
 class LoggingPlugin(IPluggable):
     def register(self, registry: IRegistry) -> None:
-        registry.register_bean(LoggingAdvisor)
-        registry.register_bean(AsyncLoggingAdvisor)
+        registry.register_injectable(LoggingAspect)
+        registry.register_injectable(AsyncLoggingAspect)

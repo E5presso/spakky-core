@@ -4,11 +4,11 @@ from logging import Logger, Formatter, StreamHandler, getLogger
 
 import pytest
 
-from spakky.aop.post_processor import AspectBeanPostProcessor
+from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.application_context import ApplicationContext
-from spakky.bean.bean import Bean
-from spakky.cryptography.key import Key
-from spakky.extensions.logging import AsyncLoggingAdvisor, LoggingAdvisor
+from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
+from spakky.injectable.injectable import Injectable
+from spakky.security.key import Key
 from tests.aop import apps
 from tests.aop.apps.dummy import AsyncDummyAdvisor, DummyAdvisor
 
@@ -37,21 +37,21 @@ def get_logger_fixture() -> Generator[Logger, Any, None]:
 def get_application_context_fixture(
     key: Key, logger: Logger
 ) -> Generator[ApplicationContext, Any, None]:
-    @Bean()
+    @Injectable()
     def get_logger() -> Logger:
         return logger
 
-    @Bean()
+    @Injectable()
     def get_key() -> Key:
         return key
 
     context: ApplicationContext = ApplicationContext({apps})
-    context.register_bean_factory(get_logger)
-    context.register_bean_factory(get_key)
-    context.register_bean(DummyAdvisor)
-    context.register_bean(LoggingAdvisor)
-    context.register_bean(AsyncDummyAdvisor)
-    context.register_bean(AsyncLoggingAdvisor)
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
+    context.register_injectable(get_logger)
+    context.register_injectable(get_key)
+    context.register_injectable(DummyAdvisor)
+    context.register_injectable(LoggingAspect)
+    context.register_injectable(AsyncDummyAdvisor)
+    context.register_injectable(AsyncLoggingAspect)
+    context.register_post_processor(AspectPostProcessor(logger))
     context.start()
     yield context

@@ -1,7 +1,6 @@
 import sys
 from abc import ABC
 from typing import Any, final
-from itertools import chain
 from dataclasses import dataclass
 
 from spakky.core.error import SpakkyCoreError
@@ -13,8 +12,7 @@ else:
     from typing_extensions import Self  # pragma: no cover
 
 
-__ANNOTATION_METADATA__ = "__SPAKKY_ANNOTATION_METADATA__"
-__ANNOTATION_TYPEMAP__ = "__SPAKKY_ANNOTATION_TYPEMAP__"
+__ANNOTATION_METADATA__ = "__spakky_annotation_metadata__"
 
 
 @dataclass
@@ -24,86 +22,65 @@ class Annotation(ABC):
 
     @final
     def __set_annotation(self, obj: AnyT) -> AnyT:
-        typemap: dict[type, set[type[Self]]] = self.__get_typemap(obj)
         metadata: dict[type[Self], list[Self]] = self.__get_metadata(obj)
-        type_: type[Self] = type(self)
-        for base_type in type_.mro():
-            if base_type not in typemap:
-                typemap[base_type] = set()
-            typemap[base_type].add(type_)
-        if type_ not in metadata:
-            metadata[type_] = []
-        metadata[type_].append(self)
-        setattr(obj, __ANNOTATION_TYPEMAP__, typemap)
+        for base_type in type(self).mro():
+            if base_type not in metadata:
+                metadata[base_type] = []
+            metadata[base_type].append(self)
         setattr(obj, __ANNOTATION_METADATA__, metadata)
         return obj
 
     @final
     @classmethod
     def all(cls, obj: Any) -> list[Self]:
-        typemap: dict[type, set[type[Self]]] = cls.__get_typemap(obj)
         metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
-        if cls not in typemap:
-            return []
-        types: set[type[Self]] = typemap[cls]
-        annotations: list[Self] = list(chain(*(metadata.get(t) or [] for t in types)))
+        annotations: list[Self] = metadata.get(cls, [])
         return annotations
 
     @final
     @classmethod
-    def single(cls, obj: Any) -> Self:
-        annotations: list[Self] = cls.all(obj)
-        if len(annotations) > 1:
-            raise MultipleAnnotationFoundError(cls, obj)
-        if len(annotations) == 0:
+    def get(cls, obj: Any) -> Self:
+        metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
+        if cls not in metadata:
             raise AnnotationNotFoundError(cls, obj)
+        annotations: list[Self] = metadata.get(cls, [])
+        if len(annotations) > 1:
+            raise MultipleAnnotationFoundError(cls, obj)
         return annotations[0]
 
     @final
     @classmethod
-    def single_or_none(cls, obj: Any) -> Self | None:
-        annotations: list[Self] = cls.all(obj)
-        if len(annotations) > 1:
-            raise MultipleAnnotationFoundError(cls, obj)
-        if len(annotations) == 0:
+    def get_or_none(cls, obj: Any) -> Self | None:
+        metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
+        if cls not in metadata:
             return None
+        annotations: list[Self] = metadata.get(cls, [])
+        if len(annotations) > 1:
+            raise MultipleAnnotationFoundError(cls, obj)
         return annotations[0]
 
     @final
     @classmethod
-    def single_or_default(cls, obj: Any, default: Self) -> Self:
-        annotations: list[Self] = cls.all(obj)
+    def get_or_default(cls, obj: Any, default: Self) -> Self:
+        metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
+        if cls not in metadata:
+            return default
+        annotations: list[Self] = metadata.get(cls, [])
         if len(annotations) > 1:
             raise MultipleAnnotationFoundError(cls, obj)
-        if len(annotations) == 0:
-            return default
         return annotations[0]
 
     @final
     @classmethod
     def contains(cls, obj: Any) -> bool:
-        annotations: list[Self] = cls.all(obj)
-        return len(annotations) > 0
-
-    @final
-    @classmethod
-    def __get_typemap(cls, obj: Any) -> dict[type, set[type[Self]]]:
-        typemap: dict[type, set[type[Self]]] = getattr(obj, __ANNOTATION_TYPEMAP__, {})
-        return typemap
+        metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
+        return cls in metadata
 
     @final
     @classmethod
     def __get_metadata(cls, obj: Any) -> dict[type[Self], list[Self]]:
         metadata: dict[type[Self], list[Self]] = getattr(obj, __ANNOTATION_METADATA__, {})
         return metadata
-
-
-class AnnotationNotFoundError(SpakkyCoreError):
-    message = "Object has no specified annotation"
-
-
-class MultipleAnnotationFoundError(SpakkyCoreError):
-    message = "Multiple annotation found in object"
 
 
 @dataclass
@@ -116,3 +93,11 @@ class ClassAnnotation(Annotation, ABC):
 class FunctionAnnotation(Annotation, ABC):
     def __call__(self, obj: FuncT) -> FuncT:
         return super().__call__(obj)
+
+
+class AnnotationNotFoundError(SpakkyCoreError):
+    message = "Object has no specified annotation"
+
+
+class MultipleAnnotationFoundError(SpakkyCoreError):
+    message = "Multiple annotation found in object"

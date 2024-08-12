@@ -3,20 +3,23 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from spakky.core.mutability import mutable
+from spakky.domain.error import DomainValidationError
+from spakky.domain.models.entity import CannotMonkeyPatchEntityError, Entity
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
-
-from spakky.core.mutability import mutable
-from spakky.domain.error import DomainValidationError
-from spakky.domain.models.entity import CannotMonkeyPatchEntityError, Entity
 
 
 def test_entity_equals() -> None:
     @mutable
     class User(Entity[UUID]):
         name: str
+
+        def validate(self) -> None:
+            return
 
         @classmethod
         def next_id(cls) -> UUID:
@@ -37,6 +40,9 @@ def test_entity_not_equals_with_wrong_type() -> None:
     class User(Entity[UUID]):
         name: str
 
+        def validate(self) -> None:
+            return
+
         @classmethod
         def next_id(cls) -> UUID:
             return uuid4()
@@ -48,6 +54,9 @@ def test_entity_not_equals_with_wrong_type() -> None:
     @mutable
     class Class(Entity[UUID]):
         name: str
+
+        def validate(self) -> None:
+            return
 
         @classmethod
         def next_id(cls) -> UUID:
@@ -68,6 +77,9 @@ def test_entity_not_equals_transient() -> None:
     class User(Entity[UUID]):
         name: str
 
+        def validate(self) -> None:
+            return
+
         @classmethod
         def next_id(cls) -> UUID:
             return uuid4()
@@ -86,6 +98,9 @@ def test_entity_not_equals() -> None:
     @mutable
     class User(Entity[UUID]):
         name: str
+
+        def validate(self) -> None:
+            return
 
         @classmethod
         def next_id(cls) -> UUID:
@@ -106,6 +121,9 @@ def test_entity_hash() -> None:
     class User(Entity[UUID]):
         name: str
 
+        def validate(self) -> None:
+            return
+
         @classmethod
         def next_id(cls) -> UUID:
             return uuid4()
@@ -123,6 +141,12 @@ def test_entity_prevent_monkey_patching() -> None:
     class User(Entity[UUID]):
         name: str
 
+        def validate(self) -> None:
+            return
+
+        def update_name(self, name: str) -> None:
+            self.name = name
+
         @classmethod
         def next_id(cls) -> UUID:
             return uuid4()
@@ -131,15 +155,12 @@ def test_entity_prevent_monkey_patching() -> None:
         def create(cls: type[Self], name: str) -> Self:
             return cls(uid=cls.next_id(), name=name)
 
-        def update_name(self, name: str) -> None:
-            self.name = name
-
     user: User = User.create(name="John")
     user.update_name("Sarah")
 
     assert user.name == "Sarah"
     with pytest.raises(CannotMonkeyPatchEntityError):
-        user.update_name = lambda name: print(name)
+        user.update_name = lambda name: print(name)  # pylint: disable=unnecessary-lambda
 
 
 def test_entity_validation_pass() -> None:
@@ -154,6 +175,9 @@ def test_entity_validation_pass() -> None:
             if not 0 < self.age and self.age < 100:
                 raise DomainValidationError
 
+        def update_name(self, name: str) -> None:
+            self.name = name
+
         @classmethod
         def next_id(cls) -> UUID:
             return uuid4()
@@ -161,9 +185,6 @@ def test_entity_validation_pass() -> None:
         @classmethod
         def create(cls, name: str, age: int) -> Self:
             return cls(uid=cls.next_id(), name=name, age=age)
-
-        def update_name(self, name: str) -> None:
-            self.name = name
 
     @mutable
     class Class(Entity[UUID]):
@@ -173,6 +194,9 @@ def test_entity_validation_pass() -> None:
             if not len(self.name) < 10:
                 raise DomainValidationError
 
+        def update_name(self, name: str) -> None:
+            self.name = name
+
         @classmethod
         def next_id(cls) -> UUID:
             return uuid4()
@@ -180,9 +204,6 @@ def test_entity_validation_pass() -> None:
         @classmethod
         def create(cls, name: str) -> Self:
             return cls(uid=cls.next_id(), name=name)
-
-        def update_name(self, name: str) -> None:
-            self.name = name
 
     user: User = User.create("Sam", 30)
     clazz: Class = Class.create("Astronomy")
@@ -209,6 +230,9 @@ def test_entity_attribute_will_not_change_if_validation_error_raised() -> None:
             if not 0 < self.age and self.age < 100:
                 raise DomainValidationError
 
+        def update_name(self, name: str) -> None:
+            self.name = name
+
         @classmethod
         def next_id(cls) -> UUID:
             return uuid4()
@@ -216,9 +240,6 @@ def test_entity_attribute_will_not_change_if_validation_error_raised() -> None:
         @classmethod
         def create(cls, name: str, age: int) -> Self:
             return cls(uid=cls.next_id(), name=name, age=age)
-
-        def update_name(self, name: str) -> None:
-            self.name = name
 
     user: User = User.create("Sam", 30)
     with pytest.raises(DomainValidationError):

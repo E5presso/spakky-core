@@ -18,9 +18,9 @@ def test_class_annotation_expect_success() -> None:
     class Dummy: ...
 
     assert ClassAnnotation.contains(Dummy)
-    assert ClassAnnotation.single_or_none(Dummy) is not None
-    assert ClassAnnotation.single_or_default(Dummy, ClassAnnotation()) is not None
-    assert ClassAnnotation.single(Dummy)
+    assert ClassAnnotation.get_or_none(Dummy) is not None
+    assert ClassAnnotation.get_or_default(Dummy, ClassAnnotation()) is not None
+    assert ClassAnnotation.get(Dummy)
 
 
 def test_class_annotation_expect_fail() -> None:
@@ -29,9 +29,9 @@ def test_class_annotation_expect_fail() -> None:
     with pytest.raises(AssertionError):
         assert ClassAnnotation.contains(Dummy)
     with pytest.raises(AssertionError):
-        assert ClassAnnotation.single_or_none(Dummy) is not None
+        assert ClassAnnotation.get_or_none(Dummy) is not None
     with pytest.raises(AnnotationNotFoundError):
-        ClassAnnotation.single(Dummy)
+        ClassAnnotation.get(Dummy)
 
 
 def test_multiple_class_annotation_expect_success() -> None:
@@ -59,11 +59,11 @@ def test_same_class_annotation_multiple_times_expect_error() -> None:
     class Dummy: ...
 
     with pytest.raises(MultipleAnnotationFoundError):
-        DummyAnnotation.single(Dummy)
+        DummyAnnotation.get(Dummy)
     with pytest.raises(MultipleAnnotationFoundError):
-        DummyAnnotation.single_or_none(Dummy)
+        DummyAnnotation.get_or_none(Dummy)
     with pytest.raises(MultipleAnnotationFoundError):
-        DummyAnnotation.single_or_default(Dummy, DummyAnnotation(age=30))
+        DummyAnnotation.get_or_default(Dummy, DummyAnnotation(age=30))
 
     assert DummyAnnotation.all(Dummy) == [
         DummyAnnotation(age=30),
@@ -91,8 +91,8 @@ def test_function_annotation_expect_success() -> None:
     def function() -> None: ...
 
     assert FunctionAnnotation.contains(function)
-    assert FunctionAnnotation.single_or_none(function) is not None
-    assert FunctionAnnotation.single(function)
+    assert FunctionAnnotation.get_or_none(function) is not None
+    assert FunctionAnnotation.get(function)
 
     @dataclass
     class CustomAnnotation(Annotation):
@@ -116,9 +116,9 @@ def test_function_annotation_expect_fail() -> None:
     with pytest.raises(AssertionError):
         assert FunctionAnnotation.contains(function)
     with pytest.raises(AssertionError):
-        assert FunctionAnnotation.single_or_none(function) is not None
+        assert FunctionAnnotation.get_or_none(function) is not None
     with pytest.raises(AnnotationNotFoundError):
-        FunctionAnnotation.single(function)
+        FunctionAnnotation.get(function)
 
 
 def test_multiple_function_annotation_expect_success() -> None:
@@ -146,9 +146,9 @@ def test_same_function_annotation_multiple_times_expect_error() -> None:
     def dummy() -> None: ...
 
     with pytest.raises(MultipleAnnotationFoundError):
-        DummyAnnotation.single(dummy)
+        DummyAnnotation.get(dummy)
     with pytest.raises(MultipleAnnotationFoundError):
-        DummyAnnotation.single_or_none(dummy)
+        DummyAnnotation.get_or_none(dummy)
 
     assert DummyAnnotation.all(dummy) == [
         DummyAnnotation(name="Sarah"),
@@ -177,11 +177,11 @@ def test_class_annotation_inheritance() -> None:
     assert Bar.contains(Dummy)
     assert Foo.contains(Dummy)
 
-    assert Baz.single(Dummy).uid == uid
-    assert Baz.single(Dummy).name == "John"
-    assert Bar.single(Dummy).uid == uid
-    assert Bar.single(Dummy).name == "John"
-    assert Foo.single(Dummy).uid == uid
+    assert Baz.get(Dummy).uid == uid
+    assert Baz.get(Dummy).name == "John"
+    assert Bar.get(Dummy).uid == uid
+    assert Bar.get(Dummy).name == "John"
+    assert Foo.get(Dummy).uid == uid
 
 
 def test_class_annotation_inheritance_expect_fail() -> None:

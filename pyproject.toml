@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spakky-core"
-version = "0.15.1"
+version = "0.16.0"
 description = "Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc..."
 authors = ["Spakky <sejong418@icloud.com>"]
 packages = [{ include = "spakky" }]
@@ -14,6 +14,8 @@ build-backend = "poetry.core.masonry.api"
 python = ">=3.10"
 pycryptodome = "^3.20.0"
 typing-extensions = "^4.9.0"
+bcrypt = "^4.2.0"
+argon2-cffi = "^23.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.2"
@@ -22,12 +24,14 @@ isort = "^5.12.0"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
+pytest-xdist = "^3.6.1"
 
 [tool.poetry.group.ci.dependencies]
 pylint = "^3.0.2"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
+pytest-xdist = "^3.6.1"
 
 [tool.black]
 line-length = 90
@@ -78,7 +82,9 @@ addopts = """
     --cov-report=xml
     --no-cov-on-fail
     --strict-markers
+    --dist=loadfile
     -p no:warnings
+    -n auto
     -vv
 """
 

@@ -2,13 +2,12 @@ from typing import Any
 from dataclasses import dataclass
 
 from spakky.aop.advice import Around
-from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
-from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.aop.order import Order
+from spakky.aspects.logging import Logging
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
-from spakky.cryptography.key import Key
-from spakky.extensions.logging import Logging
+from spakky.security.key import Key
 from spakky.stereotype.usecase import UseCase
 
 
@@ -22,25 +21,19 @@ class AsyncDummy(FunctionAnnotation): ...
 
 @Order(0)
 @Aspect()
-class DummyAdvisor(IAdvisor):
-    def __init__(self) -> None:
-        super().__init__()
-
+class DummyAdvisor(IAspect):
     @Around(Dummy.contains)
     def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
-        _annotation = Dummy.single(joinpoint)
+        _annotation = Dummy.get(joinpoint)
         return joinpoint(*args, **kwargs)
 
 
 @Order(0)
 @AsyncAspect()
-class AsyncDummyAdvisor(IAsyncAdvisor):
-    def __init__(self) -> None:
-        super().__init__()
-
+class AsyncDummyAdvisor(IAsyncAspect):
     @Around(AsyncDummy.contains)
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-        _annotation = AsyncDummy.single(joinpoint)
+        _annotation = AsyncDummy.get(joinpoint)
         return await joinpoint(*args, **kwargs)
 
 

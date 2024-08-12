@@ -1,14 +1,14 @@
 import sys
 from uuid import UUID, uuid4
 
+from spakky.core.mutability import immutable, mutable
+from spakky.domain.models.aggregate_root import AggregateRoot
+from spakky.domain.models.domain_event import DomainEvent
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
-
-from spakky.core.mutability import immutable, mutable
-from spakky.domain.models.aggregate_root import AggregateRoot
-from spakky.domain.models.domain_event import DomainEvent
 
 
 def test_aggregate_root_add_event() -> None:
@@ -16,13 +16,16 @@ def test_aggregate_root_add_event() -> None:
     class User(AggregateRoot[UUID]):
         name: str
 
-        @classmethod
-        def next_id(cls) -> UUID:
-            return uuid4()
+        def validate(self) -> None:
+            return
 
         @immutable
         class Created(DomainEvent):
             name: str
+
+        @classmethod
+        def next_id(cls) -> UUID:
+            return uuid4()
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
@@ -40,13 +43,16 @@ def test_aggregate_root_remove_event() -> None:
     class User(AggregateRoot[UUID]):
         name: str
 
-        @classmethod
-        def next_id(cls) -> UUID:
-            return uuid4()
+        def validate(self) -> None:
+            return
 
         @immutable
         class Created(DomainEvent):
             name: str
+
+        @classmethod
+        def next_id(cls) -> UUID:
+            return uuid4()
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:
@@ -66,13 +72,16 @@ def test_aggregate_root_clear_events() -> None:
     class User(AggregateRoot[UUID]):
         name: str
 
-        @classmethod
-        def next_id(cls) -> UUID:
-            return uuid4()
+        def validate(self) -> None:
+            return
 
         @immutable
         class Created(DomainEvent):
             name: str
+
+        @classmethod
+        def next_id(cls) -> UUID:
+            return uuid4()
 
         @classmethod
         def create(cls: type[Self], name: str) -> Self:

@@ -15,12 +15,10 @@ class EntityNotFoundError(SpakkyDomainError):
 @runtime_checkable
 class IGenericRepository(Protocol[AggregateRootT, AggregateIdT_contra]):
     @abstractmethod
-    def single(self, aggregate_id: AggregateIdT_contra) -> AggregateRootT: ...
+    def get(self, aggregate_id: AggregateIdT_contra) -> AggregateRootT: ...
 
     @abstractmethod
-    def single_or_none(
-        self, aggregate_id: AggregateIdT_contra
-    ) -> AggregateRootT | None: ...
+    def get_or_none(self, aggregate_id: AggregateIdT_contra) -> AggregateRootT | None: ...
 
     @abstractmethod
     def contains(self, aggregate_id: AggregateIdT_contra) -> bool: ...
@@ -50,10 +48,10 @@ class IGenericRepository(Protocol[AggregateRootT, AggregateIdT_contra]):
 @runtime_checkable
 class IAsyncGenericRepository(Protocol[AggregateRootT, AggregateIdT_contra]):
     @abstractmethod
-    async def single(self, aggregate_id: AggregateIdT_contra) -> AggregateRootT: ...
+    async def get(self, aggregate_id: AggregateIdT_contra) -> AggregateRootT: ...
 
     @abstractmethod
-    async def single_or_none(
+    async def get_or_none(
         self, aggregate_id: AggregateIdT_contra
     ) -> AggregateRootT | None: ...
 

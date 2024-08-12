@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from spakky.bean.bean import Bean
+from spakky.injectable.injectable import Injectable
 
 
 @dataclass
-class Repository(Bean): ...
+class Repository(Injectable): ...

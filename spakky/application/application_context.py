@@ -1,19 +1,17 @@
-from enum import Enum, auto
 from uuid import UUID, uuid4
 from types import ModuleType
 from typing import Any, Callable, Sequence, overload
 
-from spakky.application.interfaces.bean_container import (
-    IBeanContainer,
-    NoSuchBeanError,
-    NoUniqueBeanError,
+from spakky.application.interfaces.container import (
+    IContainer,
+    NoSuchInjectableError,
+    NoUniqueInjectableError,
 )
-from spakky.application.interfaces.bean_processor import IBeanPostProcessor
-from spakky.application.interfaces.bean_registry import CannotRegisterNonBeanObjectError
-from spakky.application.interfaces.bean_scanner import IBeanScanner
 from spakky.application.interfaces.pluggable import IPluggable, IRegistry
-from spakky.bean.bean import Bean, BeanFactoryType, UnknownType
-from spakky.bean.primary import Primary
+from spakky.application.interfaces.processor import IPostProcessor
+from spakky.application.interfaces.registry import (
+    CannotRegisterNonInjectableObjectError,
+)
 from spakky.core.importing import (
     Module,
     is_package,
@@ -23,38 +21,31 @@ from spakky.core.importing import (
     resolve_module,
 )
 from spakky.core.types import AnyT
+from spakky.injectable.injectable import Injectable, InjectableType, UnknownType
+from spakky.injectable.primary import Primary
 
 
-class BeanType(Enum):
-    CLASS = auto()
-    FACTORY = auto()
-
-
-class ApplicationContext(
-    IBeanContainer,
-    IBeanScanner,
-    IRegistry,
-):
-    __type_map: dict[type, set[type]]
-    __bean_map: dict[UUID, type | BeanFactoryType]
-    __bean_type_map: dict[type, UUID]
-    __bean_name_map: dict[str, UUID]
+class ApplicationContext(IContainer, IRegistry):
+    __target_type_map: dict[type, set[type]]
+    __type_map: dict[type, UUID]
+    __name_map: dict[str, UUID]
+    __injectable_map: dict[UUID, InjectableType]
     __singleton_cache: dict[UUID, object]
-    __post_processors: list[IBeanPostProcessor]
+    __post_processors: list[IPostProcessor]
 
     @property
-    def beans(self) -> set[type | BeanFactoryType]:
-        return set(self.__bean_map.values())
+    def injectables(self) -> set[InjectableType]:
+        return set(self.__injectable_map.values())
 
     @property
-    def post_processors(self) -> set[type[IBeanPostProcessor]]:
+    def post_processors(self) -> set[type[IPostProcessor]]:
         return {type(post_processor) for post_processor in self.__post_processors}
 
     def __init__(self, package: Module | set[Module] | None = None) -> None:
-        self.__bean_map = {}
+        self.__injectable_map = {}
+        self.__target_type_map = {}
         self.__type_map = {}
-        self.__bean_type_map = {}
-        self.__bean_name_map = {}
+        self.__name_map = {}
         self.__singleton_cache = {}
         self.__post_processors = []
         if package is None:
@@ -66,138 +57,130 @@ class ApplicationContext(
         self.scan(package)
 
     def __set_target_type(self, target_type: type) -> None:
-        for base in target_type.__mro__:
-            if base not in self.__type_map:
-                self.__type_map[base] = set()
-            self.__type_map[base].add(target_type)
+        for base_type in target_type.mro():
+            if base_type not in self.__target_type_map:
+                self.__target_type_map[base_type] = set()
+            self.__target_type_map[base_type].add(target_type)
 
-    def __set_bean(self, bean: type) -> UUID:
-        annotation: Bean = Bean.single(bean)
-        bean_id: UUID = uuid4()
-        self.__bean_type_map[annotation.bean_type] = bean_id
-        self.__bean_name_map[annotation.bean_name] = bean_id
-        self.__bean_map[bean_id] = bean
-        return bean_id
-
-    def __set_bean_factory(self, factory: BeanFactoryType) -> UUID:
-        annotation: Bean = Bean.single(factory)
-        bean_id: UUID = uuid4()
-        self.__bean_type_map[annotation.bean_type] = bean_id
-        self.__bean_name_map[annotation.bean_name] = bean_id
-        self.__bean_map[bean_id] = factory
-        return bean_id
+    def __set_injectable(self, injectable: InjectableType) -> UUID:
+        annotation: Injectable = Injectable.get(injectable)
+        injectable_id: UUID = uuid4()
+        self.__type_map[annotation.type_] = injectable_id
+        self.__name_map[annotation.name] = injectable_id
+        self.__injectable_map[injectable_id] = injectable
+        return injectable_id
 
     def __get_target_type(self, required_type: type) -> type:
-        if required_type not in self.__type_map:
-            raise NoSuchBeanError(required_type)
-        derived: set[type] = self.__type_map[required_type]
+        if required_type not in self.__target_type_map:
+            raise NoSuchInjectableError(required_type)
+        derived: set[type] = self.__target_type_map[required_type]
         if len(derived) > 1:
             marked_as_primary: set[type] = {x for x in derived if Primary.contains(x)}
             if len(marked_as_primary) != 1:
-                raise NoUniqueBeanError(required_type, derived, marked_as_primary)
+                raise NoUniqueInjectableError(required_type, derived, marked_as_primary)
             derived = marked_as_primary
         return list(derived)[0]
 
-    def __get_bean_id_by_type(self, bean_type: type) -> UUID:
-        return self.__bean_type_map[bean_type]
+    def __get_injectable_id_by_type(self, injectable_type: type) -> UUID:
+        return self.__type_map[injectable_type]
 
-    def __get_bean_id_by_name(self, bean_name: str) -> UUID:
-        if bean_name not in self.__bean_name_map:
-            raise NoSuchBeanError(bean_name)
-        return self.__bean_name_map[bean_name]
+    def __get_injectable_id_by_name(self, injectable_name: str) -> UUID:
+        if injectable_name not in self.__name_map:
+            raise NoSuchInjectableError(injectable_name)
+        return self.__name_map[injectable_name]
 
-    def __get_dependencies(self, bean_type: type | BeanFactoryType) -> dict[str, object]:
-        annotation: Bean = Bean.single(bean_type)
+    def __get_dependencies(self, injectable_type: InjectableType) -> dict[str, object]:
+        annotation: Injectable = Injectable.get(injectable_type)
         dependencies: dict[str, object] = {}
         for name, required_type in annotation.dependencies.items():
             if required_type == UnknownType:
-                dependencies[name] = self.__retrieve_bean_by_name(name)
+                dependencies[name] = self.__retrieve_injectable_by_name(name)
                 continue
-            dependencies[name] = self.__retrieve_bean_by_type(required_type)
+            dependencies[name] = self.__retrieve_injectable_by_type(required_type)
         return dependencies
 
-    def __instaniate_bean(self, bean_id: UUID) -> tuple[object, BeanType]:
-        bean = self.__bean_map[bean_id]
-        instance = bean(**self.__get_dependencies(bean))
-        return instance, BeanType.CLASS if isinstance(bean, type) else BeanType.FACTORY
+    def __get_injectable_by_id(self, injectable_id: UUID) -> object:
+        if injectable_id not in self.__singleton_cache:
+            injectable = self.__instaniate_injectable(injectable_id)
+            injectable = self.__post_process_injectable(injectable)
+            self.__singleton_cache[injectable_id] = injectable
+        return self.__singleton_cache[injectable_id]
 
-    def __post_process_bean(self, bean: object) -> object:
+    def __instaniate_injectable(self, injectable_id: UUID) -> object:
+        injectable = self.__injectable_map[injectable_id]
+        instance = injectable(**self.__get_dependencies(injectable))
+        return instance
+
+    def __post_process_injectable(self, injectable: object) -> object:
         for post_processor in self.__post_processors:
-            bean = post_processor.post_process_bean(self, bean)
-        return bean
+            injectable = post_processor.post_process(self, injectable)
+        return injectable
 
-    def __get_bean_by_id(self, bean_id: UUID) -> object:
-        if bean_id not in self.__singleton_cache:
-            bean, bean_type = self.__instaniate_bean(bean_id)
-            if bean_type == BeanType.CLASS:
-                bean = self.__post_process_bean(bean)
-            self.__singleton_cache[bean_id] = bean
-        return self.__singleton_cache[bean_id]
+    def __retrieve_injectable_by_type(self, injectable_type: type) -> object:
+        actual_type = self.__get_target_type(injectable_type)
+        injectable_id = self.__get_injectable_id_by_type(actual_type)
+        return self.__get_injectable_by_id(injectable_id)
 
-    def __retrieve_bean_by_type(self, bean_type: type) -> object:
-        actual_type = self.__get_target_type(bean_type)
-        bean_id = self.__get_bean_id_by_type(actual_type)
-        return self.__get_bean_by_id(bean_id)
-
-    def __retrieve_bean_by_name(self, name: str) -> Any:
-        bean_id = self.__get_bean_id_by_name(name)
-        return self.__get_bean_by_id(bean_id)
+    def __retrieve_injectable_by_name(self, name: str) -> object:
+        injectable_id = self.__get_injectable_id_by_name(name)
+        return self.__get_injectable_by_id(injectable_id)
 
     @overload
-    def contains(self, *, required_type: type) -> bool: ...
+    def contains(self, *, type_: type) -> bool: ...
 
     @overload
     def contains(self, *, name: str) -> bool: ...
 
+    @overload
+    def get(self, *, type_: type[AnyT]) -> AnyT: ...
+
+    @overload
+    def get(self, *, name: str) -> Any: ...
+
     def contains(
-        self, required_type: type | None = None, name: str | None = None
+        self,
+        type_: type | None = None,
+        name: str | None = None,
     ) -> bool:
-        if required_type is not None:
-            if required_type not in self.__type_map:
+        if type_ is not None:
+            if type_ not in self.__target_type_map:
                 return False
-            bean_type = self.__get_target_type(required_type)
-            return bean_type in self.__bean_type_map
-        if name is None:  # pragma: no cover
-            raise ValueError("'name' and 'required_type' both cannot be None")
-        return name in self.__bean_name_map
+            injectable_type = self.__get_target_type(type_)
+            return injectable_type in self.__type_map
+        if name is not None:
+            return name in self.__name_map
+        raise ValueError(
+            "'name' and 'required_type' both cannot be None"
+        )  # pragma: no cover
 
-    @overload
-    def single(self, *, required_type: type[AnyT]) -> AnyT: ...
+    def get(self, type_: type[AnyT] | None = None, name: str | None = None) -> AnyT | Any:
+        if type_ is not None:
+            return self.__retrieve_injectable_by_type(type_)
+        if name is not None:
+            return self.__retrieve_injectable_by_name(name)
+        raise ValueError(
+            "'name' and 'required_type' both cannot be None"
+        )  # pragma: no cover
 
-    @overload
-    def single(self, *, name: str) -> Any: ...
+    def filter_injectable_types(self, clause: Callable[[type], bool]) -> Sequence[type]:
+        return [x for x in self.__type_map if clause(x)]
 
-    def single(
-        self, required_type: type[AnyT] | None = None, name: str | None = None
-    ) -> AnyT | Any:
-        if required_type is not None:
-            return self.__retrieve_bean_by_type(required_type)
-        if name is None:  # pragma: no cover
-            raise ValueError("'name' and 'required_type' both cannot be None")
-        return self.__retrieve_bean_by_name(name)
+    def filter_injectables(self, clause: Callable[[type], bool]) -> Sequence[object]:
+        filtered: list[type[object]] = [x for x in self.__type_map if clause(x)]
+        return [self.get(type_=x) for x in filtered]
 
-    def filter_bean_types(self, clause: Callable[[type], bool]) -> Sequence[type]:
-        return [x for x in self.__bean_type_map if clause(x)]
+    def register_injectable(self, injectable: InjectableType) -> None:
+        if not Injectable.contains(injectable):
+            raise CannotRegisterNonInjectableObjectError(injectable)
+        annotation: Injectable = Injectable.get(injectable)
+        self.__set_target_type(annotation.type_)
+        self.__set_injectable(injectable)
 
-    def filter_beans(self, clause: Callable[[type], bool]) -> Sequence[object]:
-        filtered: list[type[object]] = [x for x in self.__bean_type_map if clause(x)]
-        return [self.single(required_type=x) for x in filtered]
-
-    def register_bean(self, bean: type) -> None:
-        if not Bean.contains(bean):
-            raise CannotRegisterNonBeanObjectError(bean)
-        self.__set_target_type(bean)
-        self.__set_bean(bean)
-
-    def register_bean_factory(self, factory: BeanFactoryType) -> None:
-        if not Bean.contains(factory):
-            raise CannotRegisterNonBeanObjectError(factory)
-        annotation: Bean = Bean.single(factory)
-        self.__set_target_type(annotation.bean_type)
-        self.__set_bean_factory(factory)
-
-    def register_bean_post_processor(self, post_processor: IBeanPostProcessor) -> None:
+    def register_post_processor(self, post_processor: IPostProcessor) -> None:
         self.__post_processors.append(post_processor)
+
+    def register_plugin(self, pluggable: IPluggable) -> None:
+        pluggable.register(self)
 
     def scan(self, package: Module) -> None:
         modules: set[ModuleType]
@@ -208,16 +191,13 @@ class ApplicationContext(
             modules = {resolve_module(package)}
 
         for module in modules:
-            beans: set[type] = list_classes(module, Bean.contains)
-            factories: set[BeanFactoryType] = list_functions(module, Bean.contains)
-            for bean in beans:
-                self.register_bean(bean)
+            injectables: set[type] = list_classes(module, Injectable.contains)
+            factories: set[InjectableType] = list_functions(module, Injectable.contains)
+            for injectable in injectables:
+                self.register_injectable(injectable)
             for factory in factories:
-                self.register_bean_factory(factory)
+                self.register_injectable(factory)
 
     def start(self) -> None:
-        for bean_id in self.__bean_map:
-            self.__get_bean_by_id(bean_id)
-
-    def register_plugin(self, pluggable: IPluggable) -> None:
-        pluggable.register(self)
+        for injectable_id in self.__injectable_map:
+            self.__get_injectable_by_id(injectable_id)

@@ -1,24 +1,24 @@
 from typing import overload
 
-from spakky.application.interfaces.bean_container import IBeanContainer
+from spakky.application.interfaces.container import IContainer
 from spakky.core.types import AnyT
 
 
 @overload
-def inject(context: IBeanContainer, *, required_type: type[AnyT]) -> AnyT: ...
+def inject(context: IContainer, *, type_: type[AnyT]) -> AnyT: ...
 
 
 @overload
-def inject(context: IBeanContainer, *, name: str) -> object: ...
+def inject(context: IContainer, *, name: str) -> object: ...
 
 
 def inject(
-    context: IBeanContainer,
-    required_type: type[AnyT] | None = None,
+    context: IContainer,
+    type_: type[AnyT] | None = None,
     name: str | None = None,
 ) -> AnyT | object:
     if name is not None:
-        return context.single(name=name)
-    if required_type is None:  # pragma: no cover
-        raise ValueError("'name' and 'required_type' both cannot be None")
-    return context.single(required_type=required_type)
+        return context.get(name=name)
+    if type_ is not None:
+        return context.get(type_=type_)
+    raise ValueError("'name' and 'required_type' both cannot be None")  # pragma: no cover

@@ -7,6 +7,6 @@ def test_controller() -> None:
 
     class NonAnnotated: ...
 
-    assert Controller.single_or_none(SampleController) is not None
-    assert Controller.single(SampleController).prefix == "/dummy"
-    assert Controller.single_or_none(NonAnnotated) is None
+    assert Controller.get_or_none(SampleController) is not None
+    assert Controller.get(SampleController).prefix == "/dummy"
+    assert Controller.get_or_none(NonAnnotated) is None

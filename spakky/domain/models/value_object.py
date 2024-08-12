@@ -1,5 +1,5 @@
 import sys
-from abc import ABC
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from functools import reduce
 from dataclasses import astuple
@@ -20,8 +20,8 @@ class ValueObject(IEquatable, ICloneable, ABC):
     def clone(self) -> Self:
         return deepcopy(self)
 
-    def validate(self) -> None:
-        return
+    @abstractmethod
+    def validate(self) -> None: ...
 
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, type(self)):

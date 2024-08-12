@@ -2,8 +2,8 @@ from abc import abstractmethod
 from typing import Protocol
 
 from spakky.application.application_context import ApplicationContext
-from spakky.bean.bean import Bean
 from spakky.application.inject import inject
+from spakky.injectable.injectable import Injectable
 
 
 def test_inject_to_function_by_type() -> None:
@@ -19,17 +19,17 @@ def test_inject_to_function_by_type() -> None:
         @abstractmethod
         def c(self) -> str: ...
 
-    @Bean()
+    @Injectable()
     class A(IA):
         def a(self) -> str:
             return "a"
 
-    @Bean()
+    @Injectable()
     class B(IB):
         def b(self) -> str:
             return "b"
 
-    @Bean()
+    @Injectable()
     class C(IC):
         __a: IA
         __b: IB
@@ -42,11 +42,11 @@ def test_inject_to_function_by_type() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_bean(A)
-    context.register_bean(B)
-    context.register_bean(C)
+    context.register_injectable(A)
+    context.register_injectable(B)
+    context.register_injectable(C)
 
-    def execute_c(c: IC = inject(context=context, required_type=IC)) -> str:
+    def execute_c(c: IC = inject(context=context, type_=IC)) -> str:
         return c.c()
 
     assert execute_c() == "ab"
@@ -65,17 +65,17 @@ def test_inject_to_function_by_name() -> None:
         @abstractmethod
         def c(self) -> str: ...
 
-    @Bean()
+    @Injectable()
     class A(IA):
         def a(self) -> str:
             return "a"
 
-    @Bean()
+    @Injectable()
     class B(IB):
         def b(self) -> str:
             return "b"
 
-    @Bean()
+    @Injectable()
     class C(IC):
         __a: IA
         __b: IB
@@ -88,9 +88,9 @@ def test_inject_to_function_by_name() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_bean(A)
-    context.register_bean(B)
-    context.register_bean(C)
+    context.register_injectable(A)
+    context.register_injectable(B)
+    context.register_injectable(C)
 
     def execute_c(c: IC = inject(context, IC, "c")) -> str:  # type: ignore
         return c.c()
