@@ -1,12 +1,20 @@
+import sys
 from abc import ABC, abstractmethod
 from uuid import UUID, uuid4
 from typing import Any, Generic
-from datetime import UTC, datetime
+from datetime import datetime, timedelta
 from dataclasses import field
 
 from spakky.core.interfaces.equatable import EquatableT, IEquatable
 from spakky.core.mutability import mutable
 from spakky.domain.error import SpakkyDomainError
+
+if sys.version_info >= (3, 11):
+    from datetime import UTC
+else:
+    from datetime import timezone
+
+    UTC = timezone(offset=timedelta(hours=0), name="UTC")
 
 
 class CannotMonkeyPatchEntityError(SpakkyDomainError):
