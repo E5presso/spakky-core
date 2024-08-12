@@ -9,9 +9,9 @@ from spakky.core.interfaces.equatable import EquatableT, IEquatable
 from spakky.core.mutability import mutable
 from spakky.domain.error import SpakkyDomainError
 
-if sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):  # pragma: no cover
     from datetime import UTC
-else:
+else:  # pragma: no cover
     from datetime import timezone
 
     UTC = timezone(offset=timedelta(hours=0), name="UTC")
