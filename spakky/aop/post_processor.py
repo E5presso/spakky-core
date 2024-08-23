@@ -82,7 +82,7 @@ class AspectPostProcessor(IPodPostProcessor):
                 and AsyncAspect.get(x.obj).matches(pod)
             )
 
-        matched: Sequence[object] = [x for x in container.find(selector).values()]
+        matched: Sequence[object] = list(container.find(selector).values())
         if not any(matched):
             return self.__set_cache(type(pod), pod)
         matched.sort(
