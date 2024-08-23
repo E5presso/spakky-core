@@ -33,7 +33,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
     __pod_lookup: dict[type, UUID]
     __pods: dict[UUID, Pod]
     __singleton_cache: dict[UUID, object]
-    __post_processors: set[IPodPostProcessor]
+    __post_processors: list[IPodPostProcessor]
 
     @property
     def pods(self) -> set[PodType]:
@@ -48,7 +48,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         self.__pod_lookup = {}
         self.__pods = {}
         self.__singleton_cache = {}
-        self.__post_processors = set()
+        self.__post_processors = []
         if package is None:
             return
         if isinstance(package, set):
@@ -126,7 +126,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         self.__register_pod_definition(Pod.get(obj))
 
     def register_post_processor(self, post_processor: IPodPostProcessor) -> None:
-        self.__post_processors.add(post_processor)
+        self.__post_processors.append(post_processor)
 
     def register_plugin(self, plugin: IPluggable) -> None:
         plugin.register(self)
