@@ -111,13 +111,12 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def __get_internal(
         self,
-        type_: type[ObjectT],
+        type_: type,
         name: str | None = None,
         dependency_hierarchy: list[type] | None = None,
-    ) -> ObjectT:
+    ) -> object:
         if isinstance(type_, str):  # To support forward references
             type_ = self.__type_name_map[type_]  # pragma: no cover
-
         if dependency_hierarchy is None:
             dependency_hierarchy = []
         if type_ in dependency_hierarchy:
@@ -126,10 +125,10 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         resolved_type: type = self.__resolve_type(type_, name)
         pod_id: UUID = self.__pod_lookup[resolved_type]
         pod: Pod = self.__pods[pod_id]
-        return cast(ObjectT, self.__create_pod_instance(pod, dependency_hierarchy))
+        return self.__create_pod_instance(pod, dependency_hierarchy)
 
     def get(self, type_: type[ObjectT], name: str | None = None) -> ObjectT:
-        return self.__get_internal(type_, name)
+        return cast(ObjectT, self.__get_internal(type_, name))
 
     def contains(self, type_: type, name: str | None = None) -> bool:
         try:
@@ -142,7 +141,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def find(self, selector: Callable[[Pod], bool]) -> dict[str, object]:
         return {
-            pod.name: self.get(pod.type_, pod.name)  # type: ignore
+            pod.name: self.__get_internal(pod.type_, pod.name)
             for pod in self.__pods.values()
             if selector(pod)
         }

@@ -1,6 +1,6 @@
 import sys
 from types import MethodType
-from typing import Any, Sequence, cast
+from typing import Any, Sequence
 from inspect import ismethod, getmembers, iscoroutinefunction
 from logging import Logger
 
@@ -8,9 +8,9 @@ from spakky.aop.advisor import Advisor, AsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.application.interfaces.container import IPodContainer
 from spakky.application.interfaces.post_processor import IPodPostProcessor
-from spakky.pod.order import Order
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
+from spakky.pod.order import Order
 from spakky.pod.pod import Pod
 
 
@@ -18,9 +18,7 @@ class AspectProxyHandler(AbstractProxyHandler):
     __advisor_map: dict[MethodType | Func, MethodType | Advisor]
     __async_advisor_map: dict[MethodType | AsyncFunc, MethodType | AsyncAdvisor]
 
-    def __init__(
-        self, instance: object, aspects: Sequence[IAspect | IAsyncAspect]
-    ) -> None:
+    def __init__(self, instance: object, aspects: Sequence[object]) -> None:
         super().__init__()
         self.__advisor_map = {}
         self.__async_advisor_map = {}
@@ -75,19 +73,16 @@ class AspectPostProcessor(IPodPostProcessor):
             return self.__set_cache(type(pod), pod)
         if not Pod.exists(pod):
             return self.__set_cache(type(pod), pod)
-        matched: Sequence[IAspect | IAspect] = []
-        aspects: dict[str, object] = container.find(
-            lambda x: Aspect.exists(x.obj) or AsyncAspect.exists(x.obj)
-        )
-        for _, aspect in aspects.items():
-            aspect_annotation: Aspect | None = Aspect.get_or_none(aspect)
-            async_aspect: AsyncAspect | None = AsyncAspect.get_or_none(aspect)
-            if aspect_annotation is not None and aspect_annotation.matches(pod):
-                matched.append(cast(IAspect, aspect))
-                continue
-            if async_aspect is not None and async_aspect.matches(pod):
-                matched.append(cast(IAspect, aspect))
-                continue
+
+        def selector(x: Pod) -> bool:
+            return (
+                Aspect.exists(x.obj)
+                and Aspect.get(x.obj).matches(pod)
+                or AsyncAspect.exists(x.obj)
+                and AsyncAspect.get(x.obj).matches(pod)
+            )
+
+        matched: Sequence[object] = [x for x in container.find(selector).values()]
         if not any(matched):
             return self.__set_cache(type(pod), pod)
         matched.sort(
