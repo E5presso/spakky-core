@@ -1,4 +1,5 @@
 import sys
+from copy import deepcopy
 from uuid import UUID
 from types import ModuleType
 from typing import Callable, cast
@@ -99,7 +100,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
             name: self.__get_internal(
                 type_,
                 name,
-                dependency_hierarchy,
+                deepcopy(dependency_hierarchy),  # Copy to avoid mutation
             )
             for name, type_ in pod.dependencies.items()
         }
