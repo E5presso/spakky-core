@@ -6,9 +6,9 @@ from logging import Logger
 
 from spakky.aop.advisor import Advisor, AsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
-from spakky.aop.order import Order
 from spakky.application.interfaces.container import IPodContainer
 from spakky.application.interfaces.post_processor import IPodPostProcessor
+from spakky.pod.order import Order
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
 from spakky.pod.pod import Pod
@@ -51,6 +51,7 @@ class AspectProxyHandler(AbstractProxyHandler):
         return await self.__async_advisor_map[method](*args, **kwargs)
 
 
+@Order(0)
 class AspectPostProcessor(IPodPostProcessor):
     __logger: Logger
     __cache: dict[type, object]

@@ -1,3 +1,4 @@
+import sys
 from uuid import UUID
 from types import ModuleType
 from typing import Callable, cast
@@ -24,6 +25,7 @@ from spakky.core.importing import (
 )
 from spakky.core.types import ObjectT
 from spakky.pod.lazy import Lazy
+from spakky.pod.order import Order
 from spakky.pod.pod import Pod, PodType
 from spakky.pod.primary import Primary
 
@@ -127,6 +129,9 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def register_post_processor(self, post_processor: IPodPostProcessor) -> None:
         self.__post_processors.append(post_processor)
+        self.__post_processors.sort(
+            key=lambda x: Order.get_or_default(x, Order(sys.maxsize)).order
+        )
 
     def register_plugin(self, plugin: IPluggable) -> None:
         plugin.register(self)

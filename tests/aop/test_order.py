@@ -1,6 +1,6 @@
 import pytest
 
-from spakky.aop.order import Order
+from spakky.pod.order import Order
 
 
 def test_order_cannot_be_negative() -> None:
