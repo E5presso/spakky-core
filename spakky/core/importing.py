@@ -41,22 +41,24 @@ def list_modules(package: Module) -> set[ModuleType]:
 def list_classes(
     module: ModuleType, selector: Callable[[type], bool] | None = None
 ) -> set[type]:
-    if selector is None:
-        return {member for _, member in inspect.getmembers(module, inspect.isclass)}
-    return {
-        member
-        for _, member in inspect.getmembers(module, inspect.isclass)
-        if selector(member)
-    }
+    if selector is not None:
+        return {
+            member
+            for _, member in inspect.getmembers(
+                module, lambda x: inspect.isclass(x) and selector(x)
+            )
+        }
+    return {member for _, member in inspect.getmembers(module, inspect.isclass)}
 
 
 def list_functions(
     module: ModuleType, selector: Callable[[FunctionType], bool] | None = None
 ) -> set[FunctionType]:
-    if selector is None:
-        return {member for _, member in inspect.getmembers(module, inspect.isfunction)}
-    return {
-        member
-        for _, member in inspect.getmembers(module, inspect.isfunction)
-        if selector(member)
-    }
+    if selector is not None:
+        return {
+            member
+            for _, member in inspect.getmembers(
+                module, lambda x: inspect.isfunction(x) and selector(x)
+            )
+        }
+    return {member for _, member in inspect.getmembers(module, inspect.isfunction)}

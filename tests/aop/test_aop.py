@@ -7,13 +7,13 @@ from dataclasses import dataclass
 import pytest
 
 from spakky.aop.advice import After, AfterRaising, AfterReturning, Around, Before
-from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
-from spakky.aop.aspect import Aspect, AsyncAspect
-from spakky.aop.post_processor import AspectBeanPostProcessor
+from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
+from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.application_context import ApplicationContext
-from spakky.bean.bean import Bean
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, AsyncFuncT, Func
+from spakky.plugins.aspect import AspectPlugin
+from spakky.pod.pod import Pod
 
 
 def test_aop_with_no_implementations() -> None:
@@ -23,9 +23,9 @@ def test_aop_with_no_implementations() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor): ...
+    class LogAdvisor(IAspect): ...
 
-    @Bean()
+    @Pod()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
@@ -40,13 +40,13 @@ def test_aop_with_no_implementations() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     assert service.echo(message="Hello World!") == "Hello World!"
     assert len(logs) == 0
 
@@ -58,28 +58,28 @@ def test_aop() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
+    class LogAdvisor(IAspect):
+        @Before(Log.exists)
         def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AfterRaising(Log.contains)
+        @AfterRaising(Log.exists)
         def after_raising(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AfterReturning(Log.contains)
+        @AfterReturning(Log.exists)
         def after_returning(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @After(Log.contains)
+        @After(Log.exists)
         def after(self) -> None:
             nonlocal logs
-            logs.append(f"after")
+            logs.append("after")
 
-        @Around(Log.contains)
+        @Around(Log.exists)
         def around(
             self,
             joinpoint: Func,
@@ -96,7 +96,7 @@ def test_aop() -> None:
                 logs.append(f"around {args}, {kwargs} {result}")
                 return result
 
-    @Bean()
+    @Pod()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
@@ -111,13 +111,13 @@ def test_aop() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_plugin(AspectPlugin(logger))
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     assert service.echo(message="Hello World!") == "Hello World!"
     assert logs[0] == "before (), {'message': 'Hello World!'}"
     assert logs[1] == "around (), {'message': 'Hello World!'} Hello World!"
@@ -125,41 +125,41 @@ def test_aop() -> None:
     assert logs[3] == "after"
 
 
-def test_aop_with_another_bean() -> None:
+def test_aop_with_another_pod() -> None:
     logs: list[str] = []
 
     @dataclass
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
+    class LogAdvisor(IAspect):
+        @Before(Log.exists)
         def before(self, *args: Any, **kwargs: Any) -> None:
             return super().before(*args, **kwargs)
 
-        @AfterReturning(Log.contains)
+        @AfterReturning(Log.exists)
         def after_returning(self, result: Any) -> None:
             return super().after_returning(result)
 
-        @AfterRaising(Log.contains)
+        @AfterRaising(Log.exists)
         def after_raising(self, error: Exception) -> None:
             return super().after_raising(error)
 
-        @After(Log.contains)
+        @After(Log.exists)
         def after(self) -> None:
             return super().after()
 
-        @Around(Log.contains)
+        @Around(Log.exists)
         def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
             return super().around(joinpoint, *args, **kwargs)
 
-    @Bean()
+    @Pod()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
             return message
 
-    @Bean()
+    @Pod()
     class AnotherService:
         def echo(self, message: str) -> str:
             return message
@@ -173,24 +173,20 @@ def test_aop_with_another_bean() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(AnotherService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(AnotherService)
+    context.register(LogAdvisor)
 
     context.start()
 
+    assert context.get(type_=EchoService).echo(message="Hello World!") == "Hello World!"
     assert (
-        context.single(required_type=EchoService).echo(message="Hello World!")
-        == "Hello World!"
-    )
-    assert (
-        context.single(required_type=AnotherService).echo(message="Hello World!")
-        == "Hello World!"
+        context.get(type_=AnotherService).echo(message="Hello World!") == "Hello World!"
     )
     assert len(logs) == 0
 
-    assert dir(context.single(required_type=EchoService)) == dir(EchoService())
+    assert dir(context.get(type_=EchoService)) == dir(EchoService())
 
 
 def test_aop_with_no_implementations_raise_error() -> None:
@@ -200,9 +196,9 @@ def test_aop_with_no_implementations_raise_error() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor): ...
+    class LogAdvisor(IAspect): ...
 
-    @Bean()
+    @Pod()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
@@ -217,13 +213,13 @@ def test_aop_with_no_implementations_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     with pytest.raises(RuntimeError):
         assert service.echo(message="Hello World!") == "Hello World!"
     assert len(logs) == 0
@@ -236,14 +232,14 @@ def test_aop_with_implementations_raise_error() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @AfterRaising(Log.contains)
+    class LogAdvisor(IAspect):
+        @AfterRaising(Log.exists)
         def after_raising(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {type(error).__name__}")
             return super().after_raising(error)
 
-    @Bean()
+    @Pod()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
@@ -258,13 +254,13 @@ def test_aop_with_implementations_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     with pytest.raises(RuntimeError):
         assert service.echo(message="Hello World!") == "Hello World!"
 
@@ -278,28 +274,28 @@ def test_aop_raise_error() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
+    class LogAdvisor(IAspect):
+        @Before(Log.exists)
         def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AfterRaising(Log.contains)
+        @AfterRaising(Log.exists)
         def after_raising(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AfterReturning(Log.contains)
+        @AfterReturning(Log.exists)
         def after_returning(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @After(Log.contains)
+        @After(Log.exists)
         def after(self) -> None:
             nonlocal logs
-            logs.append(f"after")
+            logs.append("after")
 
-        @Around(Log.contains)
+        @Around(Log.exists)
         def around(
             self,
             joinpoint: Func,
@@ -316,7 +312,7 @@ def test_aop_raise_error() -> None:
                 logs.append(f"around {args}, {kwargs} {result}")
                 return result
 
-    @Bean()
+    @Pod()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
@@ -331,13 +327,13 @@ def test_aop_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     with pytest.raises(RuntimeError):
         assert service.echo(message="Hello World!") == "Hello World!"
     assert logs[0] == "before (), {'message': 'Hello World!'}"
@@ -353,23 +349,9 @@ def test_aop_that_does_not_have_any_aspects() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        def before(self, *args: Any, **kwargs: Any) -> None:
-            return super().before(*args, **kwargs)
+    class LogAdvisor(IAspect): ...
 
-        def after_returning(self, result: Any) -> None:
-            return super().after_returning(result)
-
-        def after_raising(self, error: Exception) -> None:
-            return super().after_raising(error)
-
-        def after(self) -> None:
-            return super().after()
-
-        def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
-            return super().around(joinpoint, *args, **kwargs)
-
-    @Bean()
+    @Pod()
     class EchoService:
         @Log()
         def echo(self, message: str) -> str:
@@ -384,13 +366,13 @@ def test_aop_that_does_not_have_any_aspects() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     assert service.echo(message="Hello World!") == "Hello World!"
     assert len(logs) == 0
 
@@ -402,28 +384,28 @@ def test_aop_with_no_method() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
+    class LogAdvisor(IAspect):
+        @Before(Log.exists)
         def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AfterRaising(Log.contains)
+        @AfterRaising(Log.exists)
         def after_raising(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AfterReturning(Log.contains)
+        @AfterReturning(Log.exists)
         def after_returning(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @After(Log.contains)
+        @After(Log.exists)
         def after(self) -> None:
             nonlocal logs
-            logs.append(f"after")
+            logs.append("after")
 
-        @Around(Log.contains)
+        @Around(Log.exists)
         def around(
             self,
             joinpoint: Func,
@@ -440,7 +422,7 @@ def test_aop_with_no_method() -> None:
                 logs.append(f"around {args}, {kwargs} {result}")
                 return result
 
-    @Bean()
+    @Pod()
     class EchoService:
         message = "Hello World!"
 
@@ -453,13 +435,13 @@ def test_aop_with_no_method() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     assert service.message == "Hello World!"
     assert len(logs) == 0
 
@@ -471,28 +453,28 @@ def test_aop_with_dependencies() -> None:
     class Log(FunctionAnnotation): ...
 
     @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
+    class LogAdvisor(IAspect):
+        @Before(Log.exists)
         def before(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AfterRaising(Log.contains)
+        @AfterRaising(Log.exists)
         def after_raising(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AfterReturning(Log.contains)
+        @AfterReturning(Log.exists)
         def after_returning(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @After(Log.contains)
+        @After(Log.exists)
         def after(self) -> None:
             nonlocal logs
-            logs.append(f"after")
+            logs.append("after")
 
-        @Around(Log.contains)
+        @Around(Log.exists)
         def around(
             self,
             joinpoint: Func,
@@ -509,7 +491,7 @@ def test_aop_with_dependencies() -> None:
                 logs.append(f"around {args}, {kwargs} {result}")
                 return result
 
-    @Bean()
+    @Pod()
     class EchoService:
         message: str
 
@@ -529,103 +511,18 @@ def test_aop_with_dependencies() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    @Bean(bean_name="message")
+    @Pod(name="message")
     def get_message() -> str:
         return "Hello World!"
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean_factory(get_message)
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(get_message)
+    context.register(EchoService)
+    context.register(LogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
-    assert service.message == "Hello World!"
-    assert service.echo() == "Hello World!"
-    assert logs[0] == "before (), {}"
-    assert logs[1] == "around (), {} Hello World!"
-    assert logs[2] == "after_returning Hello World!"
-    assert logs[3] == "after"
-
-
-def test_aop_with_dependencies_no_typing() -> None:
-    logs: list[str] = []
-
-    @dataclass
-    class Log(FunctionAnnotation): ...
-
-    @Aspect()
-    class LogAdvisor(IAdvisor):
-        @Before(Log.contains)
-        def before(self, *args: Any, **kwargs: Any) -> None:
-            nonlocal logs
-            logs.append(f"before {args}, {kwargs}")
-
-        @AfterRaising(Log.contains)
-        def after_raising(self, error: Exception) -> None:
-            nonlocal logs
-            logs.append(f"after_raising {error}")
-
-        @AfterReturning(Log.contains)
-        def after_returning(self, result: Any) -> None:
-            nonlocal logs
-            logs.append(f"after_returning {result}")
-
-        @After(Log.contains)
-        def after(self) -> None:
-            nonlocal logs
-            logs.append(f"after")
-
-        @Around(Log.contains)
-        def around(
-            self,
-            joinpoint: Func,
-            *args: Any,
-            **kwargs: Any,
-        ) -> Any:
-            nonlocal logs
-            try:
-                result = joinpoint(*args, **kwargs)
-            except Exception as e:
-                logs.append(f"around {args}, {kwargs} {e}")
-                raise
-            else:
-                logs.append(f"around {args}, {kwargs} {result}")
-                return result
-
-    @Bean()
-    class EchoService:
-        message: str
-
-        def __init__(self, message) -> None:  # type: ignore
-            self.message = message
-
-        @Log()
-        def echo(self) -> str:
-            return self.message
-
-    context: ApplicationContext = ApplicationContext()
-
-    console = logging.StreamHandler()
-    console.setLevel(level=logging.DEBUG)
-    console.setFormatter(logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s"))
-    logger: logging.Logger = logging.getLogger("debug")
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(console)
-
-    @Bean(bean_name="message")
-    def get_message() -> str:
-        return "Hello World!"
-
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean_factory(get_message)
-    context.register_bean(EchoService)
-    context.register_bean(LogAdvisor)
-
-    context.start()
-
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     assert service.message == "Hello World!"
     assert service.echo() == "Hello World!"
     assert logs[0] == "before (), {}"
@@ -644,9 +541,9 @@ async def test_async_aop_with_no_implementations() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor): ...
+    class AsyncLogAdvisor(IAsyncAspect): ...
 
-    @Bean()
+    @Pod()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
@@ -661,13 +558,13 @@ async def test_async_aop_with_no_implementations() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     assert await service.echo(message="Hello World!") == "Hello World!"
     assert len(logs) == 0
 
@@ -682,28 +579,28 @@ async def test_async_aop() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
-        @Before(AsyncLog.contains)
+    class AsyncLogAdvisor(IAsyncAspect):
+        @Before(AsyncLog.exists)
         async def before_async(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AfterRaising(AsyncLog.contains)
+        @AfterRaising(AsyncLog.exists)
         async def after_raising_async(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AfterReturning(AsyncLog.contains)
+        @AfterReturning(AsyncLog.exists)
         async def after_returning_async(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @After(AsyncLog.contains)
+        @After(AsyncLog.exists)
         async def after_async(self) -> None:
             nonlocal logs
-            logs.append(f"after")
+            logs.append("after")
 
-        @Around(AsyncLog.contains)
+        @Around(AsyncLog.exists)
         async def around_async(
             self,
             joinpoint: AsyncFunc,
@@ -720,7 +617,7 @@ async def test_async_aop() -> None:
                 logs.append(f"around {args}, {kwargs} {result}")
                 return result
 
-    @Bean()
+    @Pod()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
@@ -735,13 +632,13 @@ async def test_async_aop() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     assert await service.echo(message="Hello World!") == "Hello World!"
     assert logs[0] == "before (), {'message': 'Hello World!'}"
     assert logs[1] == "around (), {'message': 'Hello World!'} Hello World!"
@@ -750,7 +647,7 @@ async def test_async_aop() -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_aop_with_another_bean() -> None:
+async def test_async_aop_with_another_pod() -> None:
     logs: list[str] = []
 
     @dataclass
@@ -759,36 +656,36 @@ async def test_async_aop_with_another_bean() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
-        @Before(AsyncLog.contains)
+    class AsyncLogAdvisor(IAsyncAspect):
+        @Before(AsyncLog.exists)
         async def before_async(self, *args: Any, **kwargs: Any) -> None:
             return await super().before_async(*args, **kwargs)
 
-        @AfterRaising(AsyncLog.contains)
+        @AfterRaising(AsyncLog.exists)
         async def after_raising_async(self, error: Exception) -> None:
             return await super().after_raising_async(error)
 
-        @AfterReturning(AsyncLog.contains)
+        @AfterReturning(AsyncLog.exists)
         async def after_returning_async(self, result: Any) -> None:
             return await super().after_returning_async(result)
 
-        @After(AsyncLog.contains)
+        @After(AsyncLog.exists)
         async def after_async(self) -> None:
             return await super().after_async()
 
-        @Around(AsyncLog.contains)
+        @Around(AsyncLog.exists)
         async def around_async(
             self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any
         ) -> Any:
             return await super().around_async(joinpoint, *args, **kwargs)
 
-    @Bean()
+    @Pod()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
             return message
 
-    @Bean()
+    @Pod()
     class AnotherService:
         async def echo(self, message: str) -> str:
             return message
@@ -802,24 +699,24 @@ async def test_async_aop_with_another_bean() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(AnotherService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(AnotherService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
     assert (
-        await context.single(required_type=EchoService).echo(message="Hello World!")
+        await context.get(type_=EchoService).echo(message="Hello World!")
         == "Hello World!"
     )
     assert (
-        await context.single(required_type=AnotherService).echo(message="Hello World!")
+        await context.get(type_=AnotherService).echo(message="Hello World!")
         == "Hello World!"
     )
     assert len(logs) == 0
 
-    assert dir(context.single(required_type=EchoService)) == dir(EchoService())
+    assert dir(context.get(type_=EchoService)) == dir(EchoService())
 
 
 @pytest.mark.asyncio
@@ -832,9 +729,9 @@ async def test_async_aop_with_no_implementations_raise_error() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor): ...
+    class AsyncLogAdvisor(IAsyncAspect): ...
 
-    @Bean()
+    @Pod()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
@@ -849,13 +746,13 @@ async def test_async_aop_with_no_implementations_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     with pytest.raises(RuntimeError):
         assert await service.echo(message="Hello World!") == "Hello World!"
     assert len(logs) == 0
@@ -871,14 +768,14 @@ async def test_async_aop_with_implementations_raise_error() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
-        @AfterRaising(AsyncLog.contains)
+    class AsyncLogAdvisor(IAsyncAspect):
+        @AfterRaising(AsyncLog.exists)
         async def after_raising_async(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {type(error).__name__}")
             return await super().after_raising_async(error)
 
-    @Bean()
+    @Pod()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
@@ -893,13 +790,13 @@ async def test_async_aop_with_implementations_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     with pytest.raises(RuntimeError):
         assert await service.echo(message="Hello World!") == "Hello World!"
     assert logs[0] == "after_raising RuntimeError"
@@ -915,28 +812,28 @@ async def test_async_aop_raise_error() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
-        @Before(AsyncLog.contains)
+    class AsyncLogAdvisor(IAsyncAspect):
+        @Before(AsyncLog.exists)
         async def before_async(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AfterRaising(AsyncLog.contains)
+        @AfterRaising(AsyncLog.exists)
         async def after_raising_async(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AfterReturning(AsyncLog.contains)
+        @AfterReturning(AsyncLog.exists)
         async def after_returning_async(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @After(AsyncLog.contains)
+        @After(AsyncLog.exists)
         async def after_async(self) -> None:
             nonlocal logs
-            logs.append(f"after")
+            logs.append("after")
 
-        @Around(AsyncLog.contains)
+        @Around(AsyncLog.exists)
         async def around_async(
             self,
             joinpoint: AsyncFunc,
@@ -953,7 +850,7 @@ async def test_async_aop_raise_error() -> None:
                 logs.append(f"around {args}, {kwargs} {result}")
                 return result
 
-    @Bean()
+    @Pod()
     class EchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
@@ -968,13 +865,13 @@ async def test_async_aop_raise_error() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(EchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(EchoService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
-    service: EchoService = context.single(required_type=EchoService)
+    service: EchoService = context.get(type_=EchoService)
     with pytest.raises(RuntimeError):
         assert await service.echo(message="Hello World!") == "Hello World!"
     assert logs[0] == "before (), {'message': 'Hello World!'}"
@@ -993,7 +890,7 @@ async def test_async_aop_that_does_not_have_any_aspects() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
+    class AsyncLogAdvisor(IAsyncAspect):
         async def before_async(self, *args: Any, **kwargs: Any) -> None:
             return await super().before_async(*args, **kwargs)
 
@@ -1009,7 +906,7 @@ async def test_async_aop_that_does_not_have_any_aspects() -> None:
         async def around_async(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
             return await super().around_async(joinpoint, *args, **kwargs)
 
-    @Bean()
+    @Pod()
     class AsyncEchoService:
         @AsyncLog()
         async def echo(self, message: str) -> str:
@@ -1024,13 +921,13 @@ async def test_async_aop_that_does_not_have_any_aspects() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(AsyncEchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(AsyncEchoService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
-    service: AsyncEchoService = context.single(required_type=AsyncEchoService)
+    service: AsyncEchoService = context.get(type_=AsyncEchoService)
     assert await service.echo(message="Hello World!") == "Hello World!"
     assert len(logs) == 0
 
@@ -1045,28 +942,28 @@ async def test_async_aop_with_no_method() -> None:
             return super().__call__(obj)
 
     @AsyncAspect()
-    class AsyncLogAdvisor(IAsyncAdvisor):
-        @Before(AsyncLog.contains)
+    class AsyncLogAdvisor(IAsyncAspect):
+        @Before(AsyncLog.exists)
         async def before_async(self, *args: Any, **kwargs: Any) -> None:
             nonlocal logs
             logs.append(f"before {args}, {kwargs}")
 
-        @AfterRaising(AsyncLog.contains)
+        @AfterRaising(AsyncLog.exists)
         async def after_raising_async(self, error: Exception) -> None:
             nonlocal logs
             logs.append(f"after_raising {error}")
 
-        @AfterReturning(AsyncLog.contains)
+        @AfterReturning(AsyncLog.exists)
         async def after_returning_async(self, result: Any) -> None:
             nonlocal logs
             logs.append(f"after_returning {result}")
 
-        @After(AsyncLog.contains)
+        @After(AsyncLog.exists)
         async def after_async(self) -> None:
             nonlocal logs
-            logs.append(f"after")
+            logs.append("after")
 
-        @Around(AsyncLog.contains)
+        @Around(AsyncLog.exists)
         async def around_async(
             self,
             joinpoint: AsyncFunc,
@@ -1083,7 +980,7 @@ async def test_async_aop_with_no_method() -> None:
                 logs.append(f"around {args}, {kwargs} {result}")
                 return result
 
-    @Bean()
+    @Pod()
     class AsyncEchoService:
         message = "Hello World!"
 
@@ -1096,12 +993,12 @@ async def test_async_aop_with_no_method() -> None:
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console)
 
-    context.register_bean_post_processor(AspectBeanPostProcessor(logger))
-    context.register_bean(AsyncEchoService)
-    context.register_bean(AsyncLogAdvisor)
+    context.register_post_processor(AspectPostProcessor(logger))
+    context.register(AsyncEchoService)
+    context.register(AsyncLogAdvisor)
 
     context.start()
 
-    service: AsyncEchoService = context.single(required_type=AsyncEchoService)
+    service: AsyncEchoService = context.get(type_=AsyncEchoService)
     assert service.message == "Hello World!"
     assert len(logs) == 0

@@ -1,19 +1,19 @@
-from enum import Enum, auto
-from uuid import UUID, uuid4
+from uuid import UUID
 from types import ModuleType
-from typing import Any, Callable, Sequence, overload
+from typing import Callable, cast
 
-from spakky.application.interfaces.bean_container import (
-    IBeanContainer,
-    NoSuchBeanError,
-    NoUniqueBeanError,
+from spakky.application.interfaces.container import (
+    IPodContainer,
+    NoSuchPodError,
+    NoUniquePodError,
 )
-from spakky.application.interfaces.bean_processor import IBeanPostProcessor
-from spakky.application.interfaces.bean_registry import CannotRegisterNonBeanObjectError
-from spakky.application.interfaces.bean_scanner import IBeanScanner
-from spakky.application.interfaces.pluggable import IPluggable, IRegistry
-from spakky.bean.bean import Bean, BeanFactoryType, UnknownType
-from spakky.bean.primary import Primary
+from spakky.application.interfaces.pluggable import IPluggable
+from spakky.application.interfaces.plugin_registry import IPluginRegistry
+from spakky.application.interfaces.post_processor import IPodPostProcessor
+from spakky.application.interfaces.registry import (
+    CannotRegisterNonPodObjectError,
+    IPodRegistry,
+)
 from spakky.core.importing import (
     Module,
     is_package,
@@ -22,41 +22,33 @@ from spakky.core.importing import (
     list_modules,
     resolve_module,
 )
-from spakky.core.types import AnyT
+from spakky.core.types import ObjectT
+from spakky.pod.lazy import Lazy
+from spakky.pod.pod import Pod, PodType
+from spakky.pod.primary import Primary
 
 
-class BeanType(Enum):
-    CLASS = auto()
-    FACTORY = auto()
-
-
-class ApplicationContext(
-    IBeanContainer,
-    IBeanScanner,
-    IRegistry,
-):
-    __type_map: dict[type, set[type]]
-    __bean_map: dict[UUID, type | BeanFactoryType]
-    __bean_type_map: dict[type, UUID]
-    __bean_name_map: dict[str, UUID]
+class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
+    __type_lookup: dict[type, set[type]]  # dict[base: {derived}]
+    __pod_lookup: dict[type, UUID]
+    __pods: dict[UUID, Pod]
     __singleton_cache: dict[UUID, object]
-    __post_processors: list[IBeanPostProcessor]
+    __post_processors: set[IPodPostProcessor]
 
     @property
-    def beans(self) -> set[type | BeanFactoryType]:
-        return set(self.__bean_map.values())
+    def pods(self) -> set[PodType]:
+        return {x.obj for x in self.__pods.values()}
 
     @property
-    def post_processors(self) -> set[type[IBeanPostProcessor]]:
-        return {type(post_processor) for post_processor in self.__post_processors}
+    def post_processors(self) -> set[type[IPodPostProcessor]]:
+        return {type(x) for x in self.__post_processors}
 
     def __init__(self, package: Module | set[Module] | None = None) -> None:
-        self.__bean_map = {}
-        self.__type_map = {}
-        self.__bean_type_map = {}
-        self.__bean_name_map = {}
+        self.__type_lookup = {}
+        self.__pod_lookup = {}
+        self.__pods = {}
         self.__singleton_cache = {}
-        self.__post_processors = []
+        self.__post_processors = set()
         if package is None:
             return
         if isinstance(package, set):
@@ -65,139 +57,79 @@ class ApplicationContext(
             return
         self.scan(package)
 
-    def __set_target_type(self, target_type: type) -> None:
-        for base in target_type.__mro__:
-            if base not in self.__type_map:
-                self.__type_map[base] = set()
-            self.__type_map[base].add(target_type)
+    def __register_pod_definition(self, pod: Pod) -> None:
+        for base_type in pod.type_.mro():
+            if base_type not in self.__type_lookup:
+                self.__type_lookup[base_type] = set()
+            self.__type_lookup[base_type].add(pod.type_)
+        self.__pod_lookup[pod.type_] = pod.id
+        self.__pods[pod.id] = pod
 
-    def __set_bean(self, bean: type) -> UUID:
-        annotation: Bean = Bean.single(bean)
-        bean_id: UUID = uuid4()
-        self.__bean_type_map[annotation.bean_type] = bean_id
-        self.__bean_name_map[annotation.bean_name] = bean_id
-        self.__bean_map[bean_id] = bean
-        return bean_id
-
-    def __set_bean_factory(self, factory: BeanFactoryType) -> UUID:
-        annotation: Bean = Bean.single(factory)
-        bean_id: UUID = uuid4()
-        self.__bean_type_map[annotation.bean_type] = bean_id
-        self.__bean_name_map[annotation.bean_name] = bean_id
-        self.__bean_map[bean_id] = factory
-        return bean_id
-
-    def __get_target_type(self, required_type: type) -> type:
-        if required_type not in self.__type_map:
-            raise NoSuchBeanError(required_type)
-        derived: set[type] = self.__type_map[required_type]
+    def __resolve_type(self, type_: type, name: str | None) -> type:
+        if type_ not in self.__type_lookup:
+            raise NoSuchPodError(type_)
+        derived: set[type] = self.__type_lookup[type_]
         if len(derived) > 1:
-            marked_as_primary: set[type] = {x for x in derived if Primary.contains(x)}
-            if len(marked_as_primary) != 1:
-                raise NoUniqueBeanError(required_type, derived, marked_as_primary)
-            derived = marked_as_primary
+            derived: set[type] = {
+                x for x in derived if Primary.exists(x) or Pod.get(x).name == name
+            }
+        if len(derived) != 1:
+            raise NoUniquePodError(type_, derived)
         return list(derived)[0]
 
-    def __get_bean_id_by_type(self, bean_type: type) -> UUID:
-        return self.__bean_type_map[bean_type]
-
-    def __get_bean_id_by_name(self, bean_name: str) -> UUID:
-        if bean_name not in self.__bean_name_map:
-            raise NoSuchBeanError(bean_name)
-        return self.__bean_name_map[bean_name]
-
-    def __get_dependencies(self, bean_type: type | BeanFactoryType) -> dict[str, object]:
-        annotation: Bean = Bean.single(bean_type)
-        dependencies: dict[str, object] = {}
-        for name, required_type in annotation.dependencies.items():
-            if required_type == UnknownType:
-                dependencies[name] = self.__retrieve_bean_by_name(name)
-                continue
-            dependencies[name] = self.__retrieve_bean_by_type(required_type)
-        return dependencies
-
-    def __instaniate_bean(self, bean_id: UUID) -> tuple[object, BeanType]:
-        bean = self.__bean_map[bean_id]
-        instance = bean(**self.__get_dependencies(bean))
-        return instance, BeanType.CLASS if isinstance(bean, type) else BeanType.FACTORY
-
-    def __post_process_bean(self, bean: object) -> object:
+    def __post_process_pod(self, pod: object) -> object:
         for post_processor in self.__post_processors:
-            bean = post_processor.post_process_bean(self, bean)
-        return bean
+            pod = post_processor.post_process(self, pod)
+        return pod
 
-    def __get_bean_by_id(self, bean_id: UUID) -> object:
-        if bean_id not in self.__singleton_cache:
-            bean, bean_type = self.__instaniate_bean(bean_id)
-            if bean_type == BeanType.CLASS:
-                bean = self.__post_process_bean(bean)
-            self.__singleton_cache[bean_id] = bean
-        return self.__singleton_cache[bean_id]
+    def __create_pod_instance(self, pod: Pod) -> object:
+        if pod.scope == Pod.Scope.SINGLETON and pod.id in self.__singleton_cache:
+            return self.__singleton_cache[pod.id]
+        dependencies: dict[str, object] = {
+            name: self.get(
+                type_,
+                name,
+            )
+            for name, type_ in pod.dependencies.items()
+        }
+        instance: object = pod.obj(**dependencies)
+        processed: object = self.__post_process_pod(instance)
+        if pod.scope == Pod.Scope.SINGLETON:
+            self.__singleton_cache[pod.id] = processed
+        return processed
 
-    def __retrieve_bean_by_type(self, bean_type: type) -> object:
-        actual_type = self.__get_target_type(bean_type)
-        bean_id = self.__get_bean_id_by_type(actual_type)
-        return self.__get_bean_by_id(bean_id)
+    def get(self, type_: type[ObjectT], name: str | None = None) -> ObjectT:
+        resolved_type: type = self.__resolve_type(type_, name)
+        pod_id: UUID = self.__pod_lookup[resolved_type]
+        pod: Pod = self.__pods[pod_id]
+        return cast(ObjectT, self.__create_pod_instance(pod))
 
-    def __retrieve_bean_by_name(self, name: str) -> Any:
-        bean_id = self.__get_bean_id_by_name(name)
-        return self.__get_bean_by_id(bean_id)
+    def contains(self, type_: type, name: str | None = None) -> bool:
+        try:
+            self.__resolve_type(type_, name)
+            return True
+        except NoUniquePodError:
+            return True
+        except NoSuchPodError:
+            return False
 
-    @overload
-    def contains(self, *, required_type: type) -> bool: ...
+    def find(self, selector: Callable[[Pod], bool]) -> dict[str, object]:
+        return {
+            pod.name: self.get(pod.type_, pod.name)  # type: ignore
+            for pod in self.__pods.values()
+            if selector(pod)
+        }
 
-    @overload
-    def contains(self, *, name: str) -> bool: ...
+    def register(self, obj: PodType) -> None:
+        if not Pod.exists(obj):
+            raise CannotRegisterNonPodObjectError(obj)
+        self.__register_pod_definition(Pod.get(obj))
 
-    def contains(
-        self, required_type: type | None = None, name: str | None = None
-    ) -> bool:
-        if required_type is not None:
-            if required_type not in self.__type_map:
-                return False
-            bean_type = self.__get_target_type(required_type)
-            return bean_type in self.__bean_type_map
-        if name is None:  # pragma: no cover
-            raise ValueError("'name' and 'required_type' both cannot be None")
-        return name in self.__bean_name_map
+    def register_post_processor(self, post_processor: IPodPostProcessor) -> None:
+        self.__post_processors.add(post_processor)
 
-    @overload
-    def single(self, *, required_type: type[AnyT]) -> AnyT: ...
-
-    @overload
-    def single(self, *, name: str) -> Any: ...
-
-    def single(
-        self, required_type: type[AnyT] | None = None, name: str | None = None
-    ) -> AnyT | Any:
-        if required_type is not None:
-            return self.__retrieve_bean_by_type(required_type)
-        if name is None:  # pragma: no cover
-            raise ValueError("'name' and 'required_type' both cannot be None")
-        return self.__retrieve_bean_by_name(name)
-
-    def filter_bean_types(self, clause: Callable[[type], bool]) -> Sequence[type]:
-        return [x for x in self.__bean_type_map if clause(x)]
-
-    def filter_beans(self, clause: Callable[[type], bool]) -> Sequence[object]:
-        filtered: list[type[object]] = [x for x in self.__bean_type_map if clause(x)]
-        return [self.single(required_type=x) for x in filtered]
-
-    def register_bean(self, bean: type) -> None:
-        if not Bean.contains(bean):
-            raise CannotRegisterNonBeanObjectError(bean)
-        self.__set_target_type(bean)
-        self.__set_bean(bean)
-
-    def register_bean_factory(self, factory: BeanFactoryType) -> None:
-        if not Bean.contains(factory):
-            raise CannotRegisterNonBeanObjectError(factory)
-        annotation: Bean = Bean.single(factory)
-        self.__set_target_type(annotation.bean_type)
-        self.__set_bean_factory(factory)
-
-    def register_bean_post_processor(self, post_processor: IBeanPostProcessor) -> None:
-        self.__post_processors.append(post_processor)
+    def register_plugin(self, plugin: IPluggable) -> None:
+        plugin.register(self)
 
     def scan(self, package: Module) -> None:
         modules: set[ModuleType]
@@ -208,16 +140,13 @@ class ApplicationContext(
             modules = {resolve_module(package)}
 
         for module in modules:
-            beans: set[type] = list_classes(module, Bean.contains)
-            factories: set[BeanFactoryType] = list_functions(module, Bean.contains)
-            for bean in beans:
-                self.register_bean(bean)
-            for factory in factories:
-                self.register_bean_factory(factory)
+            for obj in list_classes(module, Pod.exists):
+                self.register(obj)
+            for obj in list_functions(module, Pod.exists):
+                self.register(obj)
 
     def start(self) -> None:
-        for bean_id in self.__bean_map:
-            self.__get_bean_by_id(bean_id)
-
-    def register_plugin(self, pluggable: IPluggable) -> None:
-        pluggable.register(self)
+        for pod in self.__pods.values():
+            if Lazy.exists(pod.obj):
+                continue
+            self.__create_pod_instance(pod)

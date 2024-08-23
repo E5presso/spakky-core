@@ -7,5 +7,5 @@ def test_repository() -> None:
 
     class NonAnnotated: ...
 
-    assert Repository.single_or_none(SampleRepository) is not None
-    assert Repository.single_or_none(NonAnnotated) is None
+    assert Repository.get_or_none(SampleRepository) is not None
+    assert Repository.get_or_none(NonAnnotated) is None

@@ -1,106 +1,57 @@
 import sys
+from types import MethodType
 from typing import Any, Sequence, cast
+from inspect import ismethod, getmembers, iscoroutinefunction
 from logging import Logger
 
-from spakky.aop.advisor import IAdvisor, IAsyncAdvisor
-from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.advisor import Advisor, AsyncAdvisor
+from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.aop.order import Order
-from spakky.application.interfaces.bean_container import IBeanContainer
-from spakky.application.interfaces.bean_processor import IBeanPostProcessor
-from spakky.bean.bean import Bean, UnknownType
+from spakky.application.interfaces.container import IPodContainer
+from spakky.application.interfaces.post_processor import IPodPostProcessor
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
-
-
-class _Runnable:
-    instance: IAdvisor
-    next: Func
-
-    def __init__(self, instance: IAdvisor, next: Func) -> None:
-        self.instance = instance
-        self.next = next
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.next, name)
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        self.instance.before(*args, **kwargs)
-        try:
-            result = self.instance.around(self.next, *args, **kwargs)
-            self.instance.after_returning(result)
-            return result
-        except Exception as e:
-            self.instance.after_raising(e)
-            raise
-        finally:
-            self.instance.after()
-
-
-class _AsyncRunnable:
-    instance: IAsyncAdvisor
-    next: AsyncFunc
-
-    def __init__(self, instance: IAsyncAdvisor, next: AsyncFunc) -> None:
-        self.instance = instance
-        self.next = next
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.next, name)
-
-    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        await self.instance.before_async(*args, **kwargs)
-        try:
-            result = await self.instance.around_async(self.next, *args, **kwargs)
-            await self.instance.after_returning_async(result)
-            return result
-        except Exception as e:
-            await self.instance.after_raising_async(e)
-            raise
-        finally:
-            await self.instance.after_async()
+from spakky.pod.pod import Pod
 
 
 class AspectProxyHandler(AbstractProxyHandler):
-    __container: IBeanContainer
-    __advisors: Sequence[type[IAdvisor | IAsyncAdvisor]]
+    __advisor_map: dict[MethodType | Func, MethodType | Advisor]
+    __async_advisor_map: dict[MethodType | AsyncFunc, MethodType | AsyncAdvisor]
 
     def __init__(
-        self,
-        container: IBeanContainer,
-        advisors: Sequence[type[IAdvisor | IAsyncAdvisor]],
+        self, instance: object, aspects: Sequence[IAspect | IAsyncAspect]
     ) -> None:
         super().__init__()
-        self.__container = container
-        self.__advisors = advisors
+        self.__advisor_map = {}
+        self.__async_advisor_map = {}
+        for _, method in getmembers(instance, ismethod):
+            if iscoroutinefunction(method):
+                runnable = method
+                for aspect in [
+                    x
+                    for x in aspects
+                    if isinstance(x, IAsyncAspect) and AsyncAspect.get(x).matches(method)
+                ]:
+                    runnable = AsyncAdvisor(aspect, runnable)
+                self.__async_advisor_map[method] = runnable
+            else:
+                runnable = method
+                for aspect in [
+                    x
+                    for x in aspects
+                    if isinstance(x, IAspect) and Aspect.get(x).matches(method)
+                ]:
+                    runnable = Advisor(aspect, runnable)
+                self.__advisor_map[method] = runnable
 
     def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
-        advisors: Sequence[type[IAdvisor]] = [
-            x for x in self.__advisors if issubclass(x, IAdvisor)
-        ]
-        matched: Sequence[type[IAdvisor]] = [
-            x for x in advisors if Aspect.single(x).matches(method)
-        ]
-        runnable: Func = method
-        for advisor in matched:
-            runnable = _Runnable(self.__container.single(required_type=advisor), runnable)
-        return runnable(*args, **kwargs)
+        return self.__advisor_map[method](*args, **kwargs)
 
     async def call_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-        advisors: Sequence[type[IAsyncAdvisor]] = [
-            x for x in self.__advisors if issubclass(x, IAsyncAdvisor)
-        ]
-        matched: Sequence[type[IAsyncAdvisor]] = [
-            x for x in advisors if AsyncAspect.single(x).matches(method)
-        ]
-        runnable: AsyncFunc = method
-        for advisor in matched:
-            runnable = _AsyncRunnable(
-                self.__container.single(required_type=advisor), runnable
-            )
-        return await runnable(*args, **kwargs)
+        return await self.__async_advisor_map[method](*args, **kwargs)
 
 
-class AspectBeanPostProcessor(IBeanPostProcessor):
+class AspectPostProcessor(IPodPostProcessor):
     __logger: Logger
     __cache: dict[type, object]
 
@@ -109,53 +60,48 @@ class AspectBeanPostProcessor(IBeanPostProcessor):
         self.__logger = logger
         self.__cache = {}
 
-    def __set_cache(self, type_: type, bean: object) -> object:
-        self.__cache[type_] = bean
-        return bean
+    def __set_cache(self, type_: type, obj: object) -> object:
+        self.__cache[type_] = obj
+        return obj
 
     def __get_cache(self, type_: type) -> object | None:
         return self.__cache.get(type_, None)
 
-    def post_process_bean(self, container: IBeanContainer, bean: object) -> object:
-        if (cached := self.__get_cache(type(bean))) is not None:
+    def post_process(self, container: IPodContainer, pod: object) -> object:
+        if (cached := self.__get_cache(type(pod))) is not None:
             return cached
-        if Aspect.contains(bean) or AsyncAspect.contains(bean):
-            return self.__set_cache(type(bean), bean)
-        annotation: Bean = Bean.single(bean)
-        matched_advisors: Sequence[type[IAdvisor | IAsyncAdvisor]] = []
-        advisors: Sequence[type] = container.filter_bean_types(
-            lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
+        if Aspect.exists(pod) or AsyncAspect.exists(pod):
+            return self.__set_cache(type(pod), pod)
+        if not Pod.exists(pod):
+            return self.__set_cache(type(pod), pod)
+        matched: Sequence[IAspect | IAspect] = []
+        aspects: dict[str, object] = container.find(
+            lambda x: Aspect.exists(x.obj) or AsyncAspect.exists(x.obj)
         )
-        for advisor in advisors:
-            aspect: Aspect | None = Aspect.single_or_none(advisor)
-            async_aspect: AsyncAspect | None = AsyncAspect.single_or_none(advisor)
-            if aspect is not None and aspect.matches(bean):
-                matched_advisors.append(cast(type[IAdvisor], advisor))
+        for _, aspect in aspects.items():
+            aspect_annotation: Aspect | None = Aspect.get_or_none(aspect)
+            async_aspect: AsyncAspect | None = AsyncAspect.get_or_none(aspect)
+            if aspect_annotation is not None and aspect_annotation.matches(pod):
+                matched.append(cast(IAspect, aspect))
                 continue
-            if async_aspect is not None and async_aspect.matches(bean):
-                matched_advisors.append(cast(type[IAsyncAdvisor], advisor))
+            if async_aspect is not None and async_aspect.matches(pod):
+                matched.append(cast(IAspect, aspect))
                 continue
-        if not any(matched_advisors):
-            self.__cache[type(bean)] = bean
-            return bean
-        matched_advisors.sort(
-            key=lambda x: Order.single_or_default(x, Order(sys.maxsize)).order,
+        if not any(matched):
+            return self.__set_cache(type(pod), pod)
+        matched.sort(
+            key=lambda x: Order.get_or_default(x, Order(sys.maxsize)).order,
             reverse=True,
         )
         # pylint: disable=line-too-long
         self.__logger.info(
-            f"[{type(self).__name__}] {[f'{x.__name__}({Order.single_or_default(x, Order(sys.maxsize)).order})' for x in matched_advisors]!r} -> {type(bean).__name__}"
+            f"[{type(self).__name__}] {[f'{type(x).__name__}({Order.get_or_default(x, Order(sys.maxsize)).order})' for x in matched]!r} -> {type(pod).__name__}"
         )
-        dependencies: dict[str, object] = {}
-        for name, required_type in annotation.dependencies.items():
-            if required_type == UnknownType:
-                dependencies[name] = container.single(name=name)
-                continue
-            dependencies[name] = container.single(required_type=required_type)
         return self.__set_cache(
-            type(bean),
+            type(pod),
             ProxyFactory(
-                superclass=type(bean),
-                handler=AspectProxyHandler(container, matched_advisors),
-            ).create(**dependencies),
+                superclass=type(pod),
+                instance=pod,
+                handler=AspectProxyHandler(pod, matched),
+            ).create(),
         )

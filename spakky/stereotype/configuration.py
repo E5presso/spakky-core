@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from spakky.bean.bean import Bean
+from spakky.pod.pod import Pod
 
 
 @dataclass
-class Configuration(Bean): ...
+class Configuration(Pod): ...

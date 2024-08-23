@@ -1,53 +1,52 @@
-from typing import Any, TypeVar, Protocol, runtime_checkable
+from typing import Any
 
+from spakky.aop.aspect import IAspect, IAsyncAspect
 from spakky.core.types import AsyncFunc, Func
 
 
-@runtime_checkable
-class IAdvisor(Protocol):
-    def before(self, *args: Any, **kwargs: Any) -> None:
-        return
+class Advisor:
+    instance: IAspect
+    next: Func
 
-    def after_raising(self, error: Exception) -> None:
-        return
+    def __init__(self, instance: IAspect, next: Func) -> None:
+        self.instance = instance
+        self.next = next
 
-    def after_returning(self, result: Any) -> None:
-        return
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.next, name)
 
-    def after(self) -> None:
-        return
-
-    def around(
-        self,
-        joinpoint: Func,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
-        return joinpoint(*args, **kwargs)
-
-
-@runtime_checkable
-class IAsyncAdvisor(Protocol):
-    async def before_async(self, *args: Any, **kwargs: Any) -> None:
-        return
-
-    async def after_raising_async(self, error: Exception) -> None:
-        return
-
-    async def after_returning_async(self, result: Any) -> None:
-        return
-
-    async def after_async(self) -> None:
-        return
-
-    async def around_async(
-        self,
-        joinpoint: AsyncFunc,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
-        return await joinpoint(*args, **kwargs)
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        self.instance.before(*args, **kwargs)
+        try:
+            result = self.instance.around(self.next, *args, **kwargs)
+            self.instance.after_returning(result)
+            return result
+        except Exception as e:
+            self.instance.after_raising(e)
+            raise
+        finally:
+            self.instance.after()
 
 
-AdvisorT = TypeVar("AdvisorT", bound=type[IAdvisor])
-AsyncAdvisorT = TypeVar("AsyncAdvisorT", bound=type[IAsyncAdvisor])
+class AsyncAdvisor:
+    instance: IAsyncAspect
+    next: AsyncFunc
+
+    def __init__(self, instance: IAsyncAspect, next: AsyncFunc) -> None:
+        self.instance = instance
+        self.next = next
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.next, name)
+
+    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        await self.instance.before_async(*args, **kwargs)
+        try:
+            result = await self.instance.around_async(self.next, *args, **kwargs)
+            await self.instance.after_returning_async(result)
+            return result
+        except Exception as e:
+            await self.instance.after_raising_async(e)
+            raise
+        finally:
+            await self.instance.after_async()

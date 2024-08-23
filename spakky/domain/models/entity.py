@@ -1,10 +1,20 @@
+import sys
 from abc import ABC, abstractmethod
+from uuid import UUID, uuid4
 from typing import Any, Generic
+from datetime import datetime, timedelta
 from dataclasses import field
 
 from spakky.core.interfaces.equatable import EquatableT, IEquatable
 from spakky.core.mutability import mutable
 from spakky.domain.error import SpakkyDomainError
+
+if sys.version_info >= (3, 11):  # pragma: no cover
+    from datetime import UTC
+else:  # pragma: no cover
+    from datetime import timezone
+
+    UTC = timezone(offset=timedelta(hours=0), name="UTC")
 
 
 class CannotMonkeyPatchEntityError(SpakkyDomainError):
@@ -14,14 +24,18 @@ class CannotMonkeyPatchEntityError(SpakkyDomainError):
 @mutable
 class Entity(IEquatable, Generic[EquatableT], ABC):
     __initialized: bool = field(init=False, repr=False, default=False)
+
     uid: EquatableT
+    version: UUID = field(default_factory=uuid4)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     @abstractmethod
     def next_id(cls) -> EquatableT: ...
 
-    def validate(self) -> None:
-        return
+    @abstractmethod
+    def validate(self) -> None: ...
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
