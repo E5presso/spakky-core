@@ -12,7 +12,7 @@ from spakky.core.importing import (
     list_modules,
     resolve_module,
 )
-from spakky.injectable.injectable import Injectable
+from spakky.pod.pod import Pod
 from tests.dummy import dummy_package
 from tests.dummy.dummy_package import module_a, module_b, module_c
 
@@ -28,7 +28,7 @@ def test_list_modules_expect_fail() -> None:
 
 
 def test_list_classes_expect_success() -> None:
-    assert list_classes(module_a) == {Injectable, module_a.DummyA, module_a.InjectableA}
+    assert list_classes(module_a) == {Pod, module_a.DummyA, module_a.PodA}
 
 
 def test_list_classes_with_selector_expect_success() -> None:
@@ -36,23 +36,23 @@ def test_list_classes_with_selector_expect_success() -> None:
     modules: set[ModuleType] = list_modules(dummy_package)
     assert set(chain(*(list_classes(module) for module in modules))) == {
         ClassAnnotation,
-        Injectable,
-        Injectable,
+        Pod,
+        Pod,
         module_a.DummyA,
-        module_a.InjectableA,
+        module_a.PodA,
         module_b.DummyB,
-        module_b.InjectableB,
+        module_b.PodB,
         module_b.UnmanagedB,
         module_c.DummyC,
-        module_c.InjectableC,
+        module_c.PodC,
     }
     assert set(
-        chain(*(list_classes(module, Annotation.contains) for module in modules))
+        chain(*(list_classes(module, Annotation.exists) for module in modules))
     ) == {
         module_b.DummyB,
-        module_a.InjectableA,
-        module_b.InjectableB,
-        module_c.InjectableC,
+        module_a.PodA,
+        module_b.PodB,
+        module_c.PodC,
     }
 
 
@@ -69,9 +69,9 @@ def test_list_functions_with_selector_expect_success() -> None:
         module_b.unmanaged_b,
         module_b.hello_world,
     }
-    assert set(
-        chain(*(list_functions(module, Injectable.contains) for module in modules))
-    ) == {module_b.unmanaged_b}
+    assert set(chain(*(list_functions(module, Pod.exists) for module in modules))) == {
+        module_b.unmanaged_b
+    }
 
 
 def test_resolve_module() -> None:

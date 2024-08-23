@@ -1,103 +1,57 @@
 import sys
+from types import MethodType
 from typing import Any, Sequence, cast
+from inspect import ismethod, getmembers, iscoroutinefunction
 from logging import Logger
 
+from spakky.aop.advisor import Advisor, AsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.aop.order import Order
-from spakky.application.interfaces.container import IContainer
-from spakky.application.interfaces.processor import IPostProcessor
+from spakky.application.interfaces.container import IPodContainer
+from spakky.application.interfaces.post_processor import IPodPostProcessor
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
-from spakky.injectable.injectable import Injectable, UnknownType
-
-
-class _Runnable:
-    instance: IAspect
-    next: Func
-
-    def __init__(self, instance: IAspect, next: Func) -> None:
-        self.instance = instance
-        self.next = next
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.next, name)
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        self.instance.before(*args, **kwargs)
-        try:
-            result = self.instance.around(self.next, *args, **kwargs)
-            self.instance.after_returning(result)
-            return result
-        except Exception as e:
-            self.instance.after_raising(e)
-            raise
-        finally:
-            self.instance.after()
-
-
-class _AsyncRunnable:
-    instance: IAsyncAspect
-    next: AsyncFunc
-
-    def __init__(self, instance: IAsyncAspect, next: AsyncFunc) -> None:
-        self.instance = instance
-        self.next = next
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.next, name)
-
-    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        await self.instance.before_async(*args, **kwargs)
-        try:
-            result = await self.instance.around_async(self.next, *args, **kwargs)
-            await self.instance.after_returning_async(result)
-            return result
-        except Exception as e:
-            await self.instance.after_raising_async(e)
-            raise
-        finally:
-            await self.instance.after_async()
+from spakky.pod.pod import Pod
 
 
 class AspectProxyHandler(AbstractProxyHandler):
-    __container: IContainer
-    __aspects: Sequence[type[IAspect | IAsyncAspect]]
+    __advisor_map: dict[MethodType | Func, MethodType | Advisor]
+    __async_advisor_map: dict[MethodType | AsyncFunc, MethodType | AsyncAdvisor]
 
     def __init__(
-        self,
-        container: IContainer,
-        aspects: Sequence[type[IAspect | IAsyncAspect]],
+        self, instance: object, aspects: Sequence[IAspect | IAsyncAspect]
     ) -> None:
         super().__init__()
-        self.__container = container
-        self.__aspects = aspects
+        self.__advisor_map = {}
+        self.__async_advisor_map = {}
+        for _, method in getmembers(instance, ismethod):
+            if iscoroutinefunction(method):
+                runnable = method
+                for aspect in [
+                    x
+                    for x in aspects
+                    if isinstance(x, IAsyncAspect) and AsyncAspect.get(x).matches(method)
+                ]:
+                    runnable = AsyncAdvisor(aspect, runnable)
+                self.__async_advisor_map[method] = runnable
+            else:
+                runnable = method
+                for aspect in [
+                    x
+                    for x in aspects
+                    if isinstance(x, IAspect) and Aspect.get(x).matches(method)
+                ]:
+                    runnable = Advisor(aspect, runnable)
+                self.__advisor_map[method] = runnable
 
     def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
-        aspects: Sequence[type[IAspect]] = [
-            x for x in self.__aspects if issubclass(x, IAspect)
-        ]
-        matched: Sequence[type[IAspect]] = [
-            x for x in aspects if Aspect.get(x).matches(method)
-        ]
-        runnable: Func = method
-        for aspect in matched:
-            runnable = _Runnable(self.__container.get(type_=aspect), runnable)
-        return runnable(*args, **kwargs)
+        return self.__advisor_map[method](*args, **kwargs)
 
     async def call_async(self, method: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
-        aspects: Sequence[type[IAsyncAspect]] = [
-            x for x in self.__aspects if issubclass(x, IAsyncAspect)
-        ]
-        matched: Sequence[type[IAsyncAspect]] = [
-            x for x in aspects if AsyncAspect.get(x).matches(method)
-        ]
-        runnable: AsyncFunc = method
-        for aspect in matched:
-            runnable = _AsyncRunnable(self.__container.get(type_=aspect), runnable)
-        return await runnable(*args, **kwargs)
+        return await self.__async_advisor_map[method](*args, **kwargs)
 
 
-class AspectPostProcessor(IPostProcessor):
+class AspectPostProcessor(IPodPostProcessor):
     __logger: Logger
     __cache: dict[type, object]
 
@@ -106,56 +60,48 @@ class AspectPostProcessor(IPostProcessor):
         self.__logger = logger
         self.__cache = {}
 
-    def __set_cache(self, type_: type, injectable: object) -> object:
-        self.__cache[type_] = injectable
-        return injectable
+    def __set_cache(self, type_: type, obj: object) -> object:
+        self.__cache[type_] = obj
+        return obj
 
     def __get_cache(self, type_: type) -> object | None:
         return self.__cache.get(type_, None)
 
-    def post_process(self, container: IContainer, injectable: object) -> object:
-        if (cached := self.__get_cache(type(injectable))) is not None:
+    def post_process(self, container: IPodContainer, pod: object) -> object:
+        if (cached := self.__get_cache(type(pod))) is not None:
             return cached
-        if Aspect.contains(injectable) or AsyncAspect.contains(injectable):
-            return self.__set_cache(type(injectable), injectable)
-        injectable_annotation: Injectable | None = Injectable.get_or_none(injectable)
-        if injectable_annotation is None:
-            self.__set_cache(type(injectable), injectable)
-            return injectable
-        matched_aspects: Sequence[type[IAspect | IAspect]] = []
-        aspects: Sequence[type] = container.filter_injectable_types(
-            lambda x: Aspect.contains(x) or AsyncAspect.contains(x)
+        if Aspect.exists(pod) or AsyncAspect.exists(pod):
+            return self.__set_cache(type(pod), pod)
+        if not Pod.exists(pod):
+            return self.__set_cache(type(pod), pod)
+        matched: Sequence[IAspect | IAspect] = []
+        aspects: dict[str, object] = container.find(
+            lambda x: Aspect.exists(x.obj) or AsyncAspect.exists(x.obj)
         )
-        for aspect in aspects:
+        for _, aspect in aspects.items():
             aspect_annotation: Aspect | None = Aspect.get_or_none(aspect)
             async_aspect: AsyncAspect | None = AsyncAspect.get_or_none(aspect)
-            if aspect_annotation is not None and aspect_annotation.matches(injectable):
-                matched_aspects.append(cast(type[IAspect], aspect))
+            if aspect_annotation is not None and aspect_annotation.matches(pod):
+                matched.append(cast(IAspect, aspect))
                 continue
-            if async_aspect is not None and async_aspect.matches(injectable):
-                matched_aspects.append(cast(type[IAspect], aspect))
+            if async_aspect is not None and async_aspect.matches(pod):
+                matched.append(cast(IAspect, aspect))
                 continue
-        if not any(matched_aspects):
-            self.__cache[type(injectable)] = injectable
-            return injectable
-        matched_aspects.sort(
+        if not any(matched):
+            return self.__set_cache(type(pod), pod)
+        matched.sort(
             key=lambda x: Order.get_or_default(x, Order(sys.maxsize)).order,
             reverse=True,
         )
         # pylint: disable=line-too-long
         self.__logger.info(
-            f"[{type(self).__name__}] {[f'{x.__name__}({Order.get_or_default(x, Order(sys.maxsize)).order})' for x in matched_aspects]!r} -> {type(injectable).__name__}"
+            f"[{type(self).__name__}] {[f'{type(x).__name__}({Order.get_or_default(x, Order(sys.maxsize)).order})' for x in matched]!r} -> {type(pod).__name__}"
         )
-        dependencies: dict[str, object] = {}
-        for name, required_type in injectable_annotation.dependencies.items():
-            if required_type == UnknownType:
-                dependencies[name] = container.get(name=name)
-                continue
-            dependencies[name] = container.get(type_=required_type)
         return self.__set_cache(
-            type(injectable),
+            type(pod),
             ProxyFactory(
-                superclass=type(injectable),
-                handler=AspectProxyHandler(container, matched_aspects),
-            ).create(**dependencies),
+                superclass=type(pod),
+                instance=pod,
+                handler=AspectProxyHandler(pod, matched),
+            ).create(),
         )

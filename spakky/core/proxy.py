@@ -7,7 +7,7 @@ from spakky.core.types import AsyncFunc, Func, ObjectT, is_async_function, is_fu
 
 
 @runtime_checkable
-class _IProxyHandler(Protocol):
+class IProxyHandler(Protocol):
     @abstractmethod
     def call(self, method: Func, *args: Any, **kwargs: Any) -> Any: ...
 
@@ -24,7 +24,7 @@ class _IProxyHandler(Protocol):
     def delete(self, name: str, value: Any) -> Any: ...
 
 
-class AbstractProxyHandler(ABC, _IProxyHandler):
+class AbstractProxyHandler(IProxyHandler, ABC):
     def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
         return method(*args, **kwargs)
 
@@ -42,7 +42,7 @@ class AbstractProxyHandler(ABC, _IProxyHandler):
 
 
 class ProxyFactory(Generic[ObjectT]):
-    __PROXY_CLASS_NAME_SUFFIX: ClassVar[str] = "ProxyByFactory"
+    __PROXY_CLASS_NAME_SUFFIX: ClassVar[str] = "@DynamicProxy"
     __ATTRIBUTES_TO_IGNORE: ClassVar[Iterable[str]] = [
         "__dict__",
         "__class__",
@@ -59,17 +59,20 @@ class ProxyFactory(Generic[ObjectT]):
     ]
 
     __superclass: type[ObjectT]
-    __handler: _IProxyHandler
+    __instance: ObjectT
+    __handler: IProxyHandler
 
-    def __init__(self, superclass: type[ObjectT], handler: _IProxyHandler) -> None:
+    def __init__(
+        self, superclass: type[ObjectT], instance: ObjectT, handler: IProxyHandler
+    ) -> None:
         self.__superclass = superclass
+        self.__instance = instance
         self.__handler = handler
 
-    def create(self, *args: Any, **kwargs: Any) -> ObjectT:
-        def __getattribute__(instance: ObjectT, name: str) -> Any:
-            value: Any = object.__getattribute__(instance, name)
+    def create(self) -> ObjectT:
+        def __getattribute__(_: ObjectT, name: str) -> Any:
+            value: Any = object.__getattribute__(self.__instance, name)
             if is_function(value):
-
                 if is_async_function(value):
 
                     @wraps(value)
@@ -97,16 +100,21 @@ class ProxyFactory(Generic[ObjectT]):
         def __getattr__(name: str, value: Any) -> Any:
             return self.__handler.get(name, value)
 
-        def __setattr__(instance: ObjectT, name: str, value: Any) -> None:
-            return object.__setattr__(instance, name, self.__handler.set(name, value))
+        def __setattr__(_: ObjectT, name: str, value: Any) -> None:
+            return object.__setattr__(
+                self.__instance, name, self.__handler.set(name, value)
+            )
 
-        def __delattr__(instance: ObjectT, name: str) -> None:
-            value: Any = object.__getattribute__(instance, name)
-            object.__delattr__(instance, name)
+        def __delattr__(_: ObjectT, name: str) -> None:
+            value: Any = object.__getattribute__(self.__instance, name)
+            object.__delattr__(self.__instance, name)
             self.__handler.delete(name, value)
 
         def __dir__(instance: ObjectT) -> Iterable[str]:
             return sorted(set(dir(self.__superclass) + list(instance.__dict__.keys())))
+
+        def __init__(_: ObjectT) -> None:
+            pass
 
         return new_class(
             name=self.__superclass.__name__ + self.__PROXY_CLASS_NAME_SUFFIX,
@@ -116,5 +124,6 @@ class ProxyFactory(Generic[ObjectT]):
                 __setattr__=__setattr__,
                 __delattr__=__delattr__,
                 __dir__=__dir__,
+                __init__=__init__,
             ),
-        )(*args, **kwargs)
+        )()

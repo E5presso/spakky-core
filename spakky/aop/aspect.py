@@ -4,7 +4,7 @@ from dataclasses import field, dataclass
 
 from spakky.aop.advice import After, AfterRaising, AfterReturning, Around, Before
 from spakky.core.types import AsyncFunc, Func
-from spakky.injectable.injectable import Injectable
+from spakky.pod.pod import Pod
 
 
 @runtime_checkable
@@ -58,15 +58,15 @@ AsyncAspectT = TypeVar("AsyncAspectT", bound=type[IAsyncAspect])
 
 
 @dataclass
-class Aspect(Injectable):
+class Aspect(Pod):
     aspect: type[IAspect] = field(init=False)
 
     def __call__(self, obj: AspectT) -> AspectT:
         self.aspect = obj
         return super().__call__(obj)
 
-    def matches(self, injectable: object) -> bool:
-        for _, method in getmembers(injectable, callable):
+    def matches(self, pod: object) -> bool:
+        for _, method in getmembers(pod, callable):
             for annotation, target_method in {
                 Before: self.aspect.before,
                 AfterReturning: self.aspect.after_returning,
@@ -81,15 +81,15 @@ class Aspect(Injectable):
 
 
 @dataclass
-class AsyncAspect(Injectable):
+class AsyncAspect(Pod):
     aspect: type[IAsyncAspect] = field(init=False)
 
     def __call__(self, obj: AsyncAspectT) -> AsyncAspectT:
         self.aspect = obj
         return super().__call__(obj)
 
-    def matches(self, injectable: object) -> bool:
-        for _, method in getmembers(injectable, callable):
+    def matches(self, pod: object) -> bool:
+        for _, method in getmembers(pod, callable):
             for annotation, target_method in {
                 Before: self.aspect.before_async,
                 AfterReturning: self.aspect.after_returning_async,

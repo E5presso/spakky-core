@@ -1,8 +1,8 @@
-from spakky.injectable.injectable import Injectable
+from spakky.pod.pod import Pod
 
 
 class DummyC: ...
 
 
-@Injectable()
-class InjectableC: ...
+@Pod()
+class PodC: ...

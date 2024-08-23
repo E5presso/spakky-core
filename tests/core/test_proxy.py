@@ -56,7 +56,7 @@ async def test_proxy() -> None:
             deleted.add(name)
             return super().delete(name, value)
 
-    proxy: Subject = ProxyFactory(Subject, MyMethodInterceptor()).create()
+    proxy: Subject = ProxyFactory(Subject, Subject(), MyMethodInterceptor()).create()
     assert proxy.call() == "Hello World!"
     assert await proxy.call_async() == "Hello Async!"
     assert proxy.name == "John"
@@ -122,7 +122,9 @@ async def test_proxy_with_parameter() -> None:
             deleted.add(name)
             return super().delete(name, value)
 
-    proxy: Subject = ProxyFactory(Subject, MyMethodInterceptor()).create("John")
+    proxy: Subject = ProxyFactory(
+        Subject, Subject(name="John"), MyMethodInterceptor()
+    ).create()
     assert proxy.call() == "Hello John!"
     assert await proxy.call_async() == "Hello John!"
     assert proxy.name == "John"
@@ -130,6 +132,6 @@ async def test_proxy_with_parameter() -> None:
 
     del proxy.name
 
-    assert get_count == 3
-    assert set_count == 1
+    assert get_count == 1
+    assert set_count == 0
     assert deleted == {"name"}

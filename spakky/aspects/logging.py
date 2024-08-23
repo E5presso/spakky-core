@@ -31,7 +31,7 @@ class AsyncLoggingAspect(IAsyncAspect):
         super().__init__()
         self.__logger = logger
 
-    @Around(lambda x: Logging.contains(x) and iscoroutinefunction(x))
+    @Around(lambda x: Logging.exists(x) and iscoroutinefunction(x))
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         start: float = perf_counter()
         annotation: Logging = Logging.get(joinpoint)
@@ -81,7 +81,7 @@ class LoggingAspect(IAspect):
         super().__init__()
         self.__logger = logger
 
-    @Around(lambda x: Logging.contains(x) and not iscoroutinefunction(x))
+    @Around(lambda x: Logging.exists(x) and not iscoroutinefunction(x))
     def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
         start: float = perf_counter()
         annotation: Logging = Logging.get(joinpoint)

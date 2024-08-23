@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from spakky.core.annotation import FunctionAnnotation
 from spakky.domain.models.domain_event import DomainEvent
-from spakky.injectable.injectable import Injectable
+from spakky.pod.pod import Pod
 
 
 @runtime_checkable
@@ -34,4 +34,4 @@ def on_event(
 
 
 @dataclass
-class EventHandler(Injectable): ...
+class EventHandler(Pod): ...

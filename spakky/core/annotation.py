@@ -72,7 +72,7 @@ class Annotation(ABC):
 
     @final
     @classmethod
-    def contains(cls, obj: Any) -> bool:
+    def exists(cls, obj: Any) -> bool:
         metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
         return cls in metadata
 

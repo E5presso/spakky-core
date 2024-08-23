@@ -9,4 +9,4 @@ def test_logging_plugin_register() -> None:
     plugin: IPluggable = LoggingPlugin()
     plugin.register(context)
 
-    assert context.injectables == {LoggingAspect, AsyncLoggingAspect}
+    assert context.pods == {LoggingAspect, AsyncLoggingAspect}

@@ -29,7 +29,7 @@ class AsyncTransactionalAspect(IAsyncAspect):
         self.__transacntion = transaction
         self.__logger = logger
 
-    @Around(lambda x: Transactional.contains(x) and iscoroutinefunction(x))
+    @Around(lambda x: Transactional.exists(x) and iscoroutinefunction(x))
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         self.__logger.info(f"[{type(self).__name__}] BEGIN TRANSACTION")
         try:
@@ -45,19 +45,19 @@ class AsyncTransactionalAspect(IAsyncAspect):
 @Order(0)
 @Aspect()
 class TransactionalAspect(IAspect):
-    __transacntion: AbstractTransaction
+    __transaction: AbstractTransaction
     __logger: Logger
 
     def __init__(self, transaction: AbstractTransaction, logger: Logger) -> None:
         super().__init__()
-        self.__transacntion = transaction
+        self.__transaction = transaction
         self.__logger = logger
 
-    @Around(lambda x: Transactional.contains(x) and not iscoroutinefunction(x))
+    @Around(lambda x: Transactional.exists(x) and not iscoroutinefunction(x))
     def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
         self.__logger.info(f"[{type(self).__name__}] BEGIN TRANSACTION")
         try:
-            with self.__transacntion:
+            with self.__transaction:
                 result = joinpoint(*args, **kwargs)
         except:
             self.__logger.info(f"[{type(self).__name__}] ROLLBACK")

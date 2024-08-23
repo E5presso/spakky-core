@@ -9,4 +9,4 @@ def test_transaction_plugin_register() -> None:
     plugin: IPluggable = TransactionPlugin()
     plugin.register(context)
 
-    assert context.injectables == {TransactionalAspect, AsyncTransactionalAspect}
+    assert context.pods == {TransactionalAspect, AsyncTransactionalAspect}

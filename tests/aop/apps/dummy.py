@@ -22,7 +22,7 @@ class AsyncDummy(FunctionAnnotation): ...
 @Order(0)
 @Aspect()
 class DummyAdvisor(IAspect):
-    @Around(Dummy.contains)
+    @Around(Dummy.exists)
     def around(self, joinpoint: Func, *args: Any, **kwargs: Any) -> Any:
         _annotation = Dummy.get(joinpoint)
         return joinpoint(*args, **kwargs)
@@ -31,7 +31,7 @@ class DummyAdvisor(IAspect):
 @Order(0)
 @AsyncAspect()
 class AsyncDummyAdvisor(IAsyncAspect):
-    @Around(AsyncDummy.contains)
+    @Around(AsyncDummy.exists)
     async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
         _annotation = AsyncDummy.get(joinpoint)
         return await joinpoint(*args, **kwargs)

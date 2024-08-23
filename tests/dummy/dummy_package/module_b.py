@@ -1,19 +1,19 @@
 from spakky.core.annotation import ClassAnnotation
-from spakky.injectable.injectable import Injectable
+from spakky.pod.pod import Pod
 
 
 @ClassAnnotation()
 class DummyB: ...
 
 
-@Injectable()
-class InjectableB: ...
+@Pod()
+class PodB: ...
 
 
 class UnmanagedB: ...
 
 
-@Injectable()
+@Pod()
 def unmanaged_b() -> UnmanagedB:
     return UnmanagedB()
 

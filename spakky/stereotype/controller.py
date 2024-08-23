@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from spakky.injectable.injectable import Injectable
+from spakky.pod.pod import Pod
 
 
 @dataclass
-class Controller(Injectable):
+class Controller(Pod):
     prefix: str

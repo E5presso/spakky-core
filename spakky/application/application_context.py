@@ -1,16 +1,18 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 from types import ModuleType
-from typing import Any, Callable, Sequence, overload
+from typing import Callable, cast
 
 from spakky.application.interfaces.container import (
-    IContainer,
-    NoSuchInjectableError,
-    NoUniqueInjectableError,
+    IPodContainer,
+    NoSuchPodError,
+    NoUniquePodError,
 )
-from spakky.application.interfaces.pluggable import IPluggable, IRegistry
-from spakky.application.interfaces.processor import IPostProcessor
+from spakky.application.interfaces.pluggable import IPluggable
+from spakky.application.interfaces.plugin_registry import IPluginRegistry
+from spakky.application.interfaces.post_processor import IPodPostProcessor
 from spakky.application.interfaces.registry import (
-    CannotRegisterNonInjectableObjectError,
+    CannotRegisterNonPodObjectError,
+    IPodRegistry,
 )
 from spakky.core.importing import (
     Module,
@@ -20,34 +22,33 @@ from spakky.core.importing import (
     list_modules,
     resolve_module,
 )
-from spakky.core.types import AnyT
-from spakky.injectable.injectable import Injectable, InjectableType, UnknownType
-from spakky.injectable.primary import Primary
+from spakky.core.types import ObjectT
+from spakky.pod.lazy import Lazy
+from spakky.pod.pod import Pod, PodType
+from spakky.pod.primary import Primary
 
 
-class ApplicationContext(IContainer, IRegistry):
-    __target_type_map: dict[type, set[type]]
-    __type_map: dict[type, UUID]
-    __name_map: dict[str, UUID]
-    __injectable_map: dict[UUID, InjectableType]
+class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
+    __type_lookup: dict[type, set[type]]  # dict[base: {derived}]
+    __pod_lookup: dict[type, UUID]
+    __pods: dict[UUID, Pod]
     __singleton_cache: dict[UUID, object]
-    __post_processors: list[IPostProcessor]
+    __post_processors: set[IPodPostProcessor]
 
     @property
-    def injectables(self) -> set[InjectableType]:
-        return set(self.__injectable_map.values())
+    def pods(self) -> set[PodType]:
+        return {x.obj for x in self.__pods.values()}
 
     @property
-    def post_processors(self) -> set[type[IPostProcessor]]:
-        return {type(post_processor) for post_processor in self.__post_processors}
+    def post_processors(self) -> set[type[IPodPostProcessor]]:
+        return {type(x) for x in self.__post_processors}
 
     def __init__(self, package: Module | set[Module] | None = None) -> None:
-        self.__injectable_map = {}
-        self.__target_type_map = {}
-        self.__type_map = {}
-        self.__name_map = {}
+        self.__type_lookup = {}
+        self.__pod_lookup = {}
+        self.__pods = {}
         self.__singleton_cache = {}
-        self.__post_processors = []
+        self.__post_processors = set()
         if package is None:
             return
         if isinstance(package, set):
@@ -56,131 +57,79 @@ class ApplicationContext(IContainer, IRegistry):
             return
         self.scan(package)
 
-    def __set_target_type(self, target_type: type) -> None:
-        for base_type in target_type.mro():
-            if base_type not in self.__target_type_map:
-                self.__target_type_map[base_type] = set()
-            self.__target_type_map[base_type].add(target_type)
+    def __register_pod_definition(self, pod: Pod) -> None:
+        for base_type in pod.type_.mro():
+            if base_type not in self.__type_lookup:
+                self.__type_lookup[base_type] = set()
+            self.__type_lookup[base_type].add(pod.type_)
+        self.__pod_lookup[pod.type_] = pod.id
+        self.__pods[pod.id] = pod
 
-    def __set_injectable(self, injectable: InjectableType) -> UUID:
-        annotation: Injectable = Injectable.get(injectable)
-        injectable_id: UUID = uuid4()
-        self.__type_map[annotation.type_] = injectable_id
-        self.__name_map[annotation.name] = injectable_id
-        self.__injectable_map[injectable_id] = injectable
-        return injectable_id
-
-    def __get_target_type(self, required_type: type) -> type:
-        if required_type not in self.__target_type_map:
-            raise NoSuchInjectableError(required_type)
-        derived: set[type] = self.__target_type_map[required_type]
+    def __resolve_type(self, type_: type, name: str | None) -> type:
+        if type_ not in self.__type_lookup:
+            raise NoSuchPodError(type_)
+        derived: set[type] = self.__type_lookup[type_]
         if len(derived) > 1:
-            marked_as_primary: set[type] = {x for x in derived if Primary.contains(x)}
-            if len(marked_as_primary) != 1:
-                raise NoUniqueInjectableError(required_type, derived, marked_as_primary)
-            derived = marked_as_primary
+            derived: set[type] = {
+                x for x in derived if Primary.exists(x) or Pod.get(x).name == name
+            }
+        if len(derived) != 1:
+            raise NoUniquePodError(type_, derived)
         return list(derived)[0]
 
-    def __get_injectable_id_by_type(self, injectable_type: type) -> UUID:
-        return self.__type_map[injectable_type]
-
-    def __get_injectable_id_by_name(self, injectable_name: str) -> UUID:
-        if injectable_name not in self.__name_map:
-            raise NoSuchInjectableError(injectable_name)
-        return self.__name_map[injectable_name]
-
-    def __get_dependencies(self, injectable_type: InjectableType) -> dict[str, object]:
-        annotation: Injectable = Injectable.get(injectable_type)
-        dependencies: dict[str, object] = {}
-        for name, required_type in annotation.dependencies.items():
-            if required_type == UnknownType:
-                dependencies[name] = self.__retrieve_injectable_by_name(name)
-                continue
-            dependencies[name] = self.__retrieve_injectable_by_type(required_type)
-        return dependencies
-
-    def __get_injectable_by_id(self, injectable_id: UUID) -> object:
-        if injectable_id not in self.__singleton_cache:
-            injectable = self.__instaniate_injectable(injectable_id)
-            injectable = self.__post_process_injectable(injectable)
-            self.__singleton_cache[injectable_id] = injectable
-        return self.__singleton_cache[injectable_id]
-
-    def __instaniate_injectable(self, injectable_id: UUID) -> object:
-        injectable = self.__injectable_map[injectable_id]
-        instance = injectable(**self.__get_dependencies(injectable))
-        return instance
-
-    def __post_process_injectable(self, injectable: object) -> object:
+    def __post_process_pod(self, pod: object) -> object:
         for post_processor in self.__post_processors:
-            injectable = post_processor.post_process(self, injectable)
-        return injectable
+            pod = post_processor.post_process(self, pod)
+        return pod
 
-    def __retrieve_injectable_by_type(self, injectable_type: type) -> object:
-        actual_type = self.__get_target_type(injectable_type)
-        injectable_id = self.__get_injectable_id_by_type(actual_type)
-        return self.__get_injectable_by_id(injectable_id)
+    def __create_pod_instance(self, pod: Pod) -> object:
+        if pod.scope == Pod.Scope.SINGLETON and pod.id in self.__singleton_cache:
+            return self.__singleton_cache[pod.id]
+        dependencies: dict[str, object] = {
+            name: self.get(
+                type_,
+                name,
+            )
+            for name, type_ in pod.dependencies.items()
+        }
+        instance: object = pod.obj(**dependencies)
+        processed: object = self.__post_process_pod(instance)
+        if pod.scope == Pod.Scope.SINGLETON:
+            self.__singleton_cache[pod.id] = processed
+        return processed
 
-    def __retrieve_injectable_by_name(self, name: str) -> object:
-        injectable_id = self.__get_injectable_id_by_name(name)
-        return self.__get_injectable_by_id(injectable_id)
+    def get(self, type_: type[ObjectT], name: str | None = None) -> ObjectT:
+        resolved_type: type = self.__resolve_type(type_, name)
+        pod_id: UUID = self.__pod_lookup[resolved_type]
+        pod: Pod = self.__pods[pod_id]
+        return cast(ObjectT, self.__create_pod_instance(pod))
 
-    @overload
-    def contains(self, *, type_: type) -> bool: ...
+    def contains(self, type_: type, name: str | None = None) -> bool:
+        try:
+            self.__resolve_type(type_, name)
+            return True
+        except NoUniquePodError:
+            return True
+        except NoSuchPodError:
+            return False
 
-    @overload
-    def contains(self, *, name: str) -> bool: ...
+    def find(self, selector: Callable[[Pod], bool]) -> dict[str, object]:
+        return {
+            pod.name: self.get(pod.type_, pod.name)  # type: ignore
+            for pod in self.__pods.values()
+            if selector(pod)
+        }
 
-    @overload
-    def get(self, *, type_: type[AnyT]) -> AnyT: ...
+    def register(self, obj: PodType) -> None:
+        if not Pod.exists(obj):
+            raise CannotRegisterNonPodObjectError(obj)
+        self.__register_pod_definition(Pod.get(obj))
 
-    @overload
-    def get(self, *, name: str) -> Any: ...
+    def register_post_processor(self, post_processor: IPodPostProcessor) -> None:
+        self.__post_processors.add(post_processor)
 
-    def contains(
-        self,
-        type_: type | None = None,
-        name: str | None = None,
-    ) -> bool:
-        if type_ is not None:
-            if type_ not in self.__target_type_map:
-                return False
-            injectable_type = self.__get_target_type(type_)
-            return injectable_type in self.__type_map
-        if name is not None:
-            return name in self.__name_map
-        raise ValueError(
-            "'name' and 'required_type' both cannot be None"
-        )  # pragma: no cover
-
-    def get(self, type_: type[AnyT] | None = None, name: str | None = None) -> AnyT | Any:
-        if type_ is not None:
-            return self.__retrieve_injectable_by_type(type_)
-        if name is not None:
-            return self.__retrieve_injectable_by_name(name)
-        raise ValueError(
-            "'name' and 'required_type' both cannot be None"
-        )  # pragma: no cover
-
-    def filter_injectable_types(self, clause: Callable[[type], bool]) -> Sequence[type]:
-        return [x for x in self.__type_map if clause(x)]
-
-    def filter_injectables(self, clause: Callable[[type], bool]) -> Sequence[object]:
-        filtered: list[type[object]] = [x for x in self.__type_map if clause(x)]
-        return [self.get(type_=x) for x in filtered]
-
-    def register_injectable(self, injectable: InjectableType) -> None:
-        if not Injectable.contains(injectable):
-            raise CannotRegisterNonInjectableObjectError(injectable)
-        annotation: Injectable = Injectable.get(injectable)
-        self.__set_target_type(annotation.type_)
-        self.__set_injectable(injectable)
-
-    def register_post_processor(self, post_processor: IPostProcessor) -> None:
-        self.__post_processors.append(post_processor)
-
-    def register_plugin(self, pluggable: IPluggable) -> None:
-        pluggable.register(self)
+    def register_plugin(self, plugin: IPluggable) -> None:
+        plugin.register(self)
 
     def scan(self, package: Module) -> None:
         modules: set[ModuleType]
@@ -191,13 +140,13 @@ class ApplicationContext(IContainer, IRegistry):
             modules = {resolve_module(package)}
 
         for module in modules:
-            injectables: set[type] = list_classes(module, Injectable.contains)
-            factories: set[InjectableType] = list_functions(module, Injectable.contains)
-            for injectable in injectables:
-                self.register_injectable(injectable)
-            for factory in factories:
-                self.register_injectable(factory)
+            for obj in list_classes(module, Pod.exists):
+                self.register(obj)
+            for obj in list_functions(module, Pod.exists):
+                self.register(obj)
 
     def start(self) -> None:
-        for injectable_id in self.__injectable_map:
-            self.__get_injectable_by_id(injectable_id)
+        for pod in self.__pods.values():
+            if Lazy.exists(pod.obj):
+                continue
+            self.__create_pod_instance(pod)

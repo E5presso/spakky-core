@@ -1,19 +1,27 @@
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 
-from spakky.application.interfaces.processor import IPostProcessor
-from spakky.injectable.injectable import InjectableType
-from spakky.injectable.error import SpakkyInjectableError
+from spakky.application.interfaces.post_processor import IPodPostProcessor
+from spakky.pod.error import SpakkyPodError
+from spakky.pod.pod import PodType
 
 
-class CannotRegisterNonInjectableObjectError(SpakkyInjectableError):
-    message = "Cannot register non-injectable object."
+class CannotRegisterNonPodObjectError(SpakkyPodError):
+    message = "Cannot register non-pod object."
 
 
 @runtime_checkable
-class IRegistry(Protocol):
+class IPodRegistry(Protocol):
+    @property
     @abstractmethod
-    def register_injectable(self, injectable: InjectableType) -> None: ...
+    def pods(self) -> set[PodType]: ...
+
+    @property
+    @abstractmethod
+    def post_processors(self) -> set[type[IPodPostProcessor]]: ...
 
     @abstractmethod
-    def register_post_processor(self, post_processor: IPostProcessor) -> None: ...
+    def register(self, obj: PodType) -> None: ...
+
+    @abstractmethod
+    def register_post_processor(self, post_processor: IPodPostProcessor) -> None: ...

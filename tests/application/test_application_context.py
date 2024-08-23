@@ -7,309 +7,264 @@ import pytest
 
 from spakky.application.application_context import (
     ApplicationContext,
-    CannotRegisterNonInjectableObjectError,
-    NoSuchInjectableError,
-    NoUniqueInjectableError,
+    CannotRegisterNonPodObjectError,
+    NoSuchPodError,
+    NoUniquePodError,
 )
 from spakky.application.interfaces.pluggable import IPluggable
-from spakky.application.interfaces.registry import IRegistry
+from spakky.application.interfaces.registry import IPodRegistry
 from spakky.core.annotation import ClassAnnotation
-from spakky.injectable.injectable import Injectable
-from spakky.injectable.primary import Primary
+from spakky.pod.lazy import Lazy
+from spakky.pod.pod import Pod
+from spakky.pod.primary import Primary
 from tests.dummy import dummy_package, second_dummy_package
 from tests.dummy.dummy_package import module_a
-from tests.dummy.dummy_package.module_a import DummyA, InjectableA
-from tests.dummy.dummy_package.module_b import DummyB, InjectableB, UnmanagedB
-from tests.dummy.dummy_package.module_c import DummyC, InjectableC
+from tests.dummy.dummy_package.module_a import DummyA, PodA
+from tests.dummy.dummy_package.module_b import DummyB, PodB, UnmanagedB
+from tests.dummy.dummy_package.module_c import DummyC, PodC
 from tests.dummy.second_dummy_package import second_module_a
-from tests.dummy.second_dummy_package.second_module_a import (
-    SecondDummyA,
-    SecondInjectableA,
-)
-from tests.dummy.second_dummy_package.second_module_b import (
-    SecondDummyB,
-    SecondInjectableB,
-)
-from tests.dummy.second_dummy_package.second_module_c import (
-    SecondDummyC,
-    SecondInjectableC,
-)
+from tests.dummy.second_dummy_package.second_module_a import SecondDummyA, SecondPodA
+from tests.dummy.second_dummy_package.second_module_b import SecondDummyB, SecondPodB
+from tests.dummy.second_dummy_package.second_module_c import SecondDummyC, SecondPodC
 
 
 def test_application_context_register_expect_success() -> None:
-    @Injectable()
-    class FirstSampleInjectable:
+    @Pod()
+    class FirstSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
-    @Injectable()
-    class SecondSampleInjectable:
+    @Pod()
+    class SecondSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
-    context.register_injectable(SecondSampleInjectable)
+    context.register(FirstSamplePod)
+    context.register(SecondSamplePod)
 
 
 def test_application_context_register_expect_error() -> None:
-    class NonInjectable:
+    class NonPod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    with pytest.raises(CannotRegisterNonInjectableObjectError):
-        context.register_injectable(NonInjectable)
+    with pytest.raises(CannotRegisterNonPodObjectError):
+        context.register(NonPod)
 
 
 def test_application_context_get_by_type_singleton_expect_success() -> None:
-    @Injectable()
-    class FirstSampleInjectable:
+    @Pod()
+    class FirstSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
-    @Injectable()
-    class SecondSampleInjectable:
+    @Pod()
+    class SecondSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
-    context.register_injectable(SecondSampleInjectable)
+    context.register(FirstSamplePod)
+    context.register(SecondSamplePod)
 
-    assert (
-        context.get(type_=FirstSampleInjectable).id
-        == context.get(type_=FirstSampleInjectable).id
-    )
-    assert (
-        context.get(type_=SecondSampleInjectable).id
-        == context.get(type_=SecondSampleInjectable).id
-    )
+    assert context.get(type_=FirstSamplePod).id == context.get(type_=FirstSamplePod).id
+    assert context.get(type_=SecondSamplePod).id == context.get(type_=SecondSamplePod).id
 
 
 def test_application_context_get_by_type_expect_no_such_error() -> None:
-    @Injectable()
-    class FirstSampleInjectable:
+    @Pod()
+    class FirstSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
-    class SecondSampleInjectable:
+    class SecondSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
+    context.register(FirstSamplePod)
 
-    assert (
-        context.get(type_=FirstSampleInjectable).id
-        == context.get(type_=FirstSampleInjectable).id
-    )
-    with pytest.raises(NoSuchInjectableError):
+    assert context.get(type_=FirstSamplePod).id == context.get(type_=FirstSamplePod).id
+    with pytest.raises(NoSuchPodError):
         assert (
-            context.get(type_=SecondSampleInjectable).id
-            == context.get(type_=SecondSampleInjectable).id
+            context.get(type_=SecondSamplePod).id == context.get(type_=SecondSamplePod).id
         )
 
 
 def test_application_context_get_by_name_expect_success() -> None:
-    @Injectable()
-    class SampleInjectable:
+    @Pod()
+    class SamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(SampleInjectable)
+    context.register(SamplePod)
 
-    assert isinstance(context.get(name="sample_injectable"), SampleInjectable)
+    assert isinstance(context.get(SamplePod, "sample_pod"), SamplePod)
 
 
 def test_application_context_get_by_name_expect_no_such_error() -> None:
-    @Injectable()
-    class SampleInjectable:
+    @Pod()
+    class SamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
-    context: ApplicationContext = ApplicationContext()
-    context.register_injectable(SampleInjectable)
+    class WrongPod: ...
 
-    with pytest.raises(NoSuchInjectableError):
-        context.get(name="wrong_injectable")
+    context: ApplicationContext = ApplicationContext()
+    context.register(SamplePod)
+
+    with pytest.raises(NoSuchPodError):
+        context.get(type_=WrongPod)
 
 
 def test_application_context_contains_by_type_expect_true() -> None:
-    @Injectable()
-    class SampleInjectable:
+    @Pod()
+    class SamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(SampleInjectable)
+    context.register(SamplePod)
 
-    assert context.contains(type_=SampleInjectable) is True
+    assert context.contains(type_=SamplePod) is True
 
 
 def test_application_context_contains_by_type_expect_false() -> None:
-    @Injectable()
-    class FirstSampleInjectable:
+    @Pod()
+    class FirstSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
-    @Injectable()
-    class SecondSampleInjectable:
+    @Pod()
+    class SecondSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
+    context.register(FirstSamplePod)
 
-    assert context.contains(type_=FirstSampleInjectable) is True
-    assert context.contains(type_=SecondSampleInjectable) is False
+    assert context.contains(type_=FirstSamplePod) is True
+    assert context.contains(type_=SecondSamplePod) is False
 
 
 def test_application_context_contains_by_name_expect_true() -> None:
-    @Injectable()
-    class FirstSampleInjectable:
+    @Pod()
+    class FirstSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
+    context.register(FirstSamplePod)
 
-    assert context.contains(name="first_sample_injectable") is True
+    assert context.contains(FirstSamplePod, "first_sample_pod") is True
 
 
 def test_application_context_contains_by_name_expect_false() -> None:
-    @Injectable()
-    class FirstSampleInjectable:
+    @Pod()
+    class FirstSamplePod:
         id: UUID
 
         def __init__(self) -> None:
             self.id = uuid4()
 
-    context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
+    class WrongPod: ...
 
-    assert context.contains(name="first_sample_injectable") is True
-    assert context.contains(name="wrong_sample_injectable") is False
+    context: ApplicationContext = ApplicationContext()
+    context.register(FirstSamplePod)
+
+    assert context.contains(FirstSamplePod) is True
+    assert context.contains(WrongPod) is False
 
 
 def test_application_context_get_primary_expect_success() -> None:
-    class ISampleInjectable(Protocol):
+    class ISamplePod(Protocol):
         @abstractmethod
         def do(self) -> None: ...
 
     @Primary()
-    @Injectable()
-    class FirstSampleInjectable(ISampleInjectable):
+    @Pod()
+    class FirstSamplePod(ISamplePod):
         def do(self) -> None:
             return
 
-    @Injectable()
-    class SecondSampleInjectable(ISampleInjectable):
+    @Pod()
+    class SecondSamplePod(ISamplePod):
         def do(self) -> None:
             return
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
-    context.register_injectable(SecondSampleInjectable)
+    context.register(FirstSamplePod)
+    context.register(SecondSamplePod)
 
-    assert isinstance(context.get(type_=ISampleInjectable), FirstSampleInjectable)
+    assert isinstance(context.get(type_=ISamplePod), FirstSamplePod)
 
 
 def test_application_context_get_primary_expect_no_unique_error() -> None:
-    class ISampleInjectable(Protocol):
+    class ISamplePod(Protocol):
         @abstractmethod
         def do(self) -> None: ...
 
     @Primary()
-    @Injectable()
-    class FirstSampleInjectable(ISampleInjectable):
+    @Pod()
+    class FirstSamplePod(ISamplePod):
         def do(self) -> None:
             return
 
     @Primary()
-    @Injectable()
-    class SecondSampleInjectable(ISampleInjectable):
+    @Pod()
+    class SecondSamplePod(ISamplePod):
         def do(self) -> None:
             return
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleInjectable)
-    context.register_injectable(SecondSampleInjectable)
+    context.register(FirstSamplePod)
+    context.register(SecondSamplePod)
 
-    with pytest.raises(NoUniqueInjectableError):
-        context.get(type_=ISampleInjectable)
-
-
-def test_application_context_get_dependency_recursive_by_name() -> None:
-    @Injectable()
-    class A:
-        def a(self) -> str:
-            return "a"
-
-    @Injectable()
-    class B:
-        def b(self) -> str:
-            return "b"
-
-    @Injectable()
-    class C:
-        __a: A
-        __b: B
-
-        def __init__(self, a, b) -> None:  # type: ignore
-            self.__a = a
-            self.__b = b
-
-        def c(self) -> str:
-            return self.__a.a() + self.__b.b()
-
-    context: ApplicationContext = ApplicationContext()
-    context.register_injectable(A)
-    context.register_injectable(B)
-    context.register_injectable(C)
-
-    assert context.get(type_=C).c() == "ab"
+    with pytest.raises(NoUniquePodError):
+        context.get(type_=ISamplePod)
 
 
 def test_application_context_get_dependency_recursive_by_type() -> None:
-    @Injectable()
+    @Pod()
     class A:
         def a(self) -> str:
             return "a"
 
-    @Injectable()
+    @Pod()
     class B:
         def b(self) -> str:
             return "b"
 
-    @Injectable()
+    @Pod()
     class C:
         __a: A
         __b: B
@@ -322,9 +277,9 @@ def test_application_context_get_dependency_recursive_by_type() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(A)
-    context.register_injectable(B)
-    context.register_injectable(C)
+    context.register(A)
+    context.register(B)
+    context.register(C)
 
     assert context.get(type_=C).c() == "ab"
 
@@ -333,29 +288,29 @@ def test_application_context_where() -> None:
     @dataclass
     class Customized(ClassAnnotation): ...
 
-    @Injectable()
+    @Pod()
     class FirstSampleClassMarked: ...
 
-    @Injectable()
+    @Pod()
     @Customized()
     class SecondSampleClass: ...
 
-    @Injectable()
+    @Pod()
     @Customized()
     class ThirdSampleClassMarked: ...
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(FirstSampleClassMarked)
-    context.register_injectable(SecondSampleClass)
-    context.register_injectable(ThirdSampleClassMarked)
+    context.register(FirstSampleClassMarked)
+    context.register(SecondSampleClass)
+    context.register(ThirdSampleClassMarked)
 
     queried: list[object] = list(
-        context.filter_injectables(lambda x: x.__name__.endswith("Marked"))
+        context.find(lambda x: x.obj.__name__.endswith("Marked")).values()
     )
     assert isinstance(queried[0], FirstSampleClassMarked)
     assert isinstance(queried[1], ThirdSampleClassMarked)
 
-    queried = list(context.filter_injectables(Customized.contains))
+    queried = list(context.find(lambda x: Customized.exists(x.obj)).values())
     assert isinstance(queried[0], SecondSampleClass)
     assert isinstance(queried[1], ThirdSampleClassMarked)
 
@@ -364,22 +319,21 @@ def test_application_context_scan() -> None:
     context: ApplicationContext = ApplicationContext()
     context.scan(dummy_package)
 
-    assert context.contains(type_=InjectableA) is True
-    assert context.contains(type_=InjectableB) is True
-    assert context.contains(type_=InjectableC) is True
+    assert context.contains(type_=PodA) is True
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
     assert context.contains(type_=DummyA) is False
     assert context.contains(type_=DummyB) is False
     assert context.contains(type_=DummyC) is False
     assert context.contains(type_=UnmanagedB) is True
-    assert context.contains(name="unmanaged_b") is True
 
 
 def test_application_context_initialize_with_pacakge() -> None:
     context: ApplicationContext = ApplicationContext(package=dummy_package)
 
-    assert context.contains(type_=InjectableA) is True
-    assert context.contains(type_=InjectableB) is True
-    assert context.contains(type_=InjectableC) is True
+    assert context.contains(type_=PodA) is True
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
     assert context.contains(type_=DummyA) is False
     assert context.contains(type_=DummyB) is False
     assert context.contains(type_=DummyC) is False
@@ -388,7 +342,7 @@ def test_application_context_initialize_with_pacakge() -> None:
 def test_application_context_initialize_with_module() -> None:
     context: ApplicationContext = ApplicationContext(package=module_a)
 
-    assert context.contains(type_=InjectableA) is True
+    assert context.contains(type_=PodA) is True
     assert context.contains(type_=DummyA) is False
 
 
@@ -400,16 +354,16 @@ def test_application_context_initialize_with_multiple_pacakges() -> None:
         }
     )
 
-    assert context.contains(type_=InjectableA) is True
-    assert context.contains(type_=InjectableB) is True
-    assert context.contains(type_=InjectableC) is True
+    assert context.contains(type_=PodA) is True
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
     assert context.contains(type_=DummyA) is False
     assert context.contains(type_=DummyB) is False
     assert context.contains(type_=DummyC) is False
 
-    assert context.contains(type_=SecondInjectableA) is True
-    assert context.contains(type_=SecondInjectableB) is True
-    assert context.contains(type_=SecondInjectableC) is True
+    assert context.contains(type_=SecondPodA) is True
+    assert context.contains(type_=SecondPodB) is True
+    assert context.contains(type_=SecondPodC) is True
     assert context.contains(type_=SecondDummyA) is False
     assert context.contains(type_=SecondDummyB) is False
     assert context.contains(type_=SecondDummyC) is False
@@ -423,11 +377,11 @@ def test_application_context_initialize_with_multiple_pacakges_and_modules() -> 
         }
     )
 
-    assert context.contains(type_=InjectableA) is True
-    assert context.contains(type_=InjectableB) is True
-    assert context.contains(type_=InjectableC) is True
+    assert context.contains(type_=PodA) is True
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
 
-    assert context.contains(type_=SecondInjectableA) is True
+    assert context.contains(type_=SecondPodA) is True
 
 
 def test_application_context_register_unmanaged_factory() -> None:
@@ -435,15 +389,15 @@ def test_application_context_register_unmanaged_factory() -> None:
         def a(self) -> str:
             return "A"
 
-    @Injectable()
+    @Pod()
     def get_a() -> A:
         return A()
 
     context: ApplicationContext = ApplicationContext()
-    context.register_injectable(get_a)
+    context.register(get_a)
 
-    assert context.contains(name="get_a") is True
-    a: A = context.get(name="get_a")
+    assert context.contains(A, "get_a") is True
+    a: A = context.get(A, "get_a")
     assert isinstance(a, A)
     assert a.a() == "A"
 
@@ -457,17 +411,94 @@ def test_application_context_register_unmanaged_factory_expect_error() -> None:
         return A()
 
     context: ApplicationContext = ApplicationContext()
-    with pytest.raises(CannotRegisterNonInjectableObjectError):
-        context.register_injectable(get_a)
+    with pytest.raises(CannotRegisterNonPodObjectError):
+        context.register(get_a)
 
 
 def test_application_context_register_plugin() -> None:
     class DummyPlugin(IPluggable):
-        def register(self, registry: IRegistry) -> None:
-            registry.register_injectable(InjectableA)
+        def register(self, registry: IPodRegistry) -> None:
+            registry.register(PodA)
 
     context: ApplicationContext = ApplicationContext()
     context.register_plugin(DummyPlugin())
 
-    assert context.contains(type_=InjectableA) is True
-    assert context.contains(type_=InjectableB) is False
+    assert context.contains(type_=PodA) is True
+    assert context.contains(type_=PodB) is False
+
+
+def test_application_lazy_loading() -> None:
+    initialized: bool = False
+
+    @Pod()
+    class A:
+        def a(self) -> str:
+            return "a"
+
+    @Pod()
+    class B:
+        def b(self) -> str:
+            return "b"
+
+    @Pod()
+    @Lazy()
+    class C:
+        __a: A
+        __b: B
+
+        def __init__(self, b: A, a: B) -> None:
+            self.__a = b
+            self.__b = a
+
+            nonlocal initialized
+            initialized = True
+
+        def c(self) -> str:
+            return self.__a.a() + self.__b.b()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(A)
+    context.register(B)
+    context.register(C)
+    context.start()
+
+    assert initialized is False
+
+
+def test_application_factory_loading() -> None:
+    initialized_count: int = 0
+
+    @Pod()
+    class A:
+        def a(self) -> str:
+            return "a"
+
+    @Pod()
+    class B:
+        def b(self) -> str:
+            return "b"
+
+    @Pod(scope=Pod.Scope.FACTORY)
+    class C:
+        __a: A
+        __b: B
+
+        def __init__(self, b: A, a: B) -> None:
+            self.__a = b
+            self.__b = a
+            nonlocal initialized_count
+            initialized_count += 1
+
+        def c(self) -> str:
+            return self.__a.a() + self.__b.b()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(A)
+    context.register(B)
+    context.register(C)
+
+    context.get(C)
+    context.get(C)
+    context.get(C)
+
+    assert initialized_count == 3
