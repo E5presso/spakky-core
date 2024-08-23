@@ -8,6 +8,7 @@ import pytest
 from spakky.application.application_context import (
     ApplicationContext,
     CannotRegisterNonPodObjectError,
+    CircularDependencyGraphDetectedError,
     NoSuchPodError,
     NoUniquePodError,
 )
@@ -502,3 +503,27 @@ def test_application_factory_loading() -> None:
     context.get(C)
 
     assert initialized_count == 3
+
+
+def test_application_raise_error_with_circular_dependency() -> None:
+    @Pod()
+    class A:
+        __b: "B"  # pylint: disable=unused-private-member
+
+        def __init__(self, b: "B") -> None:
+            self.__b = b  # pylint: disable=unused-private-member
+
+    @Pod()
+    class B:
+        __a: "A"  # pylint: disable=unused-private-member
+
+        def __init__(self, a: "A") -> None:
+            self.__a = a  # pylint: disable=unused-private-member
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(A)
+    context.register(B)
+
+    with pytest.raises(CircularDependencyGraphDetectedError) as e:
+        context.start()
+    assert e.value.args[0] == [B, A, B]
