@@ -2,7 +2,7 @@ import inspect
 import pkgutil
 import importlib
 from types import ModuleType, FunctionType
-from typing import Callable, TypeAlias
+from typing import Any, Callable, TypeAlias
 
 from spakky.core.error import SpakkyCoreError
 
@@ -62,3 +62,22 @@ def list_functions(
             )
         }
     return {member for _, member in inspect.getmembers(module, inspect.isfunction)}
+
+
+def list_objects(
+    module: ModuleType, selector: Callable[[Any], bool] | None = None
+) -> set[FunctionType]:
+    if selector is not None:
+        return {
+            member
+            for _, member in inspect.getmembers(
+                module,
+                lambda x: (inspect.isclass(x) or inspect.isfunction(x)) and selector(x),
+            )
+        }
+    return {
+        member
+        for _, member in inspect.getmembers(
+            module, lambda x: inspect.isclass(x) or inspect.isfunction(x)
+        )
+    }
