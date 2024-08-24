@@ -1,7 +1,7 @@
 from typing import Any
 from dataclasses import dataclass
 
-from spakky.aop.advice import Around
+from spakky.aop.pointcut import Around
 from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.pod.order import Order
 from spakky.aspects.logging import Logging

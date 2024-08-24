@@ -2,7 +2,7 @@ from typing import Any, TypeVar, Protocol, runtime_checkable
 from inspect import getmembers
 from dataclasses import field, dataclass
 
-from spakky.aop.advice import After, AfterRaising, AfterReturning, Around, Before
+from spakky.aop.pointcut import After, AfterRaising, AfterReturning, Around, Before
 from spakky.core.types import AsyncFunc, Func
 from spakky.pod.pod import Pod
 
