@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Callable
 from dataclasses import dataclass
 
@@ -6,7 +7,7 @@ from spakky.core.types import Func
 
 
 @dataclass
-class _Advice(FunctionAnnotation):
+class _PointCut(FunctionAnnotation, ABC):
     pointcut: Callable[[Func], bool]
 
     def matches(self, method: Func) -> bool:
@@ -14,20 +15,20 @@ class _Advice(FunctionAnnotation):
 
 
 @dataclass
-class Before(_Advice): ...
+class Before(_PointCut): ...
 
 
 @dataclass
-class AfterReturning(_Advice): ...
+class AfterReturning(_PointCut): ...
 
 
 @dataclass
-class AfterRaising(_Advice): ...
+class AfterRaising(_PointCut): ...
 
 
 @dataclass
-class After(_Advice): ...
+class After(_PointCut): ...
 
 
 @dataclass
-class Around(_Advice): ...
+class Around(_PointCut): ...
