@@ -20,9 +20,8 @@ from spakky.application.interfaces.registry import (
 from spakky.core.importing import (
     Module,
     is_package,
-    list_classes,
-    list_functions,
     list_modules,
+    list_objects,
     resolve_module,
 )
 from spakky.core.types import ObjectT
@@ -170,9 +169,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
             modules = {resolve_module(package)}
 
         for module in modules:
-            for obj in list_classes(module, Pod.exists):
-                self.register(obj)
-            for obj in list_functions(module, Pod.exists):
+            for obj in list_objects(module, Pod.exists):
                 self.register(obj)
 
     def start(self) -> None:

@@ -10,6 +10,7 @@ from spakky.core.importing import (
     list_classes,
     list_functions,
     list_modules,
+    list_objects,
     resolve_module,
 )
 from spakky.pod.pod import Pod
@@ -71,6 +72,44 @@ def test_list_functions_with_selector_expect_success() -> None:
     }
     assert set(chain(*(list_functions(module, Pod.exists) for module in modules))) == {
         module_b.unmanaged_b
+    }
+
+
+def test_list_objects_expect_success() -> None:
+    assert list_objects(module_b) == {
+        module_b.ClassAnnotation,
+        module_b.Pod,
+        module_b.DummyB,
+        module_b.PodB,
+        module_b.UnmanagedB,
+        module_b.unmanaged_b,
+        module_b.hello_world,
+    }
+
+
+def test_list_objects_with_selector_expect_success() -> None:
+    assert list_objects(module_b, lambda x: x.__name__ == "unmanaged_b") == {
+        module_b.unmanaged_b
+    }
+    modules: set[ModuleType] = list_modules(dummy_package)
+    assert set(chain(*(list_objects(module) for module in modules))) == {
+        module_a.PodA,
+        module_a.DummyA,
+        module_b.ClassAnnotation,
+        module_b.Pod,
+        module_b.DummyB,
+        module_b.PodB,
+        module_b.UnmanagedB,
+        module_b.unmanaged_b,
+        module_b.hello_world,
+        module_c.DummyC,
+        module_c.PodC,
+    }
+    assert set(chain(*(list_objects(module, Pod.exists) for module in modules))) == {
+        module_a.PodA,
+        module_b.PodB,
+        module_b.unmanaged_b,
+        module_c.PodC,
     }
 
 
