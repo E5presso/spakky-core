@@ -67,7 +67,7 @@ async def test_proxy() -> None:
 
     assert get_count == 1
     assert set_count == 0
-    assert deleted == set()
+    assert deleted == {"name"}
 
 
 @pytest.mark.asyncio

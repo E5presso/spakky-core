@@ -107,8 +107,8 @@ class ProxyFactory(Generic[ObjectT]):
 
         def __delattr__(_: ObjectT, name: str) -> None:
             value: Any = object.__getattribute__(self.__instance, name)
-            object.__delattr__(self.__instance, name)
             self.__handler.delete(name, value)
+            object.__delattr__(self.__instance, name)
 
         def __dir__(instance: ObjectT) -> Iterable[str]:
             return sorted(set(dir(self.__superclass) + list(instance.__dict__.keys())))

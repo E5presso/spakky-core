@@ -18,10 +18,10 @@ __ANNOTATION_METADATA__ = "__spakky_annotation_metadata__"
 @dataclass
 class Annotation(ABC):
     def __call__(self, obj: AnyT) -> AnyT:
-        return self.__set_annotation(obj)
+        return self.__set_metadata(obj)
 
     @final
-    def __set_annotation(self, obj: AnyT) -> AnyT:
+    def __set_metadata(self, obj: AnyT) -> AnyT:
         metadata: dict[type[Self], list[Self]] = self.__get_metadata(obj)
         for base_type in type(self).mro():
             if base_type not in metadata:
@@ -29,6 +29,12 @@ class Annotation(ABC):
             metadata[base_type].append(self)
         setattr(obj, __ANNOTATION_METADATA__, metadata)
         return obj
+
+    @final
+    @classmethod
+    def __get_metadata(cls, obj: Any) -> dict[type[Self], list[Self]]:
+        metadata: dict[type[Self], list[Self]] = getattr(obj, __ANNOTATION_METADATA__, {})
+        return metadata
 
     @final
     @classmethod
@@ -75,12 +81,6 @@ class Annotation(ABC):
     def exists(cls, obj: Any) -> bool:
         metadata: dict[type[Self], list[Self]] = cls.__get_metadata(obj)
         return cls in metadata
-
-    @final
-    @classmethod
-    def __get_metadata(cls, obj: Any) -> dict[type[Self], list[Self]]:
-        metadata: dict[type[Self], list[Self]] = getattr(obj, __ANNOTATION_METADATA__, {})
-        return metadata
 
 
 @dataclass
