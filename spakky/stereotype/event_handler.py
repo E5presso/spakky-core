@@ -2,7 +2,7 @@ from typing import Any, Generic, TypeVar, Callable, Awaitable, TypeAlias
 from dataclasses import dataclass
 
 from spakky.core.annotation import FunctionAnnotation
-from spakky.domain.models.domain_event import DomainEvent
+from spakky.domain.models.event import DomainEvent
 from spakky.pod.pod import Pod
 
 DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)

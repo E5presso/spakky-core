@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from spakky.core.mutability import immutable, mutable
 from spakky.domain.models.aggregate_root import AggregateRoot
-from spakky.domain.models.domain_event import DomainEvent
+from spakky.domain.models.event import DomainEvent
 
 if sys.version_info >= (3, 11):
     from typing import Self

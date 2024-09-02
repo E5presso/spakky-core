@@ -5,8 +5,8 @@ from dataclasses import field
 
 from spakky.core.interfaces.equatable import EquatableT
 from spakky.core.mutability import mutable
-from spakky.domain.models.domain_event import DomainEvent
 from spakky.domain.models.entity import Entity
+from spakky.domain.models.event import DomainEvent
 
 
 @mutable
