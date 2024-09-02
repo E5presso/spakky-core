@@ -6,8 +6,6 @@ from spakky.core.types import ObjectT
 from spakky.pod.pod import Pod
 
 
-
-
 class NoSuchPodError(SpakkyApplicationError):
     message = "Cannot find pod from context by given condition"
 

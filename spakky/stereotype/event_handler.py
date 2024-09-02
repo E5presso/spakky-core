@@ -1,33 +1,30 @@
-from typing import Any, Callable, Protocol, Awaitable, runtime_checkable
+from typing import Any, Generic, TypeVar, Callable, Awaitable, TypeAlias
 from dataclasses import dataclass
 
 from spakky.core.annotation import FunctionAnnotation
 from spakky.domain.models.domain_event import DomainEvent
 from spakky.pod.pod import Pod
 
-
-@runtime_checkable
-class IEventHandlerCallaback(Protocol):
-    # pylint: disable=no-self-argument
-    def __call__(
-        self_,  # type: ignore
-        self: Any,
-        event: DomainEvent,
-    ) -> Awaitable[None]: ...
+DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)
+IEventHandlerCallback: TypeAlias = Callable[[Any, DomainEventT], None | Awaitable[None]]
 
 
 @dataclass
-class EventRoute(FunctionAnnotation):
-    event_type: type[DomainEvent]
+class EventRoute(FunctionAnnotation, Generic[DomainEventT]):
+    event_type: type[DomainEventT]
 
-    def __call__(self, obj: IEventHandlerCallaback) -> IEventHandlerCallaback:
+    def __call__(
+        self, obj: IEventHandlerCallback[DomainEventT]
+    ) -> IEventHandlerCallback[DomainEventT]:
         return super().__call__(obj)
 
 
 def on_event(
-    event_type: type[DomainEvent],
-) -> Callable[[IEventHandlerCallaback], IEventHandlerCallaback]:
-    def wrapper(method: IEventHandlerCallaback) -> IEventHandlerCallaback:
+    event_type: type[DomainEventT],
+) -> Callable[[IEventHandlerCallback[DomainEventT]], IEventHandlerCallback[DomainEventT]]:
+    def wrapper(
+        method: IEventHandlerCallback[DomainEventT],
+    ) -> IEventHandlerCallback[DomainEventT]:
         return EventRoute(event_type)(method)
 
     return wrapper
