@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spakky-core"
-version = "1.2.4"
+version = "1.2.5"
 description = "Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc..."
 authors = ["Spakky <sejong418@icloud.com>"]
 packages = [{ include = "spakky" }]
@@ -39,7 +39,7 @@ target-version = ["py312"]
 include = '\.pyi?$'
 
 [tool.isort]
-py_version = 311
+py_version = 310
 src_paths = ["spakky", "tests"]
 skip = [".venv", ".gitignore", ".dockerignore"]
 extend_skip = [".md", ".json", ".txt"]
