@@ -3,6 +3,7 @@ import pkgutil
 import importlib
 from types import ModuleType, FunctionType
 from typing import Any, Callable, TypeAlias
+from fnmatch import filter
 
 from spakky.core.error import SpakkyCoreError
 
@@ -26,6 +27,19 @@ def is_package(module: Module) -> bool:
     return hasattr(module, PATH)
 
 
+def is_subpath_of(module: ModuleType, patterns: set[Module]) -> bool:
+    for pattern in patterns:
+        if isinstance(pattern, str):
+            if module.__name__ == pattern:
+                return True
+            if any(filter([module.__name__], pattern)):
+                return True
+            continue
+        if module.__name__.startswith(pattern.__name__):
+            return True
+    return False
+
+
 def list_modules(package: Module, exclude: set[Module] | None = None) -> set[ModuleType]:
     package = resolve_module(package)
     if not is_package(package):
@@ -37,7 +51,7 @@ def list_modules(package: Module, exclude: set[Module] | None = None) -> set[Mod
         if name.startswith(SRC_PREFIX):
             name = name.removeprefix(SRC_PREFIX)  # pragma: no cover
         module = importlib.import_module(name)
-        if module in exclude or module.__name__ in exclude:
+        if is_subpath_of(module, exclude):
             continue
         modules.add(module)
     return modules

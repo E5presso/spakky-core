@@ -152,9 +152,19 @@ def test_list_modules_name_with_excludes() -> None:
         )
         == set()
     )
+    assert (
+        list_modules(
+            dummy_package,
+            {
+                "tests.dummy.dummy_package.*",
+            },
+        )
+        == set()
+    )
 
 
 def test_list_modules_with_excludes() -> None:
     assert list_modules(dummy_package, {module_a}) == {module_b, module_c}
     assert list_modules(dummy_package, {module_a, module_b}) == {module_c}
     assert list_modules(dummy_package, {module_a, module_b, module_c}) == set()
+    assert list_modules(dummy_package, {dummy_package}) == set()

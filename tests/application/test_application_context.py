@@ -529,6 +529,32 @@ def test_application_raise_error_with_circular_dependency() -> None:
     assert e.value.args[0] == [B, A, B]
 
 
+def test_application_context_scan_with_exclude_packages() -> None:
+    context: ApplicationContext = ApplicationContext()
+    context.scan(dummy_package, exclude={dummy_package})
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is False
+    assert context.contains(type_=PodC) is False
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is False
+
+
+def test_application_context_scan_with_exclude_wildcard() -> None:
+    context: ApplicationContext = ApplicationContext()
+    context.scan(dummy_package, exclude={"tests.dummy.dummy_package.*"})
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is False
+    assert context.contains(type_=PodC) is False
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is False
+
+
 def test_application_context_scan_with_exclude() -> None:
     context: ApplicationContext = ApplicationContext()
     context.scan(dummy_package, exclude={module_a})
@@ -553,6 +579,34 @@ def test_application_context_scan_with_exclude_names() -> None:
     assert context.contains(type_=DummyB) is False
     assert context.contains(type_=DummyC) is False
     assert context.contains(type_=UnmanagedB) is True
+
+
+def test_application_context_initialize_with_exclude_packages() -> None:
+    context: ApplicationContext = ApplicationContext(
+        dummy_package, exclude={dummy_package}
+    )
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is False
+    assert context.contains(type_=PodC) is False
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is False
+
+
+def test_application_context_initialize_with_exclude_wildcard() -> None:
+    context: ApplicationContext = ApplicationContext(
+        dummy_package, exclude={"tests.dummy.dummy_package.*"}
+    )
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is False
+    assert context.contains(type_=PodC) is False
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is False
 
 
 def test_application_context_initialize_with_exclude() -> None:
