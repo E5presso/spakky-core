@@ -16,9 +16,9 @@ class CannotScanNonPackageModuleError(SpakkyCoreError):
 
 
 def resolve_module(module: Module) -> ModuleType:
-    if not isinstance(module, str):
-        return module
-    return importlib.import_module(module)
+    if isinstance(module, str):
+        return importlib.import_module(module)
+    return module
 
 
 def is_package(module: Module) -> bool:
@@ -26,15 +26,20 @@ def is_package(module: Module) -> bool:
     return hasattr(module, PATH)
 
 
-def list_modules(package: Module) -> set[ModuleType]:
+def list_modules(package: Module, exclude: set[Module] | None = None) -> set[ModuleType]:
     package = resolve_module(package)
     if not is_package(package):
         raise CannotScanNonPackageModuleError(package)
+    if exclude is None:
+        exclude = set()
     modules: set[ModuleType] = set()
     for _, name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
         if name.startswith(SRC_PREFIX):
             name = name.removeprefix(SRC_PREFIX)  # pragma: no cover
-        modules.add(importlib.import_module(name))
+        module = importlib.import_module(name)
+        if module in exclude or module.__name__ in exclude:
+            continue
+        modules.add(module)
     return modules
 
 

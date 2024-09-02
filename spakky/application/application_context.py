@@ -51,7 +51,11 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
     def post_processors(self) -> set[type[IPodPostProcessor]]:
         return {type(x) for x in self.__post_processors}
 
-    def __init__(self, package: Module | set[Module] | None = None) -> None:
+    def __init__(
+        self,
+        package: Module | set[Module] | None = None,
+        exclude: set[Module] | None = None,
+    ) -> None:
         self.__type_name_map = {}
         self.__type_lookup = {}
         self.__pod_lookup = {}
@@ -60,11 +64,13 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         self.__post_processors = []
         if package is None:
             return
+        if exclude is None:
+            exclude = set()
         if isinstance(package, set):
             for package_item in package:
-                self.scan(package_item)
+                self.scan(package_item, exclude)
             return
-        self.scan(package)
+        self.scan(package, exclude)
 
     def __register_pod_definition(self, pod: Pod) -> None:
         for base_type in pod.type_.mro():
@@ -160,11 +166,13 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
     def register_plugin(self, plugin: IPluggable) -> None:
         plugin.register(self)
 
-    def scan(self, package: Module) -> None:
+    def scan(self, package: Module, exclude: set[Module] | None = None) -> None:
         modules: set[ModuleType]
+        if exclude is None:
+            exclude = set()
 
         if is_package(package):
-            modules = list_modules(package)
+            modules = list_modules(package, exclude)
         else:
             modules = {resolve_module(package)}
 

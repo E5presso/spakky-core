@@ -527,3 +527,55 @@ def test_application_raise_error_with_circular_dependency() -> None:
     with pytest.raises(CircularDependencyGraphDetectedError) as e:
         context.start()
     assert e.value.args[0] == [B, A, B]
+
+
+def test_application_context_scan_with_exclude() -> None:
+    context: ApplicationContext = ApplicationContext()
+    context.scan(dummy_package, exclude={module_a})
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is True
+
+
+def test_application_context_scan_with_exclude_names() -> None:
+    context: ApplicationContext = ApplicationContext()
+    context.scan(dummy_package, exclude={"tests.dummy.dummy_package.module_a"})
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is True
+
+
+def test_application_context_initialize_with_exclude() -> None:
+    context: ApplicationContext = ApplicationContext(dummy_package, exclude={module_a})
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is True
+
+
+def test_application_context_initialize_with_exclude_names() -> None:
+    context: ApplicationContext = ApplicationContext(
+        dummy_package, exclude={"tests.dummy.dummy_package.module_a"}
+    )
+
+    assert context.contains(type_=PodA) is False
+    assert context.contains(type_=PodB) is True
+    assert context.contains(type_=PodC) is True
+    assert context.contains(type_=DummyA) is False
+    assert context.contains(type_=DummyB) is False
+    assert context.contains(type_=DummyC) is False
+    assert context.contains(type_=UnmanagedB) is True
