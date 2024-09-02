@@ -2,7 +2,7 @@ from uuid import UUID
 from datetime import datetime
 
 from spakky.core.mutability import immutable
-from spakky.domain.models.domain_event import DomainEvent
+from spakky.domain.models.event import DomainEvent
 
 
 def test_domain_event_equals() -> None:
@@ -150,3 +150,14 @@ def test_domain_event_compare() -> None:
     assert SampleEvent(
         timestamp=datetime.fromisoformat("2024-01-01T00:00:20.000000+09:00")
     ) >= SampleEvent(timestamp=datetime.fromisoformat("2024-01-01T00:00:10.000000+09:00"))
+
+
+def test_domain_event_name() -> None:
+    @immutable
+    class SampleEvent(DomainEvent): ...
+
+    event: SampleEvent = SampleEvent(
+        event_id=UUID("12345678-1234-5678-1234-567812345678"),
+        timestamp=datetime.fromisoformat("2024-01-26T11:32:00.000000+09:00"),
+    )
+    assert event.event_name == "SampleEvent"

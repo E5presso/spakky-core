@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Protocol, Sequence, runtime_checkable
+from typing import Any, Generic, TypeVar, Protocol, Sequence, runtime_checkable
 
-from spakky.core.interfaces.equatable import EquatableT, IEquatable
+from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.mutability import immutable
 
 ProxyIdT_contra = TypeVar("ProxyIdT_contra", bound=IEquatable, contravariant=True)
 
 
 @immutable
-class ProxyModel(IEquatable, Generic[EquatableT], ABC):
-    id: EquatableT
+class ProxyModel(IEquatable, Generic[ProxyIdT_contra], ABC):
+    id: ProxyIdT_contra
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -20,16 +20,16 @@ class ProxyModel(IEquatable, Generic[EquatableT], ABC):
         return hash(self.id)
 
 
-ProxyModelT_co = TypeVar("ProxyModelT_co", bound=ProxyModel[IEquatable], covariant=True)
+ProxyModelT_co = TypeVar("ProxyModelT_co", bound=ProxyModel[Any], covariant=True)
 
 
 @runtime_checkable
 class IGenericProxy(Protocol[ProxyModelT_co, ProxyIdT_contra]):
     @abstractmethod
-    def single(self, proxy_id: ProxyIdT_contra) -> ProxyModelT_co: ...
+    def get(self, proxy_id: ProxyIdT_contra) -> ProxyModelT_co: ...
 
     @abstractmethod
-    def single_or_none(self, proxy_id: ProxyIdT_contra) -> ProxyModelT_co | None: ...
+    def get_or_none(self, proxy_id: ProxyIdT_contra) -> ProxyModelT_co | None: ...
 
     @abstractmethod
     def contains(self, proxy_id: ProxyIdT_contra) -> bool: ...
@@ -41,12 +41,10 @@ class IGenericProxy(Protocol[ProxyModelT_co, ProxyIdT_contra]):
 @runtime_checkable
 class IAsyncGenericProxy(Protocol[ProxyModelT_co, ProxyIdT_contra]):
     @abstractmethod
-    async def single(self, proxy_id: ProxyIdT_contra) -> ProxyModelT_co: ...
+    async def get(self, proxy_id: ProxyIdT_contra) -> ProxyModelT_co: ...
 
     @abstractmethod
-    async def single_or_none(
-        self, proxy_id: ProxyIdT_contra
-    ) -> ProxyModelT_co | None: ...
+    async def get_or_none(self, proxy_id: ProxyIdT_contra) -> ProxyModelT_co | None: ...
 
     @abstractmethod
     async def contains(self, proxy_id: ProxyIdT_contra) -> bool: ...

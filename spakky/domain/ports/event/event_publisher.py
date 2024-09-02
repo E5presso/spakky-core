@@ -1,20 +1,16 @@
 from abc import abstractmethod
-from typing import Any, Generic, TypeVar, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from spakky.domain.models.aggregate_root import AggregateRoot
-
-AggregateRootT_contra = TypeVar(
-    "AggregateRootT_contra", bound=AggregateRoot[Any], contravariant=True
-)
+from spakky.domain.models.event import DomainEvent
 
 
 @runtime_checkable
-class IEventPublisher(Generic[AggregateRootT_contra], Protocol):
+class IEventPublisher(Protocol):
     @abstractmethod
-    def publish(self, aggregate: AggregateRootT_contra) -> None: ...
+    def publish(self, event: DomainEvent) -> None: ...
 
 
 @runtime_checkable
-class IAsyncEventPublisher(Generic[AggregateRootT_contra], Protocol):
+class IAsyncEventPublisher(Protocol):
     @abstractmethod
-    async def publish(self, aggregate: AggregateRootT_contra) -> None: ...
+    async def publish(self, event: DomainEvent) -> None: ...
