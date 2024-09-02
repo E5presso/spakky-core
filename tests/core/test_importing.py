@@ -125,3 +125,36 @@ def test_is_package() -> None:
 
     assert is_package(dummy_package) is True
     assert is_package(module_a) is False
+
+
+def test_list_modules_name_with_excludes() -> None:
+    assert list_modules(
+        dummy_package,
+        {
+            "tests.dummy.dummy_package.module_a",
+        },
+    ) == {module_b, module_c}
+    assert list_modules(
+        dummy_package,
+        {
+            "tests.dummy.dummy_package.module_a",
+            "tests.dummy.dummy_package.module_b",
+        },
+    ) == {module_c}
+    assert (
+        list_modules(
+            dummy_package,
+            {
+                "tests.dummy.dummy_package.module_a",
+                "tests.dummy.dummy_package.module_b",
+                "tests.dummy.dummy_package.module_c",
+            },
+        )
+        == set()
+    )
+
+
+def test_list_modules_with_excludes() -> None:
+    assert list_modules(dummy_package, {module_a}) == {module_b, module_c}
+    assert list_modules(dummy_package, {module_a, module_b}) == {module_c}
+    assert list_modules(dummy_package, {module_a, module_b, module_c}) == set()
