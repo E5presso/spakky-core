@@ -1,22 +1,21 @@
 from typing import Callable, TypeAlias
 from threading import Event, Thread
 
-from spakky.task.cancellation_token import ICancellationToken
 from spakky.task.error import TaskAlreadyStartedError, TaskNotStartedError
 from spakky.task.interface import ITask
 
-SyncTaskAction: TypeAlias = Callable[[ICancellationToken], None]
+SyncTaskAction: TypeAlias = Callable[[Event], None]
 
 
 class SyncTask(ITask):
     __action: SyncTaskAction
-    __cancellation_token: ICancellationToken
+    __cancellation_token: Event
     __thread: Thread
 
     def __init__(
         self,
         action: SyncTaskAction,
-        cancellation_token: ICancellationToken | None = None,
+        cancellation_token: Event | None = None,
     ) -> None:
         if cancellation_token is None:
             cancellation_token = Event()

@@ -1,15 +1,9 @@
 from abc import abstractmethod
-from typing import (
-    TypeVar,
-    Callable,
-    Protocol,
-    Awaitable,
-    TypeAlias,
-    runtime_checkable,
-)
+from typing import TypeVar, Callable, Protocol, Awaitable, TypeAlias, runtime_checkable
+from asyncio import Event as AsyncEvent
+from threading import Event as ThreadEvent
 
 from spakky.domain.models.event import DomainEvent
-from spakky.task.cancellation_token import ICancellationToken
 
 DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)
 IEventHandlerCallback: TypeAlias = Callable[[DomainEventT], None]
@@ -26,7 +20,7 @@ class IEventConsumer(Protocol):
     ) -> None: ...
 
     @abstractmethod
-    def start(self, cancellation_token: ICancellationToken) -> None: ...
+    def start(self, cancellation_token: ThreadEvent) -> None: ...
 
 
 @runtime_checkable
@@ -39,4 +33,4 @@ class IAsyncEventConsumer(Protocol):
     ) -> None: ...
 
     @abstractmethod
-    async def start(self, cancellation_token: ICancellationToken) -> None: ...
+    async def start(self, cancellation_token: AsyncEvent) -> None: ...
