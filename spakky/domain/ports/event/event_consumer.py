@@ -10,6 +10,7 @@ from typing import (
 )
 
 from spakky.domain.models.event import DomainEvent
+from spakky.task.cancellation_token import ICancellationToken
 
 DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)
 IEventHandlerCallback: TypeAlias = Callable[[Any, DomainEventT], None]
@@ -25,6 +26,9 @@ class IEventConsumer(Protocol):
         handler: IEventHandlerCallback[DomainEventT],
     ) -> None: ...
 
+    @abstractmethod
+    def start(self, cancellation_token: ICancellationToken) -> None: ...
+
 
 @runtime_checkable
 class IAsyncEventConsumer(Protocol):
@@ -34,3 +38,6 @@ class IAsyncEventConsumer(Protocol):
         event: type[DomainEventT],
         handler: IAsyncEventHandlerCallback[DomainEventT],
     ) -> None: ...
+
+    @abstractmethod
+    async def start(self, cancellation_token: ICancellationToken) -> None: ...
