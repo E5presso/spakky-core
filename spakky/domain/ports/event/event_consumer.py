@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from typing import (
-    Any,
     TypeVar,
     Callable,
     Protocol,
@@ -13,8 +12,8 @@ from spakky.domain.models.event import DomainEvent
 from spakky.task.cancellation_token import ICancellationToken
 
 DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)
-IEventHandlerCallback: TypeAlias = Callable[[Any, DomainEventT], None]
-IAsyncEventHandlerCallback: TypeAlias = Callable[[Any, DomainEventT], Awaitable[None]]
+IEventHandlerCallback: TypeAlias = Callable[[DomainEventT], None]
+IAsyncEventHandlerCallback: TypeAlias = Callable[[DomainEventT], Awaitable[None]]
 
 
 @runtime_checkable
