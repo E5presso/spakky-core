@@ -25,12 +25,6 @@ class IEventConsumer(Protocol):
         handler: IEventHandlerCallback[DomainEventT],
     ) -> None: ...
 
-    @abstractmethod
-    def start(self) -> None: ...
-
-    @abstractmethod
-    def stop(self) -> None: ...
-
 
 @runtime_checkable
 class IAsyncEventConsumer(Protocol):
@@ -40,9 +34,3 @@ class IAsyncEventConsumer(Protocol):
         event: type[DomainEventT],
         handler: IAsyncEventHandlerCallback[DomainEventT],
     ) -> None: ...
-
-    @abstractmethod
-    async def start(self) -> None: ...
-
-    @abstractmethod
-    async def stop(self) -> None: ...
