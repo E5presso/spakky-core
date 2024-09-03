@@ -1,13 +1,4 @@
-from typing import (
-    Any,
-    Generic,
-    TypeVar,
-    Callable,
-    Protocol,
-    Awaitable,
-    TypeAlias,
-    runtime_checkable,
-)
+from typing import Any, Generic, TypeVar, Callable, Awaitable, TypeAlias
 from dataclasses import dataclass
 
 from spakky.core.annotation import FunctionAnnotation
@@ -41,13 +32,3 @@ def on_event(
 
 @dataclass
 class EventHandler(Pod): ...
-
-
-@runtime_checkable
-class IEventHandler(Protocol):
-    def invoke(self, event: DomainEvent) -> None: ...
-
-
-@runtime_checkable
-class IAsyncEventHandler(Protocol):
-    async def invoke(self, event: DomainEvent) -> None: ...
