@@ -47,3 +47,7 @@ class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
 
     def __ge__(self, __value: Self) -> bool:
         return self.timestamp >= __value.timestamp
+
+
+@immutable
+class IntegrationEvent(DomainEvent, ABC): ...
