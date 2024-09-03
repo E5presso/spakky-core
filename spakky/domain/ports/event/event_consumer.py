@@ -26,7 +26,7 @@ class IEventConsumer(Protocol):
 @runtime_checkable
 class IAsyncEventConsumer(Protocol):
     @abstractmethod
-    async def register(
+    def register(
         self,
         event: type[DomainEventT],
         handler: IAsyncEventHandlerCallback[DomainEventT],
