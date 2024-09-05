@@ -11,6 +11,7 @@ from spakky.threading.interface import (
 
 
 class ManagedThread(IManagedThread):
+    __name: str | None
     __action: IManagedThreadAction
     __event: ThreadEvent
     __lock: ThreadLock
@@ -19,6 +20,7 @@ class ManagedThread(IManagedThread):
     def __init__(
         self,
         action: IManagedThreadAction,
+        name: str | None = None,
         event: ThreadEvent | None = None,
         lock: Optional[ThreadLock] = None,
     ) -> None:
@@ -26,6 +28,7 @@ class ManagedThread(IManagedThread):
             event = ThreadEvent()
         if lock is None:
             lock = ThreadLock()
+        self.__name = name
         self.__action = action
         self.__event = event
         self.__lock = lock
@@ -35,6 +38,7 @@ class ManagedThread(IManagedThread):
         if self.__thread is not None:
             raise ThreadAlreadyStartedError
         self.__thread = Thread(
+            name=self.__name,
             target=self.__action,
             args=(self.__event, self.__lock),
         )
@@ -50,6 +54,7 @@ class ManagedThread(IManagedThread):
 
 
 class AsyncManagedThread(IManagedThread):
+    __name: str | None
     __action: IAsyncManagedThreadAction
     __event: AsyncEvent
     __lock: AsyncLock
@@ -58,6 +63,7 @@ class AsyncManagedThread(IManagedThread):
     def __init__(
         self,
         action: IAsyncManagedThreadAction,
+        name: str | None = None,
         event: AsyncEvent | None = None,
         lock: Optional[AsyncLock] = None,
     ) -> None:
@@ -65,6 +71,7 @@ class AsyncManagedThread(IManagedThread):
             event = AsyncEvent()
         if lock is None:
             lock = AsyncLock()
+        self.__name = name
         self.__action = action
         self.__event = event
         self.__lock = lock
@@ -78,7 +85,7 @@ class AsyncManagedThread(IManagedThread):
     def start(self) -> None:
         if self.__thread is not None:
             raise ThreadAlreadyStartedError
-        self.__thread = Thread(target=self.__run)
+        self.__thread = Thread(name=self.__name, target=self.__run)
         self.__thread.start()
 
     def stop(self) -> None:
