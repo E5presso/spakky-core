@@ -4,18 +4,19 @@ on:
   push:
     branches:
       - main
+    tags:
+      - v*
 jobs:
   publish:
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      id-token: write
+      contents: read
     env:
       OS: ubuntu-latest
       PYTHON: "3.10"
       POETRY: "1.8.3"
-      PYPI_PROJECT: https://pypi.org/project/spakky-core/
-    permissions:
-      id-token: write
-      contents: read
     steps:
     - uses: actions/checkout@v3
     - name: Setup Python
@@ -31,10 +32,7 @@ jobs:
     - name: Build package
       run: poetry build
     - name: Publish package distributions to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.10.1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
+      uses: pypa/gh-action-pypi-publish@release/v1
     - name: Dump GitHub context
       env:
         GITHUB_CONTEXT: ${{ toJson(github) }}

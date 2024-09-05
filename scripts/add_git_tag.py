@@ -1,3 +1,4 @@
+import re
 import subprocess
 from typing import Any
 
@@ -19,6 +20,12 @@ def get_version_from_pyproject() -> str | None:
     return pyproject["tool"]["poetry"].get("version", None)
 
 
+def validate_version(version: str) -> bool:
+    if re.match(r"^\d+\.\d+\.\d+$", version):
+        return True
+    return False
+
+
 def add_git_tag(version: str) -> None:
     # pylint: disable=subprocess-run-check
     result = subprocess.run(
@@ -35,14 +42,17 @@ def add_git_tag(version: str) -> None:
 def main() -> None:
     current_branch: str = get_current_branch()
     print(f"[GIT TAG] Current branch: {current_branch}")
-    if current_branch == "main":
-        latest_version: str | None = get_version_from_pyproject()
-        if latest_version is not None:
-            add_git_tag(latest_version)
-            return
+    if current_branch != "main":
+        print(f"[GIT TAG] Not on main branch (current: {current_branch})")
+        return
+    latest_version: str | None = get_version_from_pyproject()
+    if (latest_version) is None:
         print("[GIT TAG] No version found in pyproject.toml")
         return
-    print(f"[GIT TAG] Not on main branch (current: {current_branch})")
+    if not validate_version(latest_version):
+        print(f"[GIT TAG] Invalid version: {latest_version}")
+        return
+    add_git_tag(f"v{latest_version}")
     return
 
 
