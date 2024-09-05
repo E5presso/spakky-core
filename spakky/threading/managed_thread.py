@@ -1,23 +1,24 @@
-from typing import Callable, Optional, Awaitable, TypeAlias
+from typing import Optional
 from asyncio import Lock as AsyncLock, Event as AsyncEvent, new_event_loop
 from threading import Lock as ThreadLock, Event as ThreadEvent, Thread
 
 from spakky.threading.error import ThreadAlreadyStartedError, ThreadNotStartedError
-from spakky.threading.interface import IManagedThread
-
-ManagedThreadAction: TypeAlias = Callable[[ThreadEvent, ThreadLock], None]
-AsyncManagedThreadAction: TypeAlias = Callable[[AsyncEvent, AsyncLock], Awaitable[None]]
+from spakky.threading.interface import (
+    IAsyncManagedThreadAction,
+    IManagedThread,
+    IManagedThreadAction,
+)
 
 
 class ManagedThread(IManagedThread):
-    __action: ManagedThreadAction
+    __action: IManagedThreadAction
     __event: ThreadEvent
     __lock: ThreadLock
     __thread: Thread | None
 
     def __init__(
         self,
-        action: ManagedThreadAction,
+        action: IManagedThreadAction,
         event: ThreadEvent | None = None,
         lock: Optional[ThreadLock] = None,
     ) -> None:
@@ -49,14 +50,14 @@ class ManagedThread(IManagedThread):
 
 
 class AsyncManagedThread(IManagedThread):
-    __action: AsyncManagedThreadAction
+    __action: IAsyncManagedThreadAction
     __event: AsyncEvent
     __lock: AsyncLock
     __thread: Thread | None
 
     def __init__(
         self,
-        action: AsyncManagedThreadAction,
+        action: IAsyncManagedThreadAction,
         event: AsyncEvent | None = None,
         lock: Optional[AsyncLock] = None,
     ) -> None:
