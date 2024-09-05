@@ -3,7 +3,7 @@ from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
-class ITask(Protocol):
+class IManagedThread(Protocol):
     @abstractmethod
     def start(self) -> None: ...
 
