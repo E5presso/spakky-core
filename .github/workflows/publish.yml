@@ -1,16 +1,17 @@
 name: Publish
 
 on:
-  release:
-    types:
-      - created
+  push:
+    branches:
+      - main
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
     env:
       OS: ubuntu-latest
       PYTHON: "3.10"
       POETRY: "1.8.3"
+      PYPI_PROJECT: https://pypi.org/project/spakky-core/
     steps:
     - uses: actions/checkout@v3
     - name: Setup Python
@@ -23,10 +24,13 @@ jobs:
         poetry-version: ${{ env.POETRY }}
     - name: Install Dependencies
       run: poetry install
-    - name: Publish
-      env:
-        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
-      run: poetry publish --build
+    - name: Build package
+      run: poetry build
+    - name: Publish package distributions to PyPI
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        repository-url: https://test.pypi.org/legacy/
+      uses: pypa/gh-action-pypi-publish@v1.10.1
     - name: Dump GitHub context
       env:
         GITHUB_CONTEXT: ${{ toJson(github) }}
