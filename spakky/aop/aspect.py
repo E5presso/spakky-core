@@ -1,10 +1,18 @@
 from typing import Any, TypeVar, Protocol, runtime_checkable
 from inspect import getmembers
-from dataclasses import field, dataclass
+from dataclasses import dataclass
 
-from spakky.aop.pointcut import After, AfterRaising, AfterReturning, Around, Before
+from spakky.aop.error import AspectInheritanceError
+from spakky.aop.pointcut import (
+    After,
+    AfterRaising,
+    AfterReturning,
+    Around,
+    Before,
+    PointCut,
+)
 from spakky.core.types import AsyncFunc, Func
-from spakky.pod.pod import Pod
+from spakky.pod.pod import Pod, is_class_pod
 
 
 @runtime_checkable
@@ -59,21 +67,20 @@ AsyncAspectT = TypeVar("AsyncAspectT", bound=type[IAsyncAspect])
 
 @dataclass
 class Aspect(Pod):
-    aspect: type[IAspect] = field(init=False)
-
-    def __call__(self, obj: AspectT) -> AspectT:
-        self.aspect = obj
-        return super().__call__(obj)
-
     def matches(self, pod: object) -> bool:
+        if not is_class_pod(self.target):
+            raise AspectInheritanceError
+        if not issubclass(self.target, IAspect):
+            raise AspectInheritanceError
+        pointcuts: dict[type[PointCut], Func] = {
+            Before: self.target.before,
+            AfterReturning: self.target.after_returning,
+            AfterRaising: self.target.after_raising,
+            After: self.target.after,
+            Around: self.target.around,
+        }
         for _, method in getmembers(pod, callable):
-            for annotation, target_method in {
-                Before: self.aspect.before,
-                AfterReturning: self.aspect.after_returning,
-                AfterRaising: self.aspect.after_raising,
-                After: self.aspect.after,
-                Around: self.aspect.around,
-            }.items():
+            for annotation, target_method in pointcuts.items():
                 if (advice := annotation.get_or_none(target_method)) is not None:
                     if advice.matches(method):
                         return True
@@ -82,21 +89,20 @@ class Aspect(Pod):
 
 @dataclass
 class AsyncAspect(Pod):
-    aspect: type[IAsyncAspect] = field(init=False)
-
-    def __call__(self, obj: AsyncAspectT) -> AsyncAspectT:
-        self.aspect = obj
-        return super().__call__(obj)
-
     def matches(self, pod: object) -> bool:
+        if not is_class_pod(self.target):
+            raise AspectInheritanceError
+        if not issubclass(self.target, IAsyncAspect):
+            raise AspectInheritanceError
+        pointcuts: dict[type[PointCut], AsyncFunc] = {
+            Before: self.target.before_async,
+            AfterReturning: self.target.after_returning_async,
+            AfterRaising: self.target.after_raising_async,
+            After: self.target.after_async,
+            Around: self.target.around_async,
+        }
         for _, method in getmembers(pod, callable):
-            for annotation, target_method in {
-                Before: self.aspect.before_async,
-                AfterReturning: self.aspect.after_returning_async,
-                AfterRaising: self.aspect.after_raising_async,
-                After: self.aspect.after_async,
-                Around: self.aspect.around_async,
-            }.items():
+            for annotation, target_method in pointcuts.items():
                 if (advice := annotation.get_or_none(target_method)) is not None:
                     if advice.matches(method):
                         return True

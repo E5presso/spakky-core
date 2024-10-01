@@ -67,18 +67,18 @@ def test_pod_factory_without_return_annotation() -> None:
 
 
 def test_pod_with_scope() -> None:
-    @Pod(scope=Pod.Scope.FACTORY)
+    @Pod(scope=Pod.Scope.PROTOTYPE)
     class A: ...
 
     assert Pod.exists(A) is True
     assert Pod.get(A) is not None
-    assert Pod.get(A).scope is Pod.Scope.FACTORY
+    assert Pod.get(A).scope is Pod.Scope.PROTOTYPE
 
 
 def test_pod_factory_with_scope() -> None:
     class A: ...
 
-    @Pod(scope=Pod.Scope.FACTORY)
+    @Pod(scope=Pod.Scope.PROTOTYPE)
     def get_a() -> A:
         return A()
 
@@ -86,7 +86,7 @@ def test_pod_factory_with_scope() -> None:
     assert Pod.get(get_a) is not None
     assert Pod.get(get_a).name == "get_a"
     assert Pod.get(get_a).type_ is A
-    assert Pod.get(get_a).scope is Pod.Scope.FACTORY
+    assert Pod.get(get_a).scope is Pod.Scope.PROTOTYPE
 
 
 def test_pod_with_name() -> None:
