@@ -24,7 +24,7 @@ from spakky.core.importing import (
     list_objects,
     resolve_module,
 )
-from spakky.core.types import ObjectT
+from spakky.core.types import ObjectT, is_optional
 from spakky.pod.lazy import Lazy
 from spakky.pod.order import Order
 from spakky.pod.pod import Pod, PodType
@@ -103,11 +103,12 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
             return self.__singleton_cache[pod.id]
         dependencies: dict[str, object] = {
             name: self.__get_internal(
-                type_,
+                dependency.type_,
                 name,
                 deepcopy(dependency_hierarchy),  # Copy to avoid mutation
             )
-            for name, type_ in pod.dependencies.items()
+            for name, dependency in pod.dependencies.items()
+            if not dependency.has_default
         }
         instance: object = pod.target(**dependencies)
         processed: object = self.__post_process_pod(instance)
@@ -120,7 +121,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         type_: type[object],
         name: str | None = None,
         dependency_hierarchy: list[type] | None = None,
-    ) -> object:
+    ) -> object | None:
         if isinstance(type_, str):  # To support forward references
             type_ = self.__type_name_map[type_]  # pragma: no cover
         if dependency_hierarchy is None:
@@ -128,10 +129,15 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         if type_ in dependency_hierarchy:
             raise CircularDependencyGraphDetectedError(dependency_hierarchy + [type_])
         dependency_hierarchy.append(type_)
-        resolved_type: type = self.__resolve_type(type_, name)
-        pod_id: UUID = self.__pod_lookup[resolved_type]
-        pod: Pod = self.__pods[pod_id]
-        return self.__create_pod_instance(pod, dependency_hierarchy)
+        try:
+            resolved_type: type = self.__resolve_type(type_, name)
+            pod_id: UUID = self.__pod_lookup[resolved_type]
+            pod: Pod = self.__pods[pod_id]
+            return self.__create_pod_instance(pod, dependency_hierarchy)
+        except NoSuchPodError:
+            if is_optional(type_):
+                return None
+            raise
 
     def __all_internal(
         self,

@@ -12,7 +12,14 @@ from spakky.pod.error import SpakkyPodError
 from spakky.utils.casing import pascal_to_snake
 from spakky.utils.inspection import has_default_constructor, is_instance_method
 
-DependencyMap: TypeAlias = dict[str, Class]
+
+@dataclass
+class Dependency:
+    type_: Class
+    has_default: bool
+
+
+DependencyMap: TypeAlias = dict[str, Dependency]
 PodType: TypeAlias = Func | Class
 PodT = TypeVar("PodT", bound=PodType)
 
@@ -56,7 +63,10 @@ class Pod(Annotation, IEquatable):
                 raise CannotUseVarArgsInPodError(obj, parameter.name)
             if parameter.annotation == Parameter.empty:
                 raise CannotDeterminePodTypeError(obj, parameter.name)
-            dependencies[parameter.name] = parameter.annotation
+            dependencies[parameter.name] = Dependency(
+                type_=parameter.annotation,
+                has_default=parameter.default != Parameter.empty,
+            )
 
         return dependencies
 
