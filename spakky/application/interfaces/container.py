@@ -20,6 +20,9 @@ class IPodContainer(Protocol):
     def get(self, type_: type[ObjectT], name: str | None = None) -> ObjectT: ...
 
     @abstractmethod
+    def all(self, type_: type[ObjectT]) -> dict[str, ObjectT]: ...
+
+    @abstractmethod
     def contains(self, type_: type, name: str | None = None) -> bool: ...
 
     @abstractmethod

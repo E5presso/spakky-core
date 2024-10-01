@@ -1,6 +1,7 @@
 from typing import Any, TypeVar, Callable, Awaitable, ParamSpec, TypeAlias, TypeGuard
 from inspect import iscoroutinefunction
 
+Class: TypeAlias = type[Any]
 Func: TypeAlias = Callable[..., Any]
 AsyncFunc: TypeAlias = Callable[..., Awaitable[Any]]
 Action: TypeAlias = Callable[..., None]
@@ -14,9 +15,9 @@ ObjectT = TypeVar("ObjectT", bound=object)
 ObjectT_co = TypeVar("ObjectT_co", bound=object, covariant=True)
 ObjectT_contra = TypeVar("ObjectT_contra", bound=object, contravariant=True)
 
-ClassT = TypeVar("ClassT", bound=type)
-ClassT_co = TypeVar("ClassT_co", bound=type, covariant=True)
-ClassT_contra = TypeVar("ClassT_contra", bound=type, contravariant=True)
+ClassT = TypeVar("ClassT", bound=Class)
+ClassT_co = TypeVar("ClassT_co", bound=Class, covariant=True)
+ClassT_contra = TypeVar("ClassT_contra", bound=Class, contravariant=True)
 
 FuncT = TypeVar("FuncT", bound=Func)
 FuncT_co = TypeVar("FuncT_co", bound=Func, covariant=True)

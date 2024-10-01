@@ -45,7 +45,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     @property
     def pods(self) -> set[PodType]:
-        return {x.obj for x in self.__pods.values()}
+        return {x.target for x in self.__pods.values()}
 
     @property
     def post_processors(self) -> set[type[IPodPostProcessor]]:
@@ -109,7 +109,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
             )
             for name, type_ in pod.dependencies.items()
         }
-        instance: object = pod.obj(**dependencies)
+        instance: object = pod.target(**dependencies)
         processed: object = self.__post_process_pod(instance)
         if pod.scope == Pod.Scope.SINGLETON:
             self.__singleton_cache[pod.id] = processed
@@ -117,7 +117,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def __get_internal(
         self,
-        type_: type,
+        type_: type[object],
         name: str | None = None,
         dependency_hierarchy: list[type] | None = None,
     ) -> object:
@@ -133,8 +133,22 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         pod: Pod = self.__pods[pod_id]
         return self.__create_pod_instance(pod, dependency_hierarchy)
 
+    def __all_internal(
+        self,
+        type_: type[object],
+        dependency_hierarchy: list[type] | None = None,
+    ) -> dict[str, object]:
+        return {
+            pod.name: self.__get_internal(pod.type_, pod.name, dependency_hierarchy)
+            for pod in self.__pods.values()
+            if pod.type_ == type_
+        }
+
     def get(self, type_: type[ObjectT], name: str | None = None) -> ObjectT:
         return cast(ObjectT, self.__get_internal(type_, name))
+
+    def all(self, type_: type[ObjectT]) -> dict[str, ObjectT]:
+        return cast(dict[str, ObjectT], self.__all_internal(type_))
 
     def contains(self, type_: type, name: str | None = None) -> bool:
         try:
@@ -182,6 +196,6 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def start(self) -> None:
         for pod in self.__pods.values():
-            if Lazy.exists(pod.obj):
+            if Lazy.exists(pod.target):
                 continue
             self.__create_pod_instance(pod, [])

@@ -76,10 +76,10 @@ class AspectPostProcessor(IPodPostProcessor):
 
         def selector(x: Pod) -> bool:
             return (
-                Aspect.exists(x.obj)
-                and Aspect.get(x.obj).matches(pod)
-                or AsyncAspect.exists(x.obj)
-                and AsyncAspect.get(x.obj).matches(pod)
+                Aspect.exists(x.target)
+                and Aspect.get(x.target).matches(pod)
+                or AsyncAspect.exists(x.target)
+                and AsyncAspect.get(x.target).matches(pod)
             )
 
         matched: Sequence[object] = list(container.find(selector).values())

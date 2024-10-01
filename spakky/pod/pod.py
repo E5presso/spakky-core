@@ -1,19 +1,19 @@
 import inspect
 from enum import Enum, auto
 from uuid import UUID, uuid4
-from typing import TypeVar, Callable, TypeAlias
+from typing import TypeVar, TypeAlias, TypeGuard
 from inspect import Parameter, isclass, isfunction
 from dataclasses import field, dataclass
 
 from spakky.core.annotation import Annotation
 from spakky.core.interfaces.equatable import IEquatable
-from spakky.core.types import AnyT
+from spakky.core.types import Class, Func
 from spakky.pod.error import SpakkyPodError
 from spakky.utils.casing import pascal_to_snake
 from spakky.utils.inspection import has_default_constructor, is_instance_method
 
-DependencyMap: TypeAlias = dict[str, type[object]]
-PodType: TypeAlias = Callable[..., object] | type[object]
+DependencyMap: TypeAlias = dict[str, Class]
+PodType: TypeAlias = Func | Class
 PodT = TypeVar("PodT", bound=PodType)
 
 
@@ -29,13 +29,13 @@ class CannotUseVarArgsInPodError(SpakkyPodError):
 class Pod(Annotation, IEquatable):
     class Scope(Enum):
         SINGLETON = auto()
-        FACTORY = auto()
+        PROTOTYPE = auto()
 
     id: UUID = field(init=False, default_factory=uuid4)
     name: str = field(kw_only=True, default="")
     scope: Scope = field(kw_only=True, default=Scope.SINGLETON)
     type_: type = field(init=False)
-    obj: PodType = field(init=False)
+    target: PodType = field(init=False)
     dependencies: DependencyMap = field(init=False, default_factory=dict)
 
     def __get_dependencies(self, obj: PodType) -> DependencyMap:
@@ -78,10 +78,10 @@ class Pod(Annotation, IEquatable):
         if not self.name:
             self.name = pascal_to_snake(obj.__name__)
         self.type_ = type_
-        self.obj = obj
+        self.target = obj
         self.dependencies = dependencies
 
-    def __call__(self, obj: AnyT) -> AnyT:
+    def __call__(self, obj: PodT) -> PodT:
         self.__initialize(obj)
         return super().__call__(obj)
 
@@ -92,3 +92,11 @@ class Pod(Annotation, IEquatable):
         if not isinstance(value, Pod):
             return False
         return self.id == value.id
+
+
+def is_class_pod(pod: PodType) -> TypeGuard[Class]:
+    return isclass(pod)
+
+
+def is_function_pod(pod: PodType) -> TypeGuard[Func]:
+    return isfunction(pod)

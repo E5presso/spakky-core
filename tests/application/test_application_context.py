@@ -306,12 +306,12 @@ def test_application_context_where() -> None:
     context.register(ThirdSampleClassMarked)
 
     queried: list[object] = list(
-        context.find(lambda x: x.obj.__name__.endswith("Marked")).values()
+        context.find(lambda x: x.target.__name__.endswith("Marked")).values()
     )
     assert isinstance(queried[0], FirstSampleClassMarked)
     assert isinstance(queried[1], ThirdSampleClassMarked)
 
-    queried = list(context.find(lambda x: Customized.exists(x.obj)).values())
+    queried = list(context.find(lambda x: Customized.exists(x.target)).values())
     assert isinstance(queried[0], SecondSampleClass)
     assert isinstance(queried[1], ThirdSampleClassMarked)
 
@@ -479,7 +479,7 @@ def test_application_factory_loading() -> None:
         def b(self) -> str:
             return "b"
 
-    @Pod(scope=Pod.Scope.FACTORY)
+    @Pod(scope=Pod.Scope.PROTOTYPE)
     class C:
         __a: A
         __b: B

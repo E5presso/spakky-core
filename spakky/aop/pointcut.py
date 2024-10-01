@@ -7,7 +7,7 @@ from spakky.core.types import Func
 
 
 @dataclass
-class _PointCut(FunctionAnnotation, ABC):
+class PointCut(FunctionAnnotation, ABC):
     pointcut: Callable[[Func], bool]
 
     def matches(self, method: Func) -> bool:
@@ -15,20 +15,20 @@ class _PointCut(FunctionAnnotation, ABC):
 
 
 @dataclass
-class Before(_PointCut): ...
+class Before(PointCut): ...
 
 
 @dataclass
-class AfterReturning(_PointCut): ...
+class AfterReturning(PointCut): ...
 
 
 @dataclass
-class AfterRaising(_PointCut): ...
+class AfterRaising(PointCut): ...
 
 
 @dataclass
-class After(_PointCut): ...
+class After(PointCut): ...
 
 
 @dataclass
-class Around(_PointCut): ...
+class Around(PointCut): ...
