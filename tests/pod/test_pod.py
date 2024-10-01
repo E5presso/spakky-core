@@ -2,7 +2,32 @@ from typing import Any
 
 import pytest
 
-from spakky.pod.pod import CannotDeterminePodTypeError, CannotUseVarArgsInPodError, Pod
+from spakky.pod.pod import (
+    CannotDeterminePodTypeError,
+    CannotUseVarArgsInPodError,
+    Dependency,
+    Pod,
+    is_class_pod,
+    is_function_pod,
+)
+
+
+def test_is_class_pod() -> None:
+    class A: ...
+
+    def a() -> None: ...
+
+    assert is_class_pod(A) is True
+    assert is_class_pod(a) is False
+
+
+def test_is_function_pod() -> None:
+    class A: ...
+
+    def a() -> None: ...
+
+    assert is_function_pod(A) is False
+    assert is_function_pod(a) is True
 
 
 def test_pod() -> None:
@@ -15,7 +40,10 @@ def test_pod() -> None:
             self.name = name
             self.age = age
 
-    assert Pod.get(SampleClass).dependencies == {"name": str, "age": int}
+    assert Pod.get(SampleClass).dependencies == {
+        "name": Dependency(type_=str, has_default=False),
+        "age": Dependency(type_=int, has_default=False),
+    }
     assert Pod.get(SampleClass).name == "sample_class"
     sample: SampleClass = SampleClass(name="John", age=30)
     assert sample.name == "John"

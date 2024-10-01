@@ -1,5 +1,17 @@
-from typing import Any, TypeVar, Callable, Awaitable, ParamSpec, TypeAlias, TypeGuard
-from inspect import iscoroutinefunction
+from types import UnionType
+from typing import (
+    Any,
+    Union,
+    TypeVar,
+    Callable,
+    Optional,
+    Awaitable,
+    ParamSpec,
+    TypeAlias,
+    TypeGuard,
+    get_args,
+    get_origin,
+)
 
 Class: TypeAlias = type[Any]
 Func: TypeAlias = Callable[..., Any]
@@ -41,9 +53,9 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def is_function(obj: Any) -> TypeGuard[Func | AsyncFunc]:
-    return callable(obj)
-
-
-def is_async_function(obj: Any) -> TypeGuard[AsyncFunc]:
-    return callable(obj) and iscoroutinefunction(obj)
+def is_optional(type_: Any) -> TypeGuard[Optional[Any]]:
+    origin_type: type = get_origin(type_)
+    is_union_type: bool = origin_type is UnionType or origin_type is Union
+    includes_none = type(None) in get_args(type_)
+    is_union_with_none: bool = is_union_type and includes_none
+    return is_union_with_none

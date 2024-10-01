@@ -633,3 +633,61 @@ def test_application_context_initialize_with_exclude_names() -> None:
     assert context.contains(type_=DummyB) is False
     assert context.contains(type_=DummyC) is False
     assert context.contains(type_=UnmanagedB) is True
+
+
+def test_application_context_with_optional_argument_type() -> None:
+    @Pod()
+    class A:
+        def a(self) -> str:
+            return "a"
+
+    class B:
+        def b(self) -> str:
+            return "b"
+
+    @Pod()
+    class C:
+        __a: A
+        __b: B | None
+
+        def __init__(self, a: A, b: B | None) -> None:
+            self.__a = a
+            self.__b = b
+
+        def c(self) -> str:
+            return self.__a.a() + (self.__b.b() if self.__b is not None else "")
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(A)
+    context.register(C)
+
+    assert context.get(type_=C).c() == "a"
+
+
+def test_application_context_with_default_argument() -> None:
+    @Pod()
+    class A:
+        def a(self) -> str:
+            return "a"
+
+    class B:
+        def b(self) -> str:
+            return "b"
+
+    @Pod()
+    class C:
+        __a: A
+        __b: B
+
+        def __init__(self, a: A, b: B = B()) -> None:
+            self.__a = a
+            self.__b = b
+
+        def c(self) -> str:
+            return self.__a.a() + self.__b.b()
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(A)
+    context.register(C)
+
+    assert context.get(type_=C).c() == "ab"

@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from types import new_class
 from typing import Any, Generic, ClassVar, Iterable, Protocol, runtime_checkable
+from inspect import ismethod, iscoroutinefunction
 from functools import wraps
 
-from spakky.core.types import AsyncFunc, Func, ObjectT, is_async_function, is_function
+from spakky.core.types import AsyncFunc, Func, ObjectT
 
 
 @runtime_checkable
@@ -72,8 +73,8 @@ class ProxyFactory(Generic[ObjectT]):
     def create(self) -> ObjectT:
         def __getattribute__(_: ObjectT, name: str) -> Any:
             value: Any = object.__getattribute__(self.__instance, name)
-            if is_function(value):
-                if is_async_function(value):
+            if ismethod(value):
+                if iscoroutinefunction(value):
 
                     @wraps(value)
                     async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
