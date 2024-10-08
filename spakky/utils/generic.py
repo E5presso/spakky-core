@@ -1,3 +1,4 @@
+# 이 코드는 https://github.com/python/typing/issues/777 에서 제안된 코드를 기반으로 작성되었습니다.
 # type: ignore
 # pylint: disable=wildcard-import, unused-import, unused-wildcard-import, no-name-in-module
 
