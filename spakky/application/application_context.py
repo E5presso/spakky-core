@@ -29,6 +29,7 @@ from spakky.pod.lazy import Lazy
 from spakky.pod.order import Order
 from spakky.pod.pod import Pod, PodType
 from spakky.pod.primary import Primary
+from spakky.utils.generic import generic_mro
 
 
 class CircularDependencyGraphDetectedError(SpakkyApplicationError):
@@ -73,7 +74,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         self.scan(package, exclude)
 
     def __register_pod_definition(self, pod: Pod) -> None:
-        for base_type in pod.type_.mro():
+        for base_type in generic_mro(pod.type_):
             if base_type not in self.__type_lookup:
                 self.__type_lookup[base_type] = set()
             self.__type_lookup[base_type].add(pod.type_)

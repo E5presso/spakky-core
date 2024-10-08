@@ -1,6 +1,6 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from uuid import UUID, uuid4
-from typing import Protocol
+from typing import Generic, TypeVar, Protocol
 from dataclasses import dataclass
 
 import pytest
@@ -15,6 +15,7 @@ from spakky.application.application_context import (
 from spakky.application.interfaces.pluggable import IPluggable
 from spakky.application.interfaces.registry import IPodRegistry
 from spakky.core.annotation import ClassAnnotation
+from spakky.core.mutability import immutable
 from spakky.pod.lazy import Lazy
 from spakky.pod.pod import Pod
 from spakky.pod.primary import Primary
@@ -691,3 +692,65 @@ def test_application_context_with_default_argument() -> None:
     context.register(C)
 
     assert context.get(type_=C).c() == "ab"
+
+
+def test_application_context_with_generic_collections() -> None:
+    @Pod()
+    def get_a() -> list[int]:
+        return [1, 2, 3]
+
+    @Pod()
+    def get_b() -> dict[str, int]:
+        return {"a": 1, "b": 2, "c": 3}
+
+    @Pod()
+    def get_c() -> set[int]:
+        return {1, 2, 3}
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(get_a)
+    context.register(get_b)
+    context.register(get_c)
+    context.start()
+
+    assert context.get(list[int]) == [1, 2, 3]
+    assert context.get(dict[str, int]) == {"a": 1, "b": 2, "c": 3}
+    assert context.get(set[int]) == {1, 2, 3}
+
+
+def test_application_context_with_generic_interface() -> None:
+    @immutable
+    class Command(ABC): ...
+
+    CommandT_contra = TypeVar("CommandT_contra", bound=Command, contravariant=True)
+
+    class IGenericCommandUseCase(Generic[CommandT_contra], Protocol):
+        @abstractmethod
+        def execute(self, command: CommandT_contra) -> None: ...
+
+    @immutable
+    class SignupCommand(Command):
+        username: str
+        password: str
+
+    class ISignupCommandUseCase(IGenericCommandUseCase[SignupCommand], Protocol): ...
+
+    @Pod()
+    class SignupCommandUseCase(ISignupCommandUseCase):
+        users: dict[str, SignupCommand]
+
+        def __init__(self) -> None:
+            self.users = {}
+
+        def execute(self, command: SignupCommand) -> None:
+            self.users[command.username] = command
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(SignupCommandUseCase)
+    context.start()
+
+    usecase = context.get(IGenericCommandUseCase[SignupCommand])
+    usecase.execute(SignupCommand(username="user", password="password"))
+
+    derived = context.get(SignupCommandUseCase)
+    assert "user" in derived.users
