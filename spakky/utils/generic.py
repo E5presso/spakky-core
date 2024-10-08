@@ -1,9 +1,13 @@
 # type: ignore
-# pylint: disable=wildcard-import, unused-import, unused-wildcard-import
+# pylint: disable=wildcard-import, unused-import, unused-wildcard-import, no-name-in-module
 
 import sys
 from typing import *
-from typing import _collect_type_vars
+
+if sys.version >= (3, 11):
+    from typing import _collect_parameters  # pragma: no cover
+else:
+    from typing import _collect_type_vars  # pragma: no cover
 
 __orig_bases__ = "__orig_bases__"
 __parameters__ = "__parameters__"
