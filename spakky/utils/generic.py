@@ -1,10 +1,11 @@
+# 이 코드는 https://github.com/python/typing/issues/777 에서 제안된 코드를 기반으로 작성되었습니다.
 # type: ignore
 # pylint: disable=wildcard-import, unused-import, unused-wildcard-import, no-name-in-module
 
 import sys
 from typing import *
 
-if sys.version >= (3, 11):
+if sys.version_info >= (3, 11):
     from typing import _collect_parameters  # pragma: no cover
 else:
     from typing import _collect_type_vars  # pragma: no cover
@@ -19,7 +20,10 @@ def _generic_mro(result: dict[type, Any], tp: Any) -> None:
         origin = tp
     result[origin] = tp
     if hasattr(origin, __orig_bases__):
-        parameters = _collect_type_vars(getattr(origin, __orig_bases__))
+        if sys.version_info >= (3, 11):
+            parameters = _collect_parameters(getattr(origin, __orig_bases__))
+        else:
+            parameters = _collect_type_vars(getattr(origin, __orig_bases__))
         substitution = dict(zip(parameters, get_args(tp)))
         for base in origin.__orig_bases__:
             if get_origin(base) in result:
