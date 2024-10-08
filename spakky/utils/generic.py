@@ -1,5 +1,5 @@
 # type: ignore
-# pylint: disable=wildcard-import, unused-import, unused-wildcard-import, no-name-in-module
+# pylint: disable=wildcard-import, unused-import, unused-wildcard-import, no-name-in-module, possibly-used-before-assignment
 
 import sys
 from typing import *
