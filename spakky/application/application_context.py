@@ -37,7 +37,7 @@ class CircularDependencyGraphDetectedError(SpakkyApplicationError):
 
 
 class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
-    __type_name_map: dict[str, type]
+    __forward_type_map: dict[str, type]
     __type_lookup: dict[type, set[type]]  # dict[base: {derived}]
     __pod_lookup: dict[type, UUID]
     __pods: dict[UUID, Pod]
@@ -57,7 +57,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         package: Module | set[Module] | None = None,
         exclude: set[Module] | None = None,
     ) -> None:
-        self.__type_name_map = {}
+        self.__forward_type_map = {}
         self.__type_lookup = {}
         self.__pod_lookup = {}
         self.__pods = {}
@@ -78,7 +78,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
             if base_type not in self.__type_lookup:
                 self.__type_lookup[base_type] = set()
             self.__type_lookup[base_type].add(pod.type_)
-        self.__type_name_map[pod.type_.__name__] = pod.type_
+        self.__forward_type_map[pod.type_.__name__] = pod.type_
         self.__pod_lookup[pod.type_] = pod.id
         self.__pods[pod.id] = pod
 
@@ -124,7 +124,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
         dependency_hierarchy: list[type] | None = None,
     ) -> object | None:
         if isinstance(type_, str):  # To support forward references
-            type_ = self.__type_name_map[type_]  # pragma: no cover
+            type_ = self.__forward_type_map[type_]  # pragma: no cover
         if dependency_hierarchy is None:
             dependency_hierarchy = []
         if type_ in dependency_hierarchy:

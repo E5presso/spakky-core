@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from uuid import UUID, uuid4
-from typing import Generic, TypeVar, Protocol
+from typing import Protocol
 from dataclasses import dataclass
 
 import pytest
@@ -16,6 +16,7 @@ from spakky.application.interfaces.pluggable import IPluggable
 from spakky.application.interfaces.registry import IPodRegistry
 from spakky.core.annotation import ClassAnnotation
 from spakky.core.mutability import immutable
+from spakky.domain.usecases.command import Command, ICommandUseCase
 from spakky.pod.lazy import Lazy
 from spakky.pod.pod import Pod
 from spakky.pod.primary import Primary
@@ -720,20 +721,18 @@ def test_application_context_with_generic_collections() -> None:
 
 def test_application_context_with_generic_interface() -> None:
     @immutable
-    class Command(ABC): ...
-
-    CommandT_contra = TypeVar("CommandT_contra", bound=Command, contravariant=True)
-
-    class IGenericCommandUseCase(Generic[CommandT_contra], Protocol):
-        @abstractmethod
-        def execute(self, command: CommandT_contra) -> None: ...
-
-    @immutable
     class SignupCommand(Command):
         username: str
         password: str
 
-    class ISignupCommandUseCase(IGenericCommandUseCase[SignupCommand], Protocol): ...
+    class ISignupCommandUseCase(ICommandUseCase[SignupCommand, None], Protocol): ...
+
+    @immutable
+    class SigninCommand(Command):
+        username: str
+        password: str
+
+    class ISigninCommandUseCase(ICommandUseCase[SigninCommand, None], Protocol): ...
 
     @Pod()
     class SignupCommandUseCase(ISignupCommandUseCase):
@@ -745,12 +744,27 @@ def test_application_context_with_generic_interface() -> None:
         def execute(self, command: SignupCommand) -> None:
             self.users[command.username] = command
 
+    @Pod()
+    class SigninCommandUseCase(ISigninCommandUseCase):
+        logs: list[SigninCommand]
+
+        def __init__(self) -> None:
+            self.logs = []
+
+        def execute(self, command: SigninCommand) -> None:
+            self.logs.append(command)
+
     context: ApplicationContext = ApplicationContext()
     context.register(SignupCommandUseCase)
+    context.register(SigninCommandUseCase)
     context.start()
 
-    usecase = context.get(IGenericCommandUseCase[SignupCommand])
-    usecase.execute(SignupCommand(username="user", password="password"))
+    signup = context.get(ICommandUseCase[SignupCommand, None])
+    signup.execute(SignupCommand(username="user", password="password"))
+    signup = context.get(SignupCommandUseCase)
+    assert "user" in signup.users
 
-    derived = context.get(SignupCommandUseCase)
-    assert "user" in derived.users
+    signin = context.get(ICommandUseCase[SigninCommand, None])
+    signin.execute(SigninCommand(username="user", password="password"))
+    signin = context.get(SigninCommandUseCase)
+    assert len(signin.logs) == 1
