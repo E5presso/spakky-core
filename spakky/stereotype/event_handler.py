@@ -30,5 +30,5 @@ def on_event(
     return wrapper
 
 
-@dataclass
+@dataclass(eq=False)
 class EventHandler(Pod): ...

@@ -32,7 +32,7 @@ class CannotUseVarArgsInPodError(SpakkyPodError):
     message = "Cannot use var args (*args or **kwargs) in pod"
 
 
-@dataclass
+@dataclass(eq=False)
 class Pod(Annotation, IEquatable):
     class Scope(Enum):
         SINGLETON = auto()

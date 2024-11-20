@@ -21,9 +21,13 @@ def _generic_mro(result: dict[type, Any], tp: Any) -> None:
     result[origin] = tp
     if hasattr(origin, __orig_bases__):
         if sys.version_info >= (3, 11):
-            parameters = _collect_parameters(getattr(origin, __orig_bases__))
+            parameters = _collect_parameters(
+                getattr(origin, __orig_bases__)
+            )  # pragma: no cover
         else:
-            parameters = _collect_type_vars(getattr(origin, __orig_bases__))
+            parameters = _collect_type_vars(
+                getattr(origin, __orig_bases__)
+            )  # pragma: no cover
         substitution = dict(zip(parameters, get_args(tp)))
         for base in origin.__orig_bases__:
             if get_origin(base) in result:
