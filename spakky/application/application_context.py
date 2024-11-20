@@ -201,9 +201,8 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
             if is_optional(type_):
                 return None
             raise NoSuchPodError(type_)
-        return {
-            name: instance
-            for name, instance in {
+        return dict(
+            {
                 self.__get_instance_by_type(
                     resolved_type,
                     name,
@@ -212,7 +211,7 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
                 )
                 for resolved_type in resolved_types
             }
-        }
+        )
 
     def __get_internal(
         self,

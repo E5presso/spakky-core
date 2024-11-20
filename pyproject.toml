@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spakky-core"
-version = "1.8.0"
+version = "1.8.1"
 description = "Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc..."
 authors = ["Spakky <sejong418@icloud.com>"]
 packages = [{ include = "spakky" }]
