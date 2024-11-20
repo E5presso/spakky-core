@@ -65,7 +65,7 @@ AspectT = TypeVar("AspectT", bound=type[IAspect])
 AsyncAspectT = TypeVar("AsyncAspectT", bound=type[IAsyncAspect])
 
 
-@dataclass
+@dataclass(eq=False)
 class Aspect(Pod):
     def matches(self, pod: object) -> bool:
         if not is_class_pod(self.target):
@@ -87,7 +87,7 @@ class Aspect(Pod):
         return False
 
 
-@dataclass
+@dataclass(eq=False)
 class AsyncAspect(Pod):
     def matches(self, pod: object) -> bool:
         if not is_class_pod(self.target):

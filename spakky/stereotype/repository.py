@@ -3,5 +3,5 @@ from dataclasses import dataclass
 from spakky.pod.pod import Pod
 
 
-@dataclass
+@dataclass(eq=False)
 class Repository(Pod): ...

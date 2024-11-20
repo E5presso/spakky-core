@@ -1,4 +1,3 @@
-import sys
 import hashlib
 from typing import ClassVar, overload
 
@@ -6,11 +5,6 @@ from spakky.security.encoding import Base64Encoder
 from spakky.security.hash import HashType
 from spakky.security.key import Key
 from spakky.security.password.interface import IPasswordEncoder
-
-if sys.version_info >= (3, 11):
-    from typing import Self  # pragma: no cover
-else:
-    from typing_extensions import Self  # pragma: no cover
 
 
 class Pbkdf2PasswordEncoder(IPasswordEncoder):
@@ -84,7 +78,9 @@ class Pbkdf2PasswordEncoder(IPasswordEncoder):
     def __repr__(self) -> str:
         return str(self)
 
-    def __eq__(self, __value: Self) -> bool:
+    def __eq__(self, __value: object) -> bool:
+        if not isinstance(__value, type(self)):
+            return False
         return self.encode() == __value.encode()
 
     def __hash__(self) -> int:

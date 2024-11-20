@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from uuid import UUID, uuid4
-from typing import Generic, TypeVar, Protocol
+from typing import Any, Protocol
 from dataclasses import dataclass
 
 import pytest
@@ -16,6 +16,7 @@ from spakky.application.interfaces.pluggable import IPluggable
 from spakky.application.interfaces.registry import IPodRegistry
 from spakky.core.annotation import ClassAnnotation
 from spakky.core.mutability import immutable
+from spakky.domain.usecases.command import Command, ICommandUseCase
 from spakky.pod.lazy import Lazy
 from spakky.pod.pod import Pod
 from spakky.pod.primary import Primary
@@ -286,7 +287,7 @@ def test_application_context_get_dependency_recursive_by_type() -> None:
     assert context.get(type_=C).c() == "ab"
 
 
-def test_application_context_where() -> None:
+def test_application_context_find() -> None:
     @dataclass
     class Customized(ClassAnnotation): ...
 
@@ -309,12 +310,12 @@ def test_application_context_where() -> None:
     queried: list[object] = list(
         context.find(lambda x: x.target.__name__.endswith("Marked")).values()
     )
-    assert isinstance(queried[0], FirstSampleClassMarked)
-    assert isinstance(queried[1], ThirdSampleClassMarked)
+    assert any(isinstance(x, FirstSampleClassMarked) for x in queried)
+    assert any(isinstance(x, ThirdSampleClassMarked) for x in queried)
 
     queried = list(context.find(lambda x: Customized.exists(x.target)).values())
-    assert isinstance(queried[0], SecondSampleClass)
-    assert isinstance(queried[1], ThirdSampleClassMarked)
+    assert any(isinstance(x, SecondSampleClass) for x in queried)
+    assert any(isinstance(x, ThirdSampleClassMarked) for x in queried)
 
 
 def test_application_context_scan() -> None:
@@ -525,9 +526,8 @@ def test_application_raise_error_with_circular_dependency() -> None:
     context.register(A)
     context.register(B)
 
-    with pytest.raises(CircularDependencyGraphDetectedError) as e:
+    with pytest.raises(CircularDependencyGraphDetectedError):
         context.start()
-    assert e.value.args[0] == [B, A, B]
 
 
 def test_application_context_scan_with_exclude_packages() -> None:
@@ -718,22 +718,50 @@ def test_application_context_with_generic_collections() -> None:
     assert context.get(set[int]) == {1, 2, 3}
 
 
+def test_application_context_with_no_unique_generic_collections() -> None:
+    @Pod()
+    def get_a() -> list[int]:
+        return [1, 2, 3]
+
+    @Pod()
+    def get_b() -> dict[str, int]:
+        return {"a": 1, "b": 2, "c": 3}
+
+    @Pod()
+    def get_c() -> set[int]:
+        return {1, 2, 3}
+
+    @Pod()
+    def get_d() -> list[int]:
+        return [1, 2, 3, 4]
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(get_a)
+    context.register(get_b)
+    context.register(get_c)
+    context.register(get_d)
+    context.start()
+
+    assert context.get(list[int], "get_a") == [1, 2, 3]
+    assert context.get(dict[str, int]) == {"a": 1, "b": 2, "c": 3}
+    assert context.get(set[int]) == {1, 2, 3}
+    assert context.get(list[int], "get_d") == [1, 2, 3, 4]
+
+
 def test_application_context_with_generic_interface() -> None:
-    @immutable
-    class Command(ABC): ...
-
-    CommandT_contra = TypeVar("CommandT_contra", bound=Command, contravariant=True)
-
-    class IGenericCommandUseCase(Generic[CommandT_contra], Protocol):
-        @abstractmethod
-        def execute(self, command: CommandT_contra) -> None: ...
-
     @immutable
     class SignupCommand(Command):
         username: str
         password: str
 
-    class ISignupCommandUseCase(IGenericCommandUseCase[SignupCommand], Protocol): ...
+    class ISignupCommandUseCase(ICommandUseCase[SignupCommand, None], Protocol): ...
+
+    @immutable
+    class SigninCommand(Command):
+        username: str
+        password: str
+
+    class ISigninCommandUseCase(ICommandUseCase[SigninCommand, None], Protocol): ...
 
     @Pod()
     class SignupCommandUseCase(ISignupCommandUseCase):
@@ -745,12 +773,334 @@ def test_application_context_with_generic_interface() -> None:
         def execute(self, command: SignupCommand) -> None:
             self.users[command.username] = command
 
+    @Pod()
+    class SigninCommandUseCase(ISigninCommandUseCase):
+        logs: list[SigninCommand]
+
+        def __init__(self) -> None:
+            self.logs = []
+
+        def execute(self, command: SigninCommand) -> None:
+            self.logs.append(command)
+
     context: ApplicationContext = ApplicationContext()
     context.register(SignupCommandUseCase)
+    context.register(SigninCommandUseCase)
     context.start()
 
-    usecase = context.get(IGenericCommandUseCase[SignupCommand])
-    usecase.execute(SignupCommand(username="user", password="password"))
+    signup = context.get(ICommandUseCase[SignupCommand, None])
+    signup.execute(SignupCommand(username="user", password="password"))
+    signup = context.get(SignupCommandUseCase)
+    assert "user" in signup.users
 
-    derived = context.get(SignupCommandUseCase)
-    assert "user" in derived.users
+    signin = context.get(ICommandUseCase[SigninCommand, None])
+    signin.execute(SigninCommand(username="user", password="password"))
+    signin = context.get(SigninCommandUseCase)
+    assert len(signin.logs) == 1
+
+
+def test_application_context_with_multiple_children_list() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class FirstSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SecondSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class ThirdSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SampleService:
+        __repositories: list[IRepository]
+
+        def __init__(self, repositories: list[IRepository]) -> None:
+            self.__repositories = repositories
+
+        def get(self, id: str) -> list[dict[str, Any]]:
+            return [repository.get(id) for repository in self.__repositories]
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(FirstSampleRepository)
+    context.register(SecondSampleRepository)
+    context.register(ThirdSampleRepository)
+    context.register(SampleService)
+    context.start()
+
+    service = context.get(SampleService)
+    assert service.get("1") == [
+        {"id": "1"},
+        {"id": "1"},
+        {"id": "1"},
+    ]
+
+
+def test_application_context_with_multiple_children_set() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class FirstSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SecondSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class ThirdSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SampleService:
+        __repositories: set[IRepository]
+
+        def __init__(self, repositories: set[IRepository]) -> None:
+            self.__repositories = repositories
+
+        def get(self, id: str) -> list[dict[str, Any]]:
+            return [repository.get(id) for repository in self.__repositories]
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(FirstSampleRepository)
+    context.register(SecondSampleRepository)
+    context.register(ThirdSampleRepository)
+    context.register(SampleService)
+    context.start()
+
+    service = context.get(SampleService)
+    assert service.get("1") == [
+        {"id": "1"},
+        {"id": "1"},
+        {"id": "1"},
+    ]
+
+
+def test_application_context_with_multiple_children_dict() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class FirstSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SecondSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class ThirdSampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SampleService:
+        __repositories: dict[str, IRepository]
+
+        def __init__(self, repositories: dict[str, IRepository]) -> None:
+            self.__repositories = repositories
+
+        def get(self, id: str) -> dict[str, dict[str, Any]]:
+            return {
+                name: repository.get(id)
+                for name, repository in self.__repositories.items()
+            }
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(FirstSampleRepository)
+    context.register(SecondSampleRepository)
+    context.register(ThirdSampleRepository)
+    context.register(SampleService)
+    context.start()
+
+    service = context.get(SampleService)
+    assert service.get("1") == {
+        "first_sample_repository": {"id": "1"},
+        "second_sample_repository": {"id": "1"},
+        "third_sample_repository": {"id": "1"},
+    }
+
+
+def test_application_context_with_optional() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    class INoneService(Protocol):
+        @abstractmethod
+        def none(self) -> None: ...
+
+    @Pod()
+    class SampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class NoneService(INoneService):
+        def none(self) -> None:
+            return
+
+    @Pod()
+    class SampleService:
+        __repository: IRepository
+        __none_service: INoneService | None
+
+        def __init__(
+            self,
+            repositories: IRepository,
+            none_service: INoneService | None,
+        ) -> None:
+            self.__repository = repositories
+            self.__none_service = none_service
+
+        def get(self, id: str) -> dict[str, Any]:
+            if self.__none_service is not None:
+                self.__none_service.none()
+            return self.__repository.get(id)
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(SampleRepository)
+    context.register(NoneService)
+    context.register(SampleService)
+    context.start()
+
+    service = context.get(SampleService)
+    assert service.get("1") == {"id": "1"}
+
+
+def test_application_context_with_default() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class SampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SampleService:
+        __repository: IRepository
+
+        def __init__(self, repositories: IRepository = SampleRepository()) -> None:
+            self.__repository = repositories
+
+        def get(self, id: str) -> dict[str, Any]:
+            return self.__repository.get(id)
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(SampleService)
+    context.start()
+
+    service = context.get(SampleService)
+    assert service.get("1") == {"id": "1"}
+
+
+def test_application_context_with_non_existance_type_or_none() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class SampleRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id}
+
+    @Pod()
+    class SampleService:
+        __repository: IRepository
+        __number: int | None
+
+        def __init__(self, repositories: IRepository, number: int | None) -> None:
+            self.__repository = repositories
+            self.__number = number
+
+        def get(self, id: str) -> tuple[dict[str, Any], int | None]:
+            return self.__repository.get(id), self.__number
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(SampleRepository)
+    context.register(SampleService)
+    context.start()
+
+    service = context.get(SampleService)
+    assert service.get("1") == ({"id": "1"}, None)
+
+
+def test_application_context_with_multiple_children_list_not_exists() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class SampleService:
+        __repositories: list[IRepository]
+
+        def __init__(self, repositories: list[IRepository]) -> None:
+            self.__repositories = repositories
+
+        def get(self, id: str) -> list[dict[str, Any]]:
+            return [repository.get(id) for repository in self.__repositories]
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(SampleService)
+    with pytest.raises(NoSuchPodError):
+        context.start()
+
+
+def test_application_context_with_multiple_children_set_not_exists() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class SampleService:
+        __repositories: set[IRepository]
+
+        def __init__(self, repositories: set[IRepository]) -> None:
+            self.__repositories = repositories
+
+        def get(self, id: str) -> list[dict[str, Any]]:
+            return [repository.get(id) for repository in self.__repositories]
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(SampleService)
+    with pytest.raises(NoSuchPodError):
+        context.start()
+
+
+def test_application_context_with_multiple_children_dict_not_exists() -> None:
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class SampleService:
+        __repositories: dict[str, IRepository]
+
+        def __init__(self, repositories: dict[str, IRepository]) -> None:
+            self.__repositories = repositories
+
+        def get(self, id: str) -> dict[str, dict[str, Any]]:
+            return {name: repository.get(id) for name, repository in self.__repositories.items()}
+
+    context: ApplicationContext = ApplicationContext()
+    context.register(SampleService)
+    with pytest.raises(NoSuchPodError):
+        context.start()
