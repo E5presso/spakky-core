@@ -6,8 +6,8 @@ from logging import Logger
 
 from spakky.aop.advisor import Advisor, AsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
-from spakky.application.interfaces.container import IPodContainer
-from spakky.application.interfaces.post_processor import IPodPostProcessor
+from spakky.application.interfaces.container import IContainer
+from spakky.application.interfaces.post_processor import IPostProcessor
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
 from spakky.pod.order import Order
@@ -50,7 +50,7 @@ class AspectProxyHandler(AbstractProxyHandler):
 
 
 @Order(0)
-class AspectPostProcessor(IPodPostProcessor):
+class AspectPostProcessor(IPostProcessor):
     __logger: Logger
     __cache: dict[type, object]
 
@@ -66,7 +66,7 @@ class AspectPostProcessor(IPodPostProcessor):
     def __get_cache(self, type_: type) -> object | None:
         return self.__cache.get(type_, None)
 
-    def post_process(self, container: IPodContainer, pod: object) -> object:
+    def post_process(self, container: IContainer, pod: object) -> object:
         if (cached := self.__get_cache(type(pod))) is not None:
             return cached
         if Aspect.exists(pod) or AsyncAspect.exists(pod):

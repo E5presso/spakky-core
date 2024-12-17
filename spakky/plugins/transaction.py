@@ -1,9 +1,9 @@
-from spakky.application.interfaces.pluggable import IPluggable
-from spakky.application.interfaces.registry import IPodRegistry
+from spakky.application.interfaces.container import IContainer
+from spakky.application.interfaces.plugin import IPlugin
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect
 
 
-class TransactionPlugin(IPluggable):
-    def register(self, registry: IPodRegistry) -> None:
-        registry.register(TransactionalAspect)
-        registry.register(AsyncTransactionalAspect)
+class TransactionPlugin(IPlugin):
+    def register(self, container: IContainer) -> None:
+        container.register(TransactionalAspect)
+        container.register(AsyncTransactionalAspect)

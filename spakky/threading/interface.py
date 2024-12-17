@@ -1,7 +1,17 @@
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
-from asyncio import Lock as AsyncLock, Event as AsyncEvent
 from threading import Lock as ThreadLock, Event as ThreadEvent
+from asyncio.locks import Lock as AsyncLock, Event as AsyncEvent
+
+from spakky.threading.error import SpakkyThreadingError
+
+
+class ThreadAlreadyStartedError(SpakkyThreadingError):
+    message = "Thread is already started"
+
+
+class ThreadNotStartedError(SpakkyThreadingError):
+    message = "Thread is not started"
 
 
 @runtime_checkable

@@ -1,9 +1,9 @@
-from spakky.application.interfaces.pluggable import IPluggable
-from spakky.application.interfaces.registry import IPodRegistry
+from spakky.application.interfaces.container import IContainer
+from spakky.application.interfaces.plugin import IPlugin
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 
 
-class LoggingPlugin(IPluggable):
-    def register(self, registry: IPodRegistry) -> None:
-        registry.register(LoggingAspect)
-        registry.register(AsyncLoggingAspect)
+class LoggingPlugin(IPlugin):
+    def register(self, container: IContainer) -> None:
+        container.register(LoggingAspect)
+        container.register(AsyncLoggingAspect)

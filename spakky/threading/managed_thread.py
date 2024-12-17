@@ -1,12 +1,14 @@
 from typing import Optional
-from asyncio import Lock as AsyncLock, Event as AsyncEvent, new_event_loop
 from threading import Lock as ThreadLock, Event as ThreadEvent, Thread
+from asyncio.locks import Lock as AsyncLock, Event as AsyncEvent
+from asyncio.events import new_event_loop
 
-from spakky.threading.error import ThreadAlreadyStartedError, ThreadNotStartedError
 from spakky.threading.interface import (
     IAsyncManagedThreadAction,
     IManagedThread,
     IManagedThreadAction,
+    ThreadAlreadyStartedError,
+    ThreadNotStartedError,
 )
 
 

@@ -1,22 +1,18 @@
 import sys
 from copy import deepcopy
 from uuid import UUID
-from types import ModuleType, GenericAlias
+from types import ModuleType
 from typing import Callable, cast, get_args, get_origin
 
 from spakky.application.error import SpakkyApplicationError
 from spakky.application.interfaces.container import (
-    IPodContainer,
+    CannotRegisterNonPodObjectError,
+    IContainer,
     NoSuchPodError,
     NoUniquePodError,
 )
-from spakky.application.interfaces.pluggable import IPluggable
-from spakky.application.interfaces.plugin_registry import IPluginRegistry
-from spakky.application.interfaces.post_processor import IPodPostProcessor
-from spakky.application.interfaces.registry import (
-    CannotRegisterNonPodObjectError,
-    IPodRegistry,
-)
+from spakky.application.interfaces.plugin import IPlugin, IPluginRegistry
+from spakky.application.interfaces.post_processor import IPostProcessor
 from spakky.core.importing import (
     Module,
     is_package,
@@ -36,19 +32,19 @@ class CircularDependencyGraphDetectedError(SpakkyApplicationError):
     message = "Circular dependency detected"
 
 
-class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
+class ApplicationContext(IContainer, IPluginRegistry):
     __forward_type_map: dict[str, type]
     __type_lookup: dict[type, set[type]]  # {base: {derived}}
     __pods: set[Pod]
     __singleton_cache: dict[UUID, object]
-    __post_processors: list[IPodPostProcessor]
+    __post_processors: list[IPostProcessor]
 
     @property
     def pods(self) -> set[PodType]:
         return {x.target for x in self.__pods}
 
     @property
-    def post_processors(self) -> set[type[IPodPostProcessor]]:
+    def post_processors(self) -> set[type[IPostProcessor]]:
         return {type(x) for x in self.__post_processors}
 
     def __init__(
@@ -138,16 +134,13 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def __get_internal_as_list(
         self,
-        type_: GenericAlias,
+        target_type: type,
         name: str | None,
         dependency_hierarchy: list[type],
     ) -> list[object] | None:
-        target_type = get_args(type_)[0]
         resolved_types = self.__resolve_all_types(target_type)
         if resolved_types is None:
-            if is_optional(type_):
-                return None
-            raise NoSuchPodError(type_)
+            return None
         return [
             instance
             for _, instance in [
@@ -163,16 +156,13 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def __get_internal_as_set(
         self,
-        type_: GenericAlias,
+        target_type: type,
         name: str | None,
         dependency_hierarchy: list[type],
     ) -> set[object] | None:
-        target_type = get_args(type_)[0]
         resolved_types = self.__resolve_all_types(target_type)
         if resolved_types is None:
-            if is_optional(type_):
-                return None
-            raise NoSuchPodError(type_)
+            return None
         return {
             instance
             for _, instance in {
@@ -188,19 +178,13 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
 
     def __get_internal_as_dict(
         self,
-        type_: GenericAlias,
+        target_type: type,
         name: str | None,
         dependency_hierarchy: list[type],
     ) -> dict[str, object] | None:
-        key_type = get_args(type_)[0]
-        target_type = get_args(type_)[1]
-        if key_type != str:
-            return None
         resolved_types = self.__resolve_all_types(target_type)
         if resolved_types is None:
-            if is_optional(type_):
-                return None
-            raise NoSuchPodError(type_)
+            return None
         return dict(
             {
                 self.__get_instance_by_type(
@@ -234,27 +218,30 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
                 dependency_hierarchy,
             )
             return instance
-        origin_type: GenericAlias | None = get_origin(type_)
-        args = get_args(type_)
-        if origin_type is not None:
-            if origin_type == list:
-                return self.__get_internal_as_list(
-                    origin_type[args],
+        generic_type = get_origin(type_)
+        generic_args = get_args(type_)
+        if generic_type is not None:
+            collection: list[object] | set[object] | dict[str, object] | None = None
+            if generic_type == list:
+                collection = self.__get_internal_as_list(
+                    generic_args[0],
                     name,
                     dependency_hierarchy,
                 )
-            if origin_type == set:
-                return self.__get_internal_as_set(
-                    origin_type[args],
+            if generic_type == set:
+                collection = self.__get_internal_as_set(
+                    generic_args[0],
                     name,
                     dependency_hierarchy,
                 )
-            if origin_type == dict:
-                return self.__get_internal_as_dict(
-                    origin_type[args],
+            if generic_type == dict:
+                collection = self.__get_internal_as_dict(
+                    generic_args[1],
                     name,
                     dependency_hierarchy,
                 )
+            if collection is not None:
+                return collection
         if is_optional(type_):
             return None
         raise NoSuchPodError(type_)
@@ -294,13 +281,13 @@ class ApplicationContext(IPodContainer, IPodRegistry, IPluginRegistry):
             raise CannotRegisterNonPodObjectError(obj)
         self.__register_pod_definition(Pod.get(obj))
 
-    def register_post_processor(self, post_processor: IPodPostProcessor) -> None:
+    def register_post_processor(self, post_processor: IPostProcessor) -> None:
         self.__post_processors.append(post_processor)
         self.__post_processors.sort(
             key=lambda x: Order.get_or_default(x, Order(sys.maxsize)).order
         )
 
-    def register_plugin(self, plugin: IPluggable) -> None:
+    def register_plugin(self, plugin: IPlugin) -> None:
         plugin.register(self)
 
     def scan(self, package: Module, exclude: set[Module] | None = None) -> None:

@@ -1,10 +1,11 @@
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from spakky.application.interfaces.container import IPodContainer
+if TYPE_CHECKING:
+    from spakky.application.interfaces.container import IContainer
 
 
 @runtime_checkable
-class IPodPostProcessor(Protocol):
+class IPostProcessor(Protocol):
     @abstractmethod
-    def post_process(self, container: IPodContainer, pod: object) -> object: ...
+    def post_process(self, container: "IContainer", pod: object) -> object: ...

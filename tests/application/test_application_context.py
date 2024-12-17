@@ -1,3 +1,6 @@
+# pylint: disable=too-many-lines, line-too-long
+
+
 from abc import abstractmethod
 from uuid import UUID, uuid4
 from typing import Any, Protocol
@@ -12,8 +15,8 @@ from spakky.application.application_context import (
     NoSuchPodError,
     NoUniquePodError,
 )
-from spakky.application.interfaces.pluggable import IPluggable
-from spakky.application.interfaces.registry import IPodRegistry
+from spakky.application.interfaces.container import IContainer
+from spakky.application.interfaces.plugin import IPlugin
 from spakky.core.annotation import ClassAnnotation
 from spakky.core.mutability import immutable
 from spakky.domain.usecases.command import Command, ICommandUseCase
@@ -419,9 +422,9 @@ def test_application_context_register_unmanaged_factory_expect_error() -> None:
 
 
 def test_application_context_register_plugin() -> None:
-    class DummyPlugin(IPluggable):
-        def register(self, registry: IPodRegistry) -> None:
-            registry.register(PodA)
+    class DummyPlugin(IPlugin):
+        def register(self, container: IContainer) -> None:
+            container.register(PodA)
 
     context: ApplicationContext = ApplicationContext()
     context.register_plugin(DummyPlugin())
