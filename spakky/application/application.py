@@ -2,7 +2,7 @@ import sys
 from types import ModuleType
 from typing import Callable
 from logging import Logger
-from importlib.metadata import EntryPoints, SelectableGroups, entry_points
+from importlib.metadata import EntryPoints, entry_points
 
 from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.error import SpakkyApplicationError
@@ -97,7 +97,7 @@ class SpakkyApplication:
         return self
 
     def load_plugins(self) -> Self:
-        all_entry_points: SelectableGroups = entry_points()
+        all_entry_points = entry_points()
         my_plugins: EntryPoints = all_entry_points.select(group=PLUGIN_PATH)
 
         for entry_point in my_plugins:
