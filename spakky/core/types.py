@@ -4,11 +4,9 @@ from typing import (
     Union,
     TypeVar,
     Callable,
-    Optional,
     Awaitable,
     ParamSpec,
     TypeAlias,
-    TypeGuard,
     get_args,
     get_origin,
 )
@@ -53,9 +51,8 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def is_optional(type_: Any) -> TypeGuard[Optional[Any]]:
-    origin_type: type = get_origin(type_)
-    is_union_type: bool = origin_type is UnionType or origin_type is Union
-    includes_none = type(None) in get_args(type_)
+def is_optional(type_: Any) -> bool:
+    is_union_type: bool = get_origin(type_) in (UnionType, Union)
+    includes_none: bool = type(None) in get_args(type_)
     is_union_with_none: bool = is_union_type and includes_none
     return is_union_with_none

@@ -7,10 +7,10 @@ import pytest
 from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.application_context import ApplicationContext
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
+from spakky.core.importing import list_objects
 from spakky.pod.pod import Pod
 from spakky.security.key import Key
-from tests.aop import apps
-from tests.aop.apps.dummy import AsyncDummyAdvisor, DummyAdvisor
+from tests.aop.apps import dummy
 
 
 @pytest.fixture(name="key", scope="package")
@@ -46,13 +46,13 @@ def get_application_context_fixture(
     def get_key() -> Key:
         return key
 
-    context: ApplicationContext = ApplicationContext({apps})
-    context.register(get_logger)
-    context.register(get_key)
-    context.register(DummyAdvisor)
-    context.register(LoggingAspect)
-    context.register(AsyncDummyAdvisor)
-    context.register(AsyncLoggingAspect)
-    context.register_post_processor(AspectPostProcessor(logger))
+    context: ApplicationContext = ApplicationContext()
+    context.add(get_logger)
+    context.add(get_key)
+    context.add(AspectPostProcessor)
+    context.add(LoggingAspect)
+    context.add(AsyncLoggingAspect)
+    for obj in list_objects(dummy, Pod.exists):
+        context.add(obj)
     context.start()
     yield context

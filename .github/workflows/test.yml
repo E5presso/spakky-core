@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        PYTHON: ["3.10", "3.11", "3.12"]
+        PYTHON: ["3.10", "3.11", "3.12", "3.13"]
     env:
       OS: ubuntu-latest
       PYTHON: "${{ matrix.PYTHON }}"
-      POETRY: "1.8.3"
+      POETRY: "2.1.1"
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
     - name: Checkout Branch
