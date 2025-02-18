@@ -51,6 +51,7 @@ class ScryptPasswordEncoder(IPasswordEncoder):
 
     def __init__(
         self,
+        *,
         password_hash: str | None = None,
         password: str | None = None,
         salt: Key | None = None,

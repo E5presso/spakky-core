@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Protocol
 
 from spakky.application.application_context import ApplicationContext
-from spakky.application.inject import inject
+from spakky.pod.inject import inject
 from spakky.pod.pod import Pod
 
 
@@ -42,11 +42,11 @@ def test_inject_to_function_by_type() -> None:
             return self.__a.a() + self.__b.b()
 
     context: ApplicationContext = ApplicationContext()
-    context.register(A)
-    context.register(B)
-    context.register(C)
+    context.add(A)
+    context.add(B)
+    context.add(C)
 
-    def execute_c(c: IC = inject(context=context, type_=IC)) -> str:
+    def execute_c(c: IC = inject(context, type_=IC)) -> str:
         return c.c()
 
     assert execute_c() == "ab"

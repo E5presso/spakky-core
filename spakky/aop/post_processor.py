@@ -6,10 +6,11 @@ from logging import Logger
 
 from spakky.aop.advisor import Advisor, AsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
-from spakky.application.interfaces.container import IPodContainer
-from spakky.application.interfaces.post_processor import IPodPostProcessor
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
+from spakky.pod.interfaces.aware.container_aware import IContainerAware
+from spakky.pod.interfaces.container import IContainer
+from spakky.pod.interfaces.post_processor import IPostProcessor
 from spakky.pod.order import Order
 from spakky.pod.pod import Pod
 
@@ -50,14 +51,19 @@ class AspectProxyHandler(AbstractProxyHandler):
 
 
 @Order(0)
-class AspectPostProcessor(IPodPostProcessor):
+@Pod()
+class AspectPostProcessor(IPostProcessor, IContainerAware):
     __logger: Logger
     __cache: dict[type, object]
+    __container: IContainer
 
     def __init__(self, logger: Logger) -> None:
         super().__init__()
         self.__logger = logger
         self.__cache = {}
+
+    def set_container(self, container: IContainer) -> None:
+        self.__container = container
 
     def __set_cache(self, type_: type, obj: object) -> object:
         self.__cache[type_] = obj
@@ -66,7 +72,7 @@ class AspectPostProcessor(IPodPostProcessor):
     def __get_cache(self, type_: type) -> object | None:
         return self.__cache.get(type_, None)
 
-    def post_process(self, container: IPodContainer, pod: object) -> object:
+    def post_process(self, pod: object) -> object:
         if (cached := self.__get_cache(type(pod))) is not None:
             return cached
         if Aspect.exists(pod) or AsyncAspect.exists(pod):
@@ -82,7 +88,7 @@ class AspectPostProcessor(IPodPostProcessor):
                 and AsyncAspect.get(x.target).matches(pod)
             )
 
-        matched: Sequence[object] = list(container.find(selector).values())
+        matched: Sequence[object] = list(self.__container.find(selector))
         if not any(matched):
             return self.__set_cache(type(pod), pod)
         matched.sort(

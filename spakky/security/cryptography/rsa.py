@@ -5,8 +5,8 @@ from Crypto.PublicKey import RSA
 from Crypto.PublicKey.RSA import RsaKey
 from Crypto.Signature import PKCS1_v1_5
 
-from spakky.security.encoding import Base64Encoder
 from spakky.security.cryptography.interface import ICryptor, ISigner
+from spakky.security.encoding import Base64Encoder
 from spakky.security.error import (
     CannotImportAsymmetricKeyError,
     DecryptionFailedError,

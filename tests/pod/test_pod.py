@@ -1,15 +1,84 @@
-from typing import Any
+from abc import abstractmethod
+from typing import Any, TypeVar, Protocol, Annotated, cast
+from dataclasses import dataclass
 
 import pytest
 
 from spakky.pod.pod import (
     CannotDeterminePodTypeError,
     CannotUseVarArgsInPodError,
-    Dependency,
+    DependencyInfo,
     Pod,
     is_class_pod,
     is_function_pod,
 )
+from spakky.pod.qualifier import Qualifier
+
+
+def test_pod_issubclass_of() -> None:
+    class A: ...
+
+    @Pod()
+    class B(A): ...
+
+    @Pod()
+    class C(A): ...
+
+    assert Pod.get(B).is_family_with(A) is True
+    assert Pod.get(C).is_family_with(A) is True
+
+
+def test_pod_issubclass_of_with_generic() -> None:
+    T_contra = TypeVar("T_contra", contravariant=True)
+
+    class IA(Protocol[T_contra]):
+        @abstractmethod
+        def do(self, t: T_contra) -> None: ...
+
+    @Pod()
+    class B(IA[int]):
+        def do(self, t: int) -> None:
+            return
+
+    @Pod()
+    class C(IA[str]):
+        def do(self, t: str) -> None:
+            return
+
+    assert Pod.get(B).is_family_with(IA) is False
+    assert Pod.get(C).is_family_with(IA) is False
+    assert Pod.get(B).is_family_with(IA[int]) is True
+    assert Pod.get(C).is_family_with(IA[str]) is True
+
+
+def test_pod_instantiate() -> None:
+    @Pod()
+    class A:
+        def __init__(self, a: int) -> None:
+            self.a = a
+
+    a: A = cast(A, Pod.get(A).instantiate({"a": 1}))
+    assert a.a == 1
+
+
+def test_pod_instantiate_with_default_value() -> None:
+    @Pod()
+    class A:
+        def __init__(self, name: str, age: int = 30) -> None:
+            self.name = name
+            self.age = age
+
+    a1: A = cast(A, Pod.get(A).instantiate({"name": "John"}))
+    assert a1.name == "John"
+    assert a1.age == 30
+
+    a2: A = cast(A, Pod.get(A).instantiate({"name": "John", "age": 40}))
+    assert a2.name == "John"
+    assert a2.age == 40
+
+    a3: A = cast(A, Pod.get(A).instantiate({"name": "John", "age": None}))
+    assert a3.name == "John"
+    assert a3.age == 30
 
 
 def test_is_class_pod() -> None:
@@ -41,8 +110,8 @@ def test_pod() -> None:
             self.age = age
 
     assert Pod.get(SampleClass).dependencies == {
-        "name": Dependency(type_=str, has_default=False),
-        "age": Dependency(type_=int, has_default=False),
+        "name": DependencyInfo(name="name", type_=str, has_default=False),
+        "age": DependencyInfo(name="age", type_=int, has_default=False),
     }
     assert Pod.get(SampleClass).name == "sample_class"
     sample: SampleClass = SampleClass(name="John", age=30)
@@ -137,3 +206,59 @@ def test_pod_factory_with_name() -> None:
     assert Pod.get(get_a) is not None
     assert Pod.get(get_a).name == "a"
     assert Pod.get(get_a).type_ is A
+
+
+def test_pod_with_qualifier() -> None:
+    def is_dummy_pod(pod: Pod) -> bool:
+        return pod.name == "dummy_pod"
+
+    def is_primary_pod(pod: Pod) -> bool:
+        return pod.is_primary
+
+    @Pod()
+    @dataclass
+    class A:
+        name: Annotated[str, Qualifier(is_dummy_pod), "dummy", 30]
+
+    @Pod()
+    class B:
+        __name: str
+        __age: int
+        __job: str
+
+        def __init__(
+            self,
+            name: Annotated[str, Qualifier(is_primary_pod), "other", True, None],
+            age: Annotated[int, Qualifier(is_primary_pod), "other", True, None],
+            job: str,
+        ) -> None:
+            self.__name = name
+            self.__age = age
+            self.__job = job
+
+        def b(self) -> str:
+            return f"{self.__name}({self.__job}) is {self.__age} years old"
+
+    assert Pod.get(A).dependencies == {
+        "name": DependencyInfo(
+            name="name",
+            type_=str,
+            has_default=False,
+            qualifier=Qualifier(is_dummy_pod),
+        ),
+    }
+    assert Pod.get(B).dependencies == {
+        "name": DependencyInfo(
+            name="name",
+            type_=str,
+            has_default=False,
+            qualifier=Qualifier(is_primary_pod),
+        ),
+        "age": DependencyInfo(
+            name="age",
+            type_=int,
+            has_default=False,
+            qualifier=Qualifier(is_primary_pod),
+        ),
+        "job": DependencyInfo(name="job", type_=str, has_default=False),
+    }

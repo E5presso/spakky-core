@@ -1,10 +1,13 @@
-from asyncio import Lock as AsyncLock, Event as AsyncEvent
 from threading import Lock as ThreadLock, Event as ThreadEvent
+from asyncio.locks import Lock as AsyncLock, Event as AsyncEvent
 
 import pytest
 
-from spakky.threading.error import ThreadAlreadyStartedError, ThreadNotStartedError
-from spakky.threading.interface import IManagedThread
+from spakky.threading.interface import (
+    IManagedThread,
+    ThreadAlreadyStartedError,
+    ThreadNotStartedError,
+)
 from spakky.threading.managed_thread import AsyncManagedThread, ManagedThread
 
 NUMBER_OF_ITERATIONS: int = 100
@@ -55,11 +58,11 @@ def test_managed_thread_multiple_times() -> None:
 def test_managed_thread_without_lock() -> None:
     number: int = 0
 
+    # pylint: disable=unused-argument
     def action(event: ThreadEvent, lock: ThreadLock) -> None:
         nonlocal number
         while not event.is_set():
-            with lock:
-                number += 1
+            number += 1
 
     thread: IManagedThread = ManagedThread(action)
     thread.start()
@@ -168,11 +171,11 @@ async def test_async_managed_thread_multiple_times() -> None:
 async def test_async_managed_thread_without_lock() -> None:
     number: int = 0
 
+    # pylint: disable=unused-argument
     async def action(event: AsyncEvent, lock: AsyncLock) -> None:
         nonlocal number
         while not event.is_set():
-            async with lock:
-                number += 1
+            number += 1
 
     thread: IManagedThread = AsyncManagedThread(action)
     thread.start()

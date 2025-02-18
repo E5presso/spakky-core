@@ -7,7 +7,7 @@
         <img src="https://img.shields.io/pypi/v/spakky-core?label=latest&color=blue">
     </a>
     <a href="https://github.com/E5presso/spakky-core">
-        <img src="https://img.shields.io/badge/python-3.10_|_3.11_|_3.12-green.svg">
+        <img src="https://img.shields.io/badge/python-3.10_|_3.11_|_3.12_|_3.13-green.svg">
     </a>
     <a href="https://github.com/E5presso/spakky-core/actions/workflows/test.yml">
         <img src="https://github.com/E5presso/spakky-core/actions/workflows/test.yml/badge.svg" alt="Test">
