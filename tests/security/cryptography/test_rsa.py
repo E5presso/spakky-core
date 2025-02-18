@@ -2,9 +2,9 @@ import random
 
 import pytest
 
-from spakky.security.encoding import Base64Encoder
 from spakky.security.cryptography.interface import ICryptor, ISigner
 from spakky.security.cryptography.rsa import AsymmetricKey, Rsa
+from spakky.security.encoding import Base64Encoder
 from spakky.security.error import (
     CannotImportAsymmetricKeyError,
     DecryptionFailedError,

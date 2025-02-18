@@ -3,7 +3,7 @@
 
 from abc import abstractmethod
 from uuid import UUID, uuid4
-from typing import Any, Protocol
+from typing import Any, Protocol, Annotated, runtime_checkable
 from dataclasses import dataclass
 
 import pytest
@@ -19,8 +19,9 @@ from spakky.core.mutability import immutable
 from spakky.domain.usecases.command import Command, ICommandUseCase
 from spakky.pod.interfaces.container import CannotRegisterNonPodObjectError
 from spakky.pod.lazy import Lazy
-from spakky.pod.pod import Pod
+from spakky.pod.pod import Pod, PodInstantiationFailedError
 from spakky.pod.primary import Primary
+from spakky.pod.qualifier import Qualifier
 
 
 def test_application_context_register_expect_success() -> None:
@@ -207,6 +208,47 @@ def test_application_context_get_primary_expect_success() -> None:
     context.add(SecondSamplePod)
 
     assert isinstance(context.get(type_=ISamplePod), FirstSamplePod)
+
+
+def test_application_context_get_qualified_expect_success() -> None:
+    class ISamplePod(Protocol):
+        @abstractmethod
+        def do(self) -> str: ...
+
+    @Pod()
+    class FirstSamplePod(ISamplePod):
+        def do(self) -> str:
+            return "first"
+
+    @Pod()
+    class SecondSamplePod(ISamplePod):
+        def do(self) -> str:
+            return "second"
+
+    @Pod()
+    class SampleService:
+        __pod: ISamplePod
+
+        def __init__(
+            self,
+            pod: Annotated[
+                ISamplePod,
+                Qualifier(lambda pod: pod.name.startswith("second")),
+            ],
+        ) -> None:
+            self.__pod = pod
+
+        def do(self) -> str:
+            return self.__pod.do()
+
+    context: ApplicationContext = ApplicationContext()
+    context.add(FirstSamplePod)
+    context.add(SecondSamplePod)
+    context.add(SampleService)
+    context.start()
+
+    service = context.get(type_=SampleService)
+    assert service.do() == "second"
 
 
 def test_application_context_get_primary_expect_no_unique_error() -> None:
@@ -406,19 +448,33 @@ def test_application_factory_loading() -> None:
 
 
 def test_application_raise_error_with_circular_dependency() -> None:
+    @runtime_checkable
+    class IA(Protocol):
+        def a(self) -> str: ...
+
+    @runtime_checkable
+    class IB(Protocol):
+        def b(self) -> str: ...
+
     @Pod()
-    class A:
-        __b: "B"  # pylint: disable=unused-private-member
+    class A(IA):
+        __b: IB
 
-        def __init__(self, b: "B") -> None:
-            self.__b = b  # pylint: disable=unused-private-member
+        def __init__(self, b: IB) -> None:
+            self.__b = b
+
+        def a(self) -> str:
+            return self.__b.b()
 
     @Pod()
-    class B:
-        __a: "A"  # pylint: disable=unused-private-member
+    class B(IB):
+        __a: IA
 
-        def __init__(self, a: "A") -> None:
-            self.__a = a  # pylint: disable=unused-private-member
+        def __init__(self, a: IA) -> None:
+            self.__a = a
+
+        def b(self) -> str:
+            return self.__a.a()
 
     context: ApplicationContext = ApplicationContext()
     context.add(A)
@@ -482,6 +538,7 @@ def test_application_context_with_generic_interface() -> None:
 
 
 def test_application_context_with_multiple_children_list_not_exists() -> None:
+    @runtime_checkable
     class IRepository(Protocol):
         @abstractmethod
         def get(self, id: str) -> dict[str, Any]: ...
@@ -498,11 +555,12 @@ def test_application_context_with_multiple_children_list_not_exists() -> None:
 
     context: ApplicationContext = ApplicationContext()
     context.add(SampleService)
-    with pytest.raises(NoSuchPodError):
+    with pytest.raises(PodInstantiationFailedError):
         context.start()
 
 
 def test_application_context_with_multiple_children_set_not_exists() -> None:
+    @runtime_checkable
     class IRepository(Protocol):
         @abstractmethod
         def get(self, id: str) -> dict[str, Any]: ...
@@ -519,11 +577,12 @@ def test_application_context_with_multiple_children_set_not_exists() -> None:
 
     context: ApplicationContext = ApplicationContext()
     context.add(SampleService)
-    with pytest.raises(NoSuchPodError):
+    with pytest.raises(PodInstantiationFailedError):
         context.start()
 
 
 def test_application_context_with_multiple_children_dict_not_exists() -> None:
+    @runtime_checkable
     class IRepository(Protocol):
         @abstractmethod
         def get(self, id: str) -> dict[str, Any]: ...
@@ -543,5 +602,5 @@ def test_application_context_with_multiple_children_dict_not_exists() -> None:
 
     context: ApplicationContext = ApplicationContext()
     context.add(SampleService)
-    with pytest.raises(NoSuchPodError):
+    with pytest.raises(PodInstantiationFailedError):
         context.start()

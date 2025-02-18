@@ -1,27 +1,30 @@
 import inspect
 from enum import Enum, auto
-from typing import TypeVar, TypeAlias, TypeGuard
+from typing import TypeVar, Annotated, TypeAlias, TypeGuard, get_origin
 from inspect import Parameter, isclass, isfunction
 from dataclasses import field, dataclass
 
 from spakky.core.annotation import Annotation
 from spakky.core.interfaces.equatable import IEquatable
+from spakky.core.metadata import get_metadata
 from spakky.core.mro import generic_mro
-from spakky.core.types import Class, Func, is_optional
+from spakky.core.types import Class, Func
 from spakky.pod.error import SpakkyPodError
 from spakky.pod.primary import Primary
+from spakky.pod.qualifier import Qualifier
 from spakky.utils.casing import pascal_to_snake
 from spakky.utils.inspection import has_default_constructor, is_instance_method
 
 
 @dataclass
-class Dependency:
+class DependencyInfo:
+    name: str
     type_: Class
     has_default: bool
-    is_optional: bool
+    qualifier: Qualifier | None = None
 
 
-DependencyMap: TypeAlias = dict[str, Dependency]
+DependencyMap: TypeAlias = dict[str, DependencyInfo]
 PodType: TypeAlias = Func | Class
 PodT = TypeVar("PodT", bound=PodType)
 
@@ -36,6 +39,22 @@ class CannotUseVarArgsInPodError(SpakkyPodError):
 
 class CannotUsePositionalOnlyArgsInPodError(SpakkyPodError):
     message = "Cannot use positional-only arguments in pod"
+
+
+class CannotUseMultipleQualifiersInDependencyAnnotationError(SpakkyPodError):
+    message = "Cannot use multiple qualifiers in dependency annotation"
+
+
+class PodInstantiationFailedError(SpakkyPodError):
+    message = "Pod instantiation failed"
+
+
+class UnexpectedDependencyNameInjectedError(PodInstantiationFailedError):
+    message = "Unexpected dependency name injected"
+
+
+class UnexpectedDependencyTypeInjectedError(PodInstantiationFailedError):
+    message = "Unexpected dependency type injected"
 
 
 @dataclass(eq=False)
@@ -71,11 +90,25 @@ class Pod(Annotation, IEquatable):
                 raise CannotUseVarArgsInPodError(obj, parameter.name)
             if parameter.annotation == Parameter.empty:
                 raise CannotDeterminePodTypeError(obj, parameter.name)
-            dependencies[parameter.name] = Dependency(
-                type_=parameter.annotation,
-                has_default=parameter.default != Parameter.empty,
-                is_optional=is_optional(parameter.annotation),
-            )
+            if get_origin(parameter.annotation) is Annotated:
+                type_, metadata = get_metadata(parameter.annotation)
+                qualifiers = [data for data in metadata if isinstance(data, Qualifier)]
+                if len(qualifiers) > 1:
+                    raise CannotUseMultipleQualifiersInDependencyAnnotationError(
+                        obj, parameter.name
+                    )
+                dependencies[parameter.name] = DependencyInfo(
+                    name=parameter.name,
+                    type_=type_,
+                    has_default=parameter.default != Parameter.empty,
+                    qualifier=qualifiers[0] if qualifiers else None,
+                )
+            else:
+                dependencies[parameter.name] = DependencyInfo(
+                    name=parameter.name,
+                    type_=parameter.annotation,
+                    has_default=parameter.default != Parameter.empty,
+                )
 
         return dependencies
 
@@ -119,16 +152,32 @@ class Pod(Annotation, IEquatable):
     def is_primary(self) -> bool:
         return Primary.exists(self.target)
 
+    @property
+    def dependency_qualifiers(self) -> dict[str, Qualifier | None]:
+        return {
+            name: dependency.qualifier for name, dependency in self.dependencies.items()
+        }
+
     def is_family_with(self, type_: type) -> bool:
         return type_ == self.type_ or type_ in self.base_types
 
     def instantiate(self, dependencies: dict[str, object | None]) -> object:
-        dependencies_without_default_value = {
-            name: dependency
-            for name, dependency in dependencies.items()
-            if not (dependency is None and self.dependencies[name].has_default)
-        }
-        return self.target(**dependencies_without_default_value)
+        final_dependencies: dict[str, object] = {}
+        for name, dependency in dependencies.items():
+            if name not in self.dependencies:
+                raise UnexpectedDependencyNameInjectedError(name)
+            dependency_spec: DependencyInfo = self.dependencies[name]
+            if dependency is None and dependency_spec.has_default:
+                # If dependency is None and has a default value,
+                # do not include it in the final dependencies
+                # so, the default value will be used
+                continue
+            if dependency_spec.type_ not in generic_mro(type(dependency)):
+                raise UnexpectedDependencyTypeInjectedError(
+                    name, type(dependency), dependency_spec.type_
+                )
+            final_dependencies[name] = dependency
+        return self.target(**final_dependencies)
 
 
 def is_class_pod(pod: PodType) -> TypeGuard[Class]:

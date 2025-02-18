@@ -22,7 +22,7 @@ from spakky.pod.pod import Pod, PodType
 from spakky.pod.post_processors.aware_post_processor import (
     ApplicationContextAwareProcessor,
 )
-from spakky.pod.primary import Primary
+from spakky.pod.qualifier import Qualifier
 
 
 class ApplicationContext(IApplicationContext, ABC):
@@ -39,16 +39,20 @@ class ApplicationContext(IApplicationContext, ABC):
         self.__post_processors = []
         self.__is_started = False
 
-    def __resolve_pod(self, type_: type) -> Pod:
+    def __resolve_pod(self, type_: type, qualifier: Qualifier | None) -> Pod | None:
         pods: set[Pod] = {
             pod for pod in self.__pods.values() if pod.is_family_with(type_)
         }
         if len(pods) < 1:
-            raise NoSuchPodError(type_)
+            return None
         if len(pods) > 1:
-            primary_pods: set[Pod] = {pod for pod in pods if Primary.exists(pod.target)}
-            if len(primary_pods) == 1:
-                return primary_pods.pop()
+            candidates: set[Pod] = {
+                pod
+                for pod in pods
+                if (qualifier.selector(pod) if qualifier is not None else pod.is_primary)
+            }
+            if len(candidates) == 1:
+                return candidates.pop()
             raise NoUniquePodError(type_)
         return pods.pop()
 
@@ -56,16 +60,16 @@ class ApplicationContext(IApplicationContext, ABC):
         if pod.type_ in dependency_hierarchy:
             raise CircularDependencyGraphDetectedError(dependency_hierarchy + [pod.type_])
         dependency_hierarchy.append(pod.type_)
-        instance: object = pod.instantiate(
-            dependencies={
-                name: self.__get_internal(
-                    type_=dependency.type_,
-                    name=name,
-                    dependency_hierarchy=deepcopy(dependency_hierarchy),
-                )
-                for name, dependency in pod.dependencies.items()
-            }
-        )
+        dependencies = {
+            name: self.__get_internal(
+                type_=dependency.type_,
+                name=name,
+                dependency_hierarchy=deepcopy(dependency_hierarchy),
+                qualifier=dependency.qualifier,
+            )
+            for name, dependency in pod.dependencies.items()
+        }
+        instance: object = pod.instantiate(dependencies=dependencies)
         post_processed: object = self.__post_process_pod(instance)
         return post_processed
 
@@ -95,7 +99,8 @@ class ApplicationContext(IApplicationContext, ABC):
         for pod in self.__pods.values():
             if Lazy.exists(pod.target):
                 continue
-            self.__get_internal(type_=pod.type_, name=pod.name)
+            if self.__get_internal(type_=pod.type_, name=pod.name) is None:
+                raise NoSuchPodError(pod.name, pod.type_)
 
     def __set_singleton_cache(self, pod: Pod, instance: object) -> None:
         if pod.scope == Pod.Scope.SINGLETON:
@@ -109,7 +114,8 @@ class ApplicationContext(IApplicationContext, ABC):
         type_: type[ObjectT] | None,
         name: str | None,
         dependency_hierarchy: list[type] | None = None,
-    ) -> ObjectT:
+        qualifier: Qualifier | None = None,
+    ) -> ObjectT | None:
         if dependency_hierarchy is None:
             # If dependency_hierarchy is None
             # it means that this is the first call on recursive cycle
@@ -117,14 +123,17 @@ class ApplicationContext(IApplicationContext, ABC):
         if isinstance(type_, str):  # To support forward references
             type_ = self.__forward_type_map[type_]
 
-        pod: Pod | None = None
+        pod: Pod | None
+
         if type_ is not None:
-            pod = self.__resolve_pod(type_=type_)
+            pod = self.__resolve_pod(type_=type_, qualifier=qualifier)
         elif name is not None:
-            pod = self.__pods[name]
+            pod = self.__pods.get(name)
+        else:
+            raise ValueError("Either name or type_ must be provided")
 
         if pod is None:
-            raise ValueError("Either name or type_ must be provided")
+            return None
 
         if (cached := self.__get_singleton_cache(pod)) is not None:
             return cast(ObjectT, cached)
@@ -194,7 +203,10 @@ class ApplicationContext(IApplicationContext, ABC):
         name: str | None = None,
         type_: type[ObjectT] | None = None,
     ) -> ObjectT | object:
-        return self.__get_internal(type_=type_, name=name)
+        instance = self.__get_internal(type_=type_, name=name)
+        if instance is None:
+            raise NoSuchPodError(name, type_)
+        return instance
 
     @overload
     def contains(self, *, name: str) -> bool: ...
