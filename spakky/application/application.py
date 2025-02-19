@@ -3,8 +3,6 @@ from types import ModuleType
 from typing import Callable
 from importlib.metadata import EntryPoints, entry_points
 
-from spakky.application.error import AbstractSpakkyApplicationError
-from spakky.pod.interfaces.application_context import IApplicationContext
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect
 from spakky.constants import PLUGIN_PATH
@@ -16,20 +14,13 @@ from spakky.core.importing import (
     resolve_module,
 )
 from spakky.pod.annotations.pod import Pod, PodType
+from spakky.pod.interfaces.application_context import IApplicationContext
 from spakky.pod.interfaces.container import IContainer
 
 if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover
 else:
     from typing_extensions import Self  # pragma: no cover
-
-
-class LoggerNotRegisteredError(AbstractSpakkyApplicationError):
-    message = "Logger is not registered"
-
-
-class AOPNotEnabledError(AbstractSpakkyApplicationError):
-    message = "AOP is not enabled"
 
 
 class SpakkyApplication:
