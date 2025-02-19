@@ -1,4 +1,4 @@
-from spakky.pod.pod import Pod
+from spakky.pod.annotations.pod import Pod
 
 
 class DummyA: ...

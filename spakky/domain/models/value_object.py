@@ -16,7 +16,7 @@ else:
 
 
 @immutable
-class ValueObject(IEquatable, ICloneable, ABC):
+class AbstractValueObject(IEquatable, ICloneable, ABC):
     def clone(self) -> Self:
         return deepcopy(self)
 

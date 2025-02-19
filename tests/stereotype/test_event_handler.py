@@ -1,5 +1,5 @@
 from spakky.core.mutability import immutable
-from spakky.domain.models.event import DomainEvent
+from spakky.domain.models.event import AbstractDomainEvent
 from spakky.stereotype.event_handler import EventHandler, EventRoute, on_event
 
 
@@ -15,7 +15,7 @@ def test_event_handler() -> None:
 
 def test_event_handler_with_callback() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     @EventHandler()
     class SampleEventHandler:

@@ -1,10 +1,10 @@
 from abc import ABC
 
-from spakky.core.error import SpakkyCoreError
+from spakky.core.error import AbstractSpakkyCoreError
 
 
-class SpakkyAOPError(SpakkyCoreError, ABC): ...
+class AbstractSpakkyAOPError(AbstractSpakkyCoreError, ABC): ...
 
 
-class AspectInheritanceError(SpakkyAOPError):
+class AspectInheritanceError(AbstractSpakkyAOPError):
     message = "Aspect classes must inherit from either IAspect or IAsyncAspect"

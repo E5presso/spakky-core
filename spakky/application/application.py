@@ -1,12 +1,10 @@
 import sys
 from types import ModuleType
 from typing import Callable
-from logging import Logger
 from importlib.metadata import EntryPoints, entry_points
 
-from spakky.aop.post_processor import AspectPostProcessor
-from spakky.application.error import SpakkyApplicationError
-from spakky.application.interfaces.application_context import IApplicationContext
+from spakky.application.error import AbstractSpakkyApplicationError
+from spakky.pod.interfaces.application_context import IApplicationContext
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect
 from spakky.constants import PLUGIN_PATH
@@ -17,8 +15,8 @@ from spakky.core.importing import (
     list_objects,
     resolve_module,
 )
+from spakky.pod.annotations.pod import Pod, PodType
 from spakky.pod.interfaces.container import IContainer
-from spakky.pod.pod import Pod, PodType
 
 if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover
@@ -26,11 +24,11 @@ else:
     from typing_extensions import Self  # pragma: no cover
 
 
-class LoggerNotRegisteredError(SpakkyApplicationError):
+class LoggerNotRegisteredError(AbstractSpakkyApplicationError):
     message = "Logger is not registered"
 
 
-class AOPNotEnabledError(SpakkyApplicationError):
+class AOPNotEnabledError(AbstractSpakkyApplicationError):
     message = "AOP is not enabled"
 
 
@@ -41,43 +39,21 @@ class SpakkyApplication:
     def container(self) -> IContainer:
         return self._application_context
 
-    @property
-    def is_logger_registered(self) -> bool:
-        return self._application_context.contains(type_=Logger)
-
-    @property
-    def is_aop_enabled(self) -> bool:
-        return self._application_context.contains(type_=AspectPostProcessor)
-
     def __init__(self, application_context: IApplicationContext) -> None:
         self._application_context = application_context
 
-    def register(self, obj: PodType) -> Self:
+    def add(self, obj: PodType) -> Self:
         self._application_context.add(obj)
         return self
 
-    def register_logger(self, name: str, logger: Logger) -> Self:
-        self._application_context.add_singleton_instance(name, logger)
-        return self
-
-    def enable_aop(self) -> Self:
-        if not self.is_logger_registered:
-            raise LoggerNotRegisteredError
-        self.register(AspectPostProcessor)
-        return self
-
     def enable_logging_aspect(self) -> Self:
-        if not self.is_aop_enabled:
-            raise AOPNotEnabledError
-        self.register(LoggingAspect)
-        self.register(AsyncLoggingAspect)
+        self.add(LoggingAspect)
+        self.add(AsyncLoggingAspect)
         return self
 
     def enable_transaction_aspect(self) -> Self:
-        if not self.is_aop_enabled:
-            raise AOPNotEnabledError
-        self.register(TransactionalAspect)
-        self.register(AsyncTransactionalAspect)
+        self.add(TransactionalAspect)
+        self.add(AsyncTransactionalAspect)
         return self
 
     def scan(self, path: Module, exclude: set[Module] | None = None) -> Self:
@@ -92,7 +68,7 @@ class SpakkyApplication:
 
         for module_item in modules:
             for obj in list_objects(module_item, Pod.exists):
-                self.register(obj)
+                self.add(obj)
 
         return self
 

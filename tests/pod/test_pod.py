@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.pod.pod import (
+from spakky.pod.annotations.pod import (
     CannotDeterminePodTypeError,
     CannotUseVarArgsInPodError,
     DependencyInfo,
@@ -12,7 +12,7 @@ from spakky.pod.pod import (
     is_class_pod,
     is_function_pod,
 )
-from spakky.pod.qualifier import Qualifier
+from spakky.pod.annotations.qualifier import Qualifier
 
 
 def test_pod_issubclass_of() -> None:

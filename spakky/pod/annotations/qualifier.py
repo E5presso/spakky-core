@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from spakky.core.metadata import Metadata
 
 if TYPE_CHECKING:
-    from spakky.pod.pod import Pod
+    from spakky.pod.annotations.pod import Pod
 
 
 @dataclass

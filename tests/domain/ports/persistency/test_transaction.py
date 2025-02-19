@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from spakky.domain.models.aggregate_root import AggregateRoot
+from spakky.domain.models.aggregate_root import AbstractAggregateRoot
 from spakky.domain.ports.persistency.transaction import (
     AbstractAsyncTransaction,
     AbstractTransaction,
@@ -26,9 +26,9 @@ def test_tranasction_auto_commit() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-        def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     transaction: InMemoryTransaction = InMemoryTransaction(autocommit=True)
 
@@ -56,9 +56,9 @@ def test_tranasction_manual_commit() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-        def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     transaction: InMemoryTransaction = InMemoryTransaction(autocommit=False)
 
@@ -93,9 +93,9 @@ def test_tranasction_rollback_when_raised() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-        def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     transaction: InMemoryTransaction = InMemoryTransaction(autocommit=True)
 
@@ -125,9 +125,9 @@ async def test_async_tranasction_auto_commit() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-        async def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        async def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     transaction: AsyncInMemoryTransaction = AsyncInMemoryTransaction(autocommit=True)
 
@@ -156,9 +156,9 @@ async def test_async_tranasction_manual_commit() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-        async def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        async def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     transaction: AsyncInMemoryTransaction = AsyncInMemoryTransaction(autocommit=False)
 
@@ -194,9 +194,9 @@ async def test_async_tranasction_rollback_when_raised() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-        async def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        async def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     transaction: AsyncInMemoryTransaction = AsyncInMemoryTransaction(autocommit=True)
 

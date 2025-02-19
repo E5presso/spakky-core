@@ -1,6 +1,6 @@
 from abc import ABC
 
-from spakky.core.error import SpakkyCoreError
+from spakky.core.error import AbstractSpakkyCoreError
 
 
-class SpakkyApplicationError(SpakkyCoreError, ABC): ...
+class AbstractSpakkyApplicationError(AbstractSpakkyCoreError, ABC): ...

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from spakky.pod.pod import Pod
+from spakky.pod.annotations.pod import Pod
 
 
 @dataclass(eq=False)

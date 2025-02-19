@@ -1,5 +1,5 @@
 from abc import ABC
 
 
-class SpakkyCoreError(Exception, ABC):
+class AbstractSpakkyCoreError(Exception, ABC):
     message: str

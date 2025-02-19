@@ -2,10 +2,10 @@ from typing import Any, Generic, TypeVar, Callable, Awaitable, TypeAlias
 from dataclasses import dataclass
 
 from spakky.core.annotation import FunctionAnnotation
-from spakky.domain.models.event import DomainEvent
-from spakky.pod.pod import Pod
+from spakky.domain.models.event import AbstractDomainEvent
+from spakky.pod.annotations.pod import Pod
 
-DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)
+DomainEventT = TypeVar("DomainEventT", bound=AbstractDomainEvent)
 IEventHandlerCallback: TypeAlias = Callable[[Any, DomainEventT], None | Awaitable[None]]
 
 

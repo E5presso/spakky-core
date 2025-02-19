@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import TypeVar, Callable, Protocol, Awaitable, TypeAlias, runtime_checkable
 
-from spakky.domain.models.event import DomainEvent
+from spakky.domain.models.event import AbstractDomainEvent
 
-DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)
+DomainEventT = TypeVar("DomainEventT", bound=AbstractDomainEvent)
 IEventHandlerCallback: TypeAlias = Callable[[DomainEventT], None]
 IAsyncEventHandlerCallback: TypeAlias = Callable[[DomainEventT], Awaitable[None]]
 

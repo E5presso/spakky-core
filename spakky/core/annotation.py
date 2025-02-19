@@ -1,9 +1,8 @@
 import sys
-from abc import ABC
 from typing import Any, final
 from dataclasses import dataclass
 
-from spakky.core.error import SpakkyCoreError
+from spakky.core.error import AbstractSpakkyCoreError
 from spakky.core.types import AnyT, ClassT, FuncT
 
 if sys.version_info >= (3, 11):
@@ -16,7 +15,7 @@ __ANNOTATION_METADATA__ = "__spakky_annotation_metadata__"
 
 
 @dataclass
-class Annotation(ABC):
+class Annotation:
     def __call__(self, obj: AnyT) -> AnyT:
         return self.__set_metadata(obj)
 
@@ -84,20 +83,20 @@ class Annotation(ABC):
 
 
 @dataclass
-class ClassAnnotation(Annotation, ABC):
+class ClassAnnotation(Annotation):
     def __call__(self, obj: ClassT) -> ClassT:
         return super().__call__(obj)
 
 
 @dataclass
-class FunctionAnnotation(Annotation, ABC):
+class FunctionAnnotation(Annotation):
     def __call__(self, obj: FuncT) -> FuncT:
         return super().__call__(obj)
 
 
-class AnnotationNotFoundError(SpakkyCoreError):
+class AnnotationNotFoundError(AbstractSpakkyCoreError):
     message = "Object has no specified annotation"
 
 
-class MultipleAnnotationFoundError(SpakkyCoreError):
+class MultipleAnnotationFoundError(AbstractSpakkyCoreError):
     message = "Multiple annotation found in object"

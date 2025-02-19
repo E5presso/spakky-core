@@ -2,8 +2,8 @@ from abc import abstractmethod
 from typing import Protocol
 
 from spakky.application.application_context import ApplicationContext
+from spakky.pod.annotations.pod import Pod
 from spakky.pod.inject import inject
-from spakky.pod.pod import Pod
 
 
 def test_inject_to_function_by_type() -> None:

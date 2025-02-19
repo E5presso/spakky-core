@@ -7,7 +7,7 @@ from dataclasses import field
 
 from spakky.core.interfaces.equatable import EquatableT, IEquatable
 from spakky.core.mutability import mutable
-from spakky.domain.error import SpakkyDomainError
+from spakky.domain.error import AbstractSpakkyDomainError
 
 if sys.version_info >= (3, 11):  # pragma: no cover
     from datetime import UTC
@@ -17,12 +17,12 @@ else:  # pragma: no cover
     UTC = timezone(offset=timedelta(hours=0), name="UTC")
 
 
-class CannotMonkeyPatchEntityError(SpakkyDomainError):
+class CannotMonkeyPatchEntityError(AbstractSpakkyDomainError):
     message: str = "Cannot monkey patch an entity."
 
 
 @mutable
-class Entity(IEquatable, Generic[EquatableT], ABC):
+class AbstractEntity(IEquatable, Generic[EquatableT], ABC):
     __initialized: bool = field(init=False, repr=False, default=False)
 
     uid: EquatableT

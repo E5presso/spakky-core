@@ -1,5 +1,6 @@
 import inspect
 from enum import Enum, auto
+from types import NoneType
 from typing import TypeVar, Annotated, TypeAlias, TypeGuard, get_origin
 from inspect import Parameter, isclass, isfunction
 from dataclasses import field, dataclass
@@ -8,10 +9,10 @@ from spakky.core.annotation import Annotation
 from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.metadata import get_metadata
 from spakky.core.mro import generic_mro
-from spakky.core.types import Class, Func
-from spakky.pod.error import SpakkyPodError
-from spakky.pod.primary import Primary
-from spakky.pod.qualifier import Qualifier
+from spakky.core.types import Class, Func, is_optional
+from spakky.pod.annotations.primary import Primary
+from spakky.pod.annotations.qualifier import Qualifier
+from spakky.pod.error import PodAnnotationFailedError, PodInstantiationFailedError
 from spakky.utils.casing import pascal_to_snake
 from spakky.utils.inspection import has_default_constructor, is_instance_method
 
@@ -21,6 +22,7 @@ class DependencyInfo:
     name: str
     type_: Class
     has_default: bool
+    is_optional: bool = False
     qualifier: Qualifier | None = None
 
 
@@ -29,24 +31,20 @@ PodType: TypeAlias = Func | Class
 PodT = TypeVar("PodT", bound=PodType)
 
 
-class CannotDeterminePodTypeError(SpakkyPodError):
+class CannotDeterminePodTypeError(PodAnnotationFailedError):
     message = "Cannot determine pod type"
 
 
-class CannotUseVarArgsInPodError(SpakkyPodError):
+class CannotUseVarArgsInPodError(PodAnnotationFailedError):
     message = "Cannot use var args (*args or **kwargs) in pod"
 
 
-class CannotUsePositionalOnlyArgsInPodError(SpakkyPodError):
+class CannotUsePositionalOnlyArgsInPodError(PodAnnotationFailedError):
     message = "Cannot use positional-only arguments in pod"
 
 
-class CannotUseMultipleQualifiersInDependencyAnnotationError(SpakkyPodError):
+class CannotUseMultipleQualifiersInDependencyAnnotationError(PodAnnotationFailedError):
     message = "Cannot use multiple qualifiers in dependency annotation"
-
-
-class PodInstantiationFailedError(SpakkyPodError):
-    message = "Pod instantiation failed"
 
 
 class UnexpectedDependencyNameInjectedError(PodInstantiationFailedError):
@@ -101,12 +99,14 @@ class Pod(Annotation, IEquatable):
                     name=parameter.name,
                     type_=type_,
                     has_default=parameter.default != Parameter.empty,
+                    is_optional=is_optional(parameter.annotation),
                     qualifier=qualifiers[0] if qualifiers else None,
                 )
             else:
                 dependencies[parameter.name] = DependencyInfo(
                     name=parameter.name,
                     type_=parameter.annotation,
+                    is_optional=is_optional(parameter.annotation),
                     has_default=parameter.default != Parameter.empty,
                 )
 
@@ -166,16 +166,17 @@ class Pod(Annotation, IEquatable):
         for name, dependency in dependencies.items():
             if name not in self.dependencies:
                 raise UnexpectedDependencyNameInjectedError(name)
-            dependency_spec: DependencyInfo = self.dependencies[name]
-            if dependency is None and dependency_spec.has_default:
-                # If dependency is None and has a default value,
-                # do not include it in the final dependencies
-                # so, the default value will be used
-                continue
-            if dependency_spec.type_ not in generic_mro(type(dependency)):
-                raise UnexpectedDependencyTypeInjectedError(
-                    name, type(dependency), dependency_spec.type_
-                )
+            dependency_info: DependencyInfo = self.dependencies[name]
+            if dependency is None:
+                if dependency_info.has_default:
+                    # If dependency is None and has a default value,
+                    # do not include it in the final dependencies
+                    # so, the default value will be used
+                    continue
+                if not dependency_info.is_optional:
+                    raise UnexpectedDependencyTypeInjectedError(
+                        name, dependency_info.type_, NoneType
+                    )
             final_dependencies[name] = dependency
         return self.target(**final_dependencies)
 

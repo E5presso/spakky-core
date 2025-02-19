@@ -5,17 +5,17 @@ from inspect import ismethod, getmembers, iscoroutinefunction
 from logging import Logger
 
 from spakky.aop.advisor import Advisor, AsyncAdvisor
-from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
-from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
+from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
+from spakky.core.proxy import ProxyFactory, ProxyHandler
 from spakky.core.types import AsyncFunc, Func
-from spakky.pod.interfaces.aware.container_aware import IContainerAware
+from spakky.pod.annotations.order import Order
+from spakky.pod.annotations.pod import Pod
 from spakky.pod.interfaces.container import IContainer
 from spakky.pod.interfaces.post_processor import IPostProcessor
-from spakky.pod.order import Order
-from spakky.pod.pod import Pod
 
 
-class AspectProxyHandler(AbstractProxyHandler):
+class AspectProxyHandler(ProxyHandler):
     __advisor_map: dict[MethodType | Func, MethodType | Advisor]
     __async_advisor_map: dict[MethodType | AsyncFunc, MethodType | AsyncAdvisor]
 
@@ -50,20 +50,17 @@ class AspectProxyHandler(AbstractProxyHandler):
         return await self.__async_advisor_map[method](*args, **kwargs)
 
 
-@Order(0)
 @Pod()
-class AspectPostProcessor(IPostProcessor, IContainerAware):
+class AspectPostProcessor(IPostProcessor):
     __logger: Logger
     __cache: dict[type, object]
     __container: IContainer
 
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self, container: IContainer, logger: Logger) -> None:
         super().__init__()
-        self.__logger = logger
         self.__cache = {}
-
-    def set_container(self, container: IContainer) -> None:
         self.__container = container
+        self.__logger = logger
 
     def __set_cache(self, type_: type, obj: object) -> object:
         self.__cache[type_] = obj
@@ -95,9 +92,10 @@ class AspectPostProcessor(IPostProcessor, IContainerAware):
             key=lambda x: Order.get_or_default(x, Order(sys.maxsize)).order,
             reverse=True,
         )
+
         # pylint: disable=line-too-long
-        self.__logger.info(
-            f"[{type(self).__name__}] {[f'{type(x).__name__}({Order.get_or_default(x, Order(sys.maxsize)).order})' for x in matched]!r} -> {type(pod).__name__}"
+        self.__logger.debug(
+            f"[{type(self).__name__}] {[f'{type(x).__name__}' for x in matched]!r} -> {type(pod).__name__!r}"
         )
         return self.__set_cache(
             type(pod),

@@ -10,7 +10,7 @@ from spakky.aspects.transactional import (
     Transactional,
     TransactionalAspect,
 )
-from spakky.domain.models.aggregate_root import AggregateRoot
+from spakky.domain.models.aggregate_root import AbstractAggregateRoot
 from spakky.domain.ports.persistency.transaction import (
     AbstractAsyncTransaction,
     AbstractTransaction,
@@ -40,9 +40,9 @@ def test_transactional_commit() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-        def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     class InMemoryHandler(Handler):
         log_records: list[str]
@@ -114,9 +114,9 @@ def test_transactional_rollback() -> None:
         def rollback(self) -> None:
             self.rolled_back = True
 
-        def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     class InMemoryHandler(Handler):
         log_records: list[str]
@@ -187,9 +187,9 @@ async def test_async_transactional_commit() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-        async def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        async def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     class InMemoryHandler(Handler):
         log_records: list[str]
@@ -261,9 +261,9 @@ async def test_async_transactional_rollback() -> None:
         async def rollback(self) -> None:
             self.rolled_back = True
 
-        async def add(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
-        async def delete(self, aggregate: AggregateRoot[Any]) -> None: ...
+        async def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
 
     class InMemoryHandler(Handler):
         log_records: list[str]
