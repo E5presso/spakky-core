@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from spakky.core.annotation import FunctionAnnotation
 from spakky.domain.models.event import DomainEvent
-from spakky.pod.pod import Pod
+from spakky.pod.annotations.pod import Pod
 
 DomainEventT = TypeVar("DomainEventT", bound=DomainEvent)
 IEventHandlerCallback: TypeAlias = Callable[[Any, DomainEventT], None | Awaitable[None]]

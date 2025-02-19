@@ -12,7 +12,7 @@ from spakky.aop.pointcut import (
     PointCut,
 )
 from spakky.core.types import AsyncFunc, Func
-from spakky.pod.pod import Pod, is_class_pod
+from spakky.pod.annotations.pod import Pod, is_class_pod
 
 
 @runtime_checkable

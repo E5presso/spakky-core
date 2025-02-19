@@ -6,7 +6,7 @@ from spakky.aop.pointcut import Around
 from spakky.aspects.logging import Logging
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
-from spakky.pod.order import Order
+from spakky.pod.annotations.order import Order
 from spakky.security.key import Key
 from spakky.stereotype.usecase import UseCase
 

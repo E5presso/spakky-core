@@ -9,7 +9,7 @@ from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.aop.pointcut import Around
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func
-from spakky.pod.order import Order
+from spakky.pod.annotations.order import Order
 
 
 @dataclass

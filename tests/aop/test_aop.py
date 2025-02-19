@@ -12,7 +12,7 @@ from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.application_context import ApplicationContext
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, AsyncFuncT, Func
-from spakky.pod.pod import Pod
+from spakky.pod.annotations.pod import Pod
 
 
 def test_aop_with_no_implementations() -> None:

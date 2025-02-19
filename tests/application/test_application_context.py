@@ -17,11 +17,11 @@ from spakky.application.application_context import (
 from spakky.core.annotation import ClassAnnotation
 from spakky.core.mutability import immutable
 from spakky.domain.usecases.command import Command, ICommandUseCase
+from spakky.pod.annotations.lazy import Lazy
+from spakky.pod.annotations.pod import Pod, PodInstantiationFailedError
+from spakky.pod.annotations.primary import Primary
+from spakky.pod.annotations.qualifier import Qualifier
 from spakky.pod.interfaces.container import CannotRegisterNonPodObjectError
-from spakky.pod.lazy import Lazy
-from spakky.pod.pod import Pod, PodInstantiationFailedError
-from spakky.pod.primary import Primary
-from spakky.pod.qualifier import Qualifier
 
 
 def test_application_context_register_expect_success() -> None:

@@ -17,8 +17,8 @@ from spakky.core.importing import (
     list_objects,
     resolve_module,
 )
+from spakky.pod.annotations.pod import Pod, PodType
 from spakky.pod.interfaces.container import IContainer
-from spakky.pod.pod import Pod, PodType
 
 if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover
@@ -42,7 +42,7 @@ class SpakkyApplication:
         return self._application_context
 
     @property
-    def is_logger_registered(self) -> bool:
+    def is_logger_added(self) -> bool:
         return self._application_context.contains(type_=Logger)
 
     @property
@@ -52,32 +52,32 @@ class SpakkyApplication:
     def __init__(self, application_context: IApplicationContext) -> None:
         self._application_context = application_context
 
-    def register(self, obj: PodType) -> Self:
+    def add(self, obj: PodType) -> Self:
         self._application_context.add(obj)
         return self
 
-    def register_logger(self, name: str, logger: Logger) -> Self:
-        self._application_context.add_singleton_instance(name, logger)
+    def add_logger(self, logger_factory: Callable[..., Logger]) -> Self:
+        self._application_context.add(logger_factory)
         return self
 
     def enable_aop(self) -> Self:
-        if not self.is_logger_registered:
+        if not self.is_logger_added:
             raise LoggerNotRegisteredError
-        self.register(AspectPostProcessor)
+        self.add(AspectPostProcessor)
         return self
 
     def enable_logging_aspect(self) -> Self:
         if not self.is_aop_enabled:
             raise AOPNotEnabledError
-        self.register(LoggingAspect)
-        self.register(AsyncLoggingAspect)
+        self.add(LoggingAspect)
+        self.add(AsyncLoggingAspect)
         return self
 
     def enable_transaction_aspect(self) -> Self:
         if not self.is_aop_enabled:
             raise AOPNotEnabledError
-        self.register(TransactionalAspect)
-        self.register(AsyncTransactionalAspect)
+        self.add(TransactionalAspect)
+        self.add(AsyncTransactionalAspect)
         return self
 
     def scan(self, path: Module, exclude: set[Module] | None = None) -> Self:
@@ -92,7 +92,7 @@ class SpakkyApplication:
 
         for module_item in modules:
             for obj in list_objects(module_item, Pod.exists):
-                self.register(obj)
+                self.add(obj)
 
         return self
 

@@ -13,7 +13,7 @@ from spakky.core.importing import (
     list_objects,
     resolve_module,
 )
-from spakky.pod.pod import Pod
+from spakky.pod.annotations.pod import Pod
 from tests.dummy import dummy_package
 from tests.dummy.dummy_package import module_a, module_b, module_c
 

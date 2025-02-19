@@ -8,6 +8,10 @@ from spakky.application.interfaces.application_context import (
     IApplicationContext,
 )
 from spakky.core.types import ObjectT
+from spakky.pod.annotations.lazy import Lazy
+from spakky.pod.annotations.order import Order
+from spakky.pod.annotations.pod import Pod, PodType
+from spakky.pod.annotations.qualifier import Qualifier
 from spakky.pod.interfaces.container import (
     CannotRegisterNonPodObjectError,
     CircularDependencyGraphDetectedError,
@@ -16,13 +20,9 @@ from spakky.pod.interfaces.container import (
     PodNameAlreadyExistsError,
 )
 from spakky.pod.interfaces.post_processor import IPostProcessor
-from spakky.pod.lazy import Lazy
-from spakky.pod.order import Order
-from spakky.pod.pod import Pod, PodType
 from spakky.pod.post_processors.aware_post_processor import (
     ApplicationContextAwareProcessor,
 )
-from spakky.pod.qualifier import Qualifier
 
 
 class ApplicationContext(IApplicationContext, ABC):
@@ -102,6 +102,12 @@ class ApplicationContext(IApplicationContext, ABC):
             if self.__get_internal(type_=pod.type_, name=pod.name) is None:
                 raise NoSuchPodError(pod.name, pod.type_)
 
+    def __clear_all(self) -> None:
+        self.__pods.clear()
+        self.__forward_type_map.clear()
+        self.__singleton_cache.clear()
+        self.__post_processors.clear()
+
     def __set_singleton_cache(self, pod: Pod, instance: object) -> None:
         if pod.scope == Pod.Scope.SINGLETON:
             self.__singleton_cache[pod.name] = instance
@@ -121,6 +127,8 @@ class ApplicationContext(IApplicationContext, ABC):
             # it means that this is the first call on recursive cycle
             dependency_hierarchy = []
         if isinstance(type_, str):  # To support forward references
+            if type_ not in self.__forward_type_map:
+                return None
             type_ = self.__forward_type_map[type_]
 
         pod: Pod | None
@@ -172,11 +180,6 @@ class ApplicationContext(IApplicationContext, ABC):
             self.__forward_type_map[base_type.__name__] = base_type
         self.__pods[pod.name] = pod
 
-    def add_singleton_instance(self, name: str, obj: object) -> None:
-        if name in self.__singleton_cache:
-            raise PodNameAlreadyExistsError(name)
-        self.__singleton_cache[name] = obj
-
     def start(self) -> None:
         if self.__is_started:
             raise ApplicationContextAlreadyStartedError()
@@ -187,6 +190,7 @@ class ApplicationContext(IApplicationContext, ABC):
     def stop(self) -> None:
         if not self.__is_started:
             raise ApplicationContextAlreadyStoppedError()
+        self.__clear_all()
         self.__is_started = False
 
     @overload

@@ -2,9 +2,9 @@ from abc import abstractmethod
 from typing import Callable, Protocol, overload, runtime_checkable
 
 from spakky.core.types import ObjectT
+from spakky.pod.annotations.pod import Pod, PodType
 from spakky.pod.error import SpakkyPodError
 from spakky.pod.interfaces.post_processor import IPostProcessor
-from spakky.pod.pod import Pod, PodType
 
 
 class CircularDependencyGraphDetectedError(SpakkyPodError):
@@ -35,9 +35,6 @@ class IContainer(Protocol):
 
     @abstractmethod
     def add(self, obj: PodType) -> None: ...
-
-    @abstractmethod
-    def add_singleton_instance(self, name: str, obj: object) -> None: ...
 
     @abstractmethod
     def _add_post_processor(self, post_processor: IPostProcessor) -> None: ...

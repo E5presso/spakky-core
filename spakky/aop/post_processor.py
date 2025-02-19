@@ -8,11 +8,12 @@ from spakky.aop.advisor import Advisor, AsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
 from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
 from spakky.core.types import AsyncFunc, Func
+from spakky.pod.annotations.order import Order
+from spakky.pod.annotations.pod import Pod
 from spakky.pod.interfaces.aware.container_aware import IContainerAware
+from spakky.pod.interfaces.aware.loger_aware import ILoggerAware
 from spakky.pod.interfaces.container import IContainer
 from spakky.pod.interfaces.post_processor import IPostProcessor
-from spakky.pod.order import Order
-from spakky.pod.pod import Pod
 
 
 class AspectProxyHandler(AbstractProxyHandler):
@@ -52,18 +53,20 @@ class AspectProxyHandler(AbstractProxyHandler):
 
 @Order(0)
 @Pod()
-class AspectPostProcessor(IPostProcessor, IContainerAware):
+class AspectPostProcessor(IPostProcessor, IContainerAware, ILoggerAware):
     __logger: Logger
     __cache: dict[type, object]
     __container: IContainer
 
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.__logger = logger
         self.__cache = {}
 
     def set_container(self, container: IContainer) -> None:
         self.__container = container
+
+    def set_logger(self, logger: Logger) -> None:
+        self.__logger = logger
 
     def __set_cache(self, type_: type, obj: object) -> object:
         self.__cache[type_] = obj

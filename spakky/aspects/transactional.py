@@ -11,7 +11,7 @@ from spakky.domain.ports.persistency.transaction import (
     AbstractAsyncTransaction,
     AbstractTransaction,
 )
-from spakky.pod.order import Order
+from spakky.pod.annotations.order import Order
 
 
 @dataclass
