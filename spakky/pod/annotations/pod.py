@@ -1,5 +1,6 @@
 import inspect
 from enum import Enum, auto
+from types import NoneType
 from typing import TypeVar, Annotated, TypeAlias, TypeGuard, get_origin
 from inspect import Parameter, isclass, isfunction
 from dataclasses import field, dataclass
@@ -8,7 +9,7 @@ from spakky.core.annotation import Annotation
 from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.metadata import get_metadata
 from spakky.core.mro import generic_mro
-from spakky.core.types import Class, Func
+from spakky.core.types import Class, Func, is_optional
 from spakky.pod.annotations.primary import Primary
 from spakky.pod.annotations.qualifier import Qualifier
 from spakky.pod.error import PodAnnotationFailedError, PodInstantiationFailedError
@@ -21,6 +22,7 @@ class DependencyInfo:
     name: str
     type_: Class
     has_default: bool
+    is_optional: bool = False
     qualifier: Qualifier | None = None
 
 
@@ -97,12 +99,14 @@ class Pod(Annotation, IEquatable):
                     name=parameter.name,
                     type_=type_,
                     has_default=parameter.default != Parameter.empty,
+                    is_optional=is_optional(parameter.annotation),
                     qualifier=qualifiers[0] if qualifiers else None,
                 )
             else:
                 dependencies[parameter.name] = DependencyInfo(
                     name=parameter.name,
                     type_=parameter.annotation,
+                    is_optional=is_optional(parameter.annotation),
                     has_default=parameter.default != Parameter.empty,
                 )
 
@@ -163,15 +167,16 @@ class Pod(Annotation, IEquatable):
             if name not in self.dependencies:
                 raise UnexpectedDependencyNameInjectedError(name)
             dependency_info: DependencyInfo = self.dependencies[name]
-            if dependency is None and dependency_info.has_default:
-                # If dependency is None and has a default value,
-                # do not include it in the final dependencies
-                # so, the default value will be used
-                continue
-            if dependency_info.type_ not in generic_mro(type(dependency)):
-                raise UnexpectedDependencyTypeInjectedError(
-                    name, type(dependency), dependency_info.type_
-                )
+            if dependency is None:
+                if dependency_info.has_default:
+                    # If dependency is None and has a default value,
+                    # do not include it in the final dependencies
+                    # so, the default value will be used
+                    continue
+                if not dependency_info.is_optional:
+                    raise UnexpectedDependencyTypeInjectedError(
+                        name, dependency_info.type_, NoneType
+                    )
             final_dependencies[name] = dependency
         return self.target(**final_dependencies)
 

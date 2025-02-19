@@ -9,7 +9,6 @@ import pytest
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
 from spakky.aop.pointcut import After, AfterRaising, AfterReturning, Around, Before
-from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.application_context import ApplicationContext
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, AsyncFuncT, Func
@@ -102,20 +101,6 @@ def test_aop() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(LogAdvisor)
 
@@ -170,20 +155,6 @@ def test_aop_with_another_pod() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(AnotherService)
     context.add(LogAdvisor)
@@ -216,20 +187,6 @@ def test_aop_with_no_implementations_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(LogAdvisor)
 
@@ -263,20 +220,6 @@ def test_aop_with_implementations_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(LogAdvisor)
 
@@ -342,20 +285,6 @@ def test_aop_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(LogAdvisor)
 
@@ -387,20 +316,6 @@ def test_aop_that_does_not_have_any_aspects() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(LogAdvisor)
 
@@ -462,20 +377,6 @@ def test_aop_with_no_method() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(LogAdvisor)
 
@@ -544,24 +445,10 @@ def test_aop_with_dependencies() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
     @Pod(name="message")
     def get_message() -> str:
         return "Hello World!"
 
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(get_message)
     context.add(EchoService)
     context.add(LogAdvisor)
@@ -597,20 +484,6 @@ async def test_async_aop_with_no_implementations() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(AsyncLogAdvisor)
 
@@ -677,20 +550,6 @@ async def test_async_aop() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(AsyncLogAdvisor)
 
@@ -750,20 +609,6 @@ async def test_async_aop_with_another_pod() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(AnotherService)
     context.add(AsyncLogAdvisor)
@@ -803,20 +648,6 @@ async def test_async_aop_with_no_implementations_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(AsyncLogAdvisor)
 
@@ -853,20 +684,6 @@ async def test_async_aop_with_implementations_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(AsyncLogAdvisor)
 
@@ -934,20 +751,6 @@ async def test_async_aop_raise_error() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(EchoService)
     context.add(AsyncLogAdvisor)
 
@@ -996,20 +799,6 @@ async def test_async_aop_that_does_not_have_any_aspects() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(AsyncEchoService)
     context.add(AsyncLogAdvisor)
 
@@ -1074,20 +863,6 @@ async def test_async_aop_with_no_method() -> None:
 
     context: ApplicationContext = ApplicationContext()
 
-    @Pod()
-    def get_logger() -> logging.Logger:
-        console = logging.StreamHandler()
-        console.setLevel(level=logging.DEBUG)
-        console.setFormatter(
-            logging.Formatter("[%(levelname)s][%(asctime)s]: %(message)s")
-        )
-        logger: logging.Logger = logging.getLogger("debug")
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(console)
-        return logger
-
-    context.add(get_logger)
-    context.add(AspectPostProcessor)
     context.add(AsyncEchoService)
     context.add(AsyncLogAdvisor)
 

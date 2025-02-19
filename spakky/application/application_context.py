@@ -1,16 +1,30 @@
+import asyncio
+import threading
 from copy import deepcopy
 from typing import Callable, cast, overload
-
-from spakky.application.interfaces.application_context import (
-    ApplicationContextAlreadyStartedError,
-    ApplicationContextAlreadyStoppedError,
-    IApplicationContext,
+from asyncio import (
+    AbstractEventLoop,
+    new_event_loop,
+    set_event_loop,
+    run_coroutine_threadsafe,
 )
+from logging import Logger, getLogger
+from threading import Thread
+
+from spakky.aop.post_processor import AspectPostProcessor
+from spakky.core.mro import generic_mro
 from spakky.core.types import ObjectT
 from spakky.pod.annotations.lazy import Lazy
 from spakky.pod.annotations.order import Order
 from spakky.pod.annotations.pod import Pod, PodType
 from spakky.pod.annotations.qualifier import Qualifier
+from spakky.pod.interfaces.application_context import (
+    ApplicationContextAlreadyStartedError,
+    ApplicationContextAlreadyStoppedError,
+    EventLoopThreadAlreadyStartedInApplicationContextError,
+    EventLoopThreadNotStartedInApplicationContextError,
+    IApplicationContext,
+)
 from spakky.pod.interfaces.container import (
     CannotRegisterNonPodObjectError,
     CircularDependencyGraphDetectedError,
@@ -22,23 +36,37 @@ from spakky.pod.interfaces.post_processor import IPostProcessor
 from spakky.pod.post_processors.aware_post_processor import (
     ApplicationContextAwareProcessor,
 )
+from spakky.service.interfaces.service import IAsyncService, IService
+from spakky.service.post_processor import ServicePostProcessor
 
 
 class ApplicationContext(IApplicationContext):
+    __logger: Logger
     __pods: dict[str, Pod]
     __forward_type_map: dict[str, type]
     __singleton_cache: dict[str, object]
     __post_processors: list[IPostProcessor]
+    __services: list[IService]
+    __async_services: list[IAsyncService]
+    __event_loop: AbstractEventLoop | None
+    __event_thread: Thread | None
     __is_started: bool
 
-    def __init__(self) -> None:
+    def __init__(self, logger: Logger | None = None) -> None:
+        self.__logger = logger or getLogger()
         self.__forward_type_map = {}
         self.__pods = {}
         self.__singleton_cache = {}
         self.__post_processors = []
+        self.__services = []
+        self.__async_services = []
+        self.__event_loop = None
+        self.__event_thread = None
         self.__is_started = False
+        self.task_stop_event = asyncio.locks.Event()
+        self.thread_stop_event = threading.Event()
 
-    def __resolve_pod(self, type_: type, qualifier: Qualifier | None) -> Pod | None:
+    def __resolve_candidate(self, type_: type, qualifier: Qualifier | None) -> Pod | None:
         pods: set[Pod] = {
             pod for pod in self.__pods.values() if pod.is_family_with(type_)
         }
@@ -78,21 +106,19 @@ class ApplicationContext(IApplicationContext):
         return pod
 
     def __register_post_processors(self) -> None:
-        self._add_post_processor(ApplicationContextAwareProcessor(self))
+        self.__add_post_processor(ApplicationContextAwareProcessor(self, self.__logger))
+        self.__add_post_processor(AspectPostProcessor(self, self.__logger))
+        self.__add_post_processor(ServicePostProcessor(self, self.__logger))
+
         post_processors: list[IPostProcessor] = cast(
             list[IPostProcessor],
             list(
-                self.find(
-                    lambda x: issubclass(
-                        x.type_,
-                        IPostProcessor,
-                    )
-                ),
+                self.find(lambda x: IPostProcessor in x.base_types),
             ),
         )
         post_processors.sort(key=lambda x: Order.get_or_default(x, Order()).order)
         for post_processor in post_processors:
-            self._add_post_processor(post_processor)
+            self.__add_post_processor(post_processor)
 
     def __initialize_pods(self) -> None:
         for pod in self.__pods.values():
@@ -106,6 +132,8 @@ class ApplicationContext(IApplicationContext):
         self.__forward_type_map.clear()
         self.__singleton_cache.clear()
         self.__post_processors.clear()
+        self.__services.clear()
+        self.__async_services.clear()
 
     def __set_singleton_cache(self, pod: Pod, instance: object) -> None:
         if pod.scope == Pod.Scope.SINGLETON:
@@ -133,7 +161,9 @@ class ApplicationContext(IApplicationContext):
         pod: Pod | None
 
         if type_ is not None:
-            pod = self.__resolve_pod(type_=type_, qualifier=qualifier)
+            if Logger in generic_mro(type_):
+                return cast(ObjectT, self.__logger)
+            pod = self.__resolve_candidate(type_=type_, qualifier=qualifier)
         elif name is not None:
             pod = self.__pods.get(name)
         else:
@@ -151,8 +181,59 @@ class ApplicationContext(IApplicationContext):
         self.__set_singleton_cache(pod, instance)
         return cast(ObjectT, instance)
 
-    def _add_post_processor(self, post_processor: IPostProcessor) -> None:
+    def __add_post_processor(self, post_processor: IPostProcessor) -> None:
         self.__post_processors.append(post_processor)
+
+    def __run_event_loop(self, loop: AbstractEventLoop) -> None:
+        set_event_loop(loop)
+        loop.run_forever()
+        loop.close()
+
+    def __start_services(self) -> None:
+        if self.__event_loop is not None:
+            raise EventLoopThreadAlreadyStartedInApplicationContextError
+        if self.__event_thread is not None:
+            raise EventLoopThreadAlreadyStartedInApplicationContextError
+
+        self.__event_loop = new_event_loop()
+        self.__event_thread = Thread(
+            target=self.__run_event_loop,
+            args=(self.__event_loop,),
+            daemon=True,
+        )
+        self.__event_thread.start()
+
+        for service in self.__services:
+            service.start()
+
+        async def start_async_services() -> None:
+            if self.__event_loop is None:
+                raise EventLoopThreadNotStartedInApplicationContextError
+            for service in self.__async_services:
+                await service.start_async()
+
+        run_coroutine_threadsafe(start_async_services(), self.__event_loop).result()
+
+    def __stop_services(self) -> None:
+        if self.__event_loop is None:
+            raise EventLoopThreadNotStartedInApplicationContextError
+        if self.__event_thread is None:
+            raise EventLoopThreadNotStartedInApplicationContextError
+
+        for service in self.__services:
+            service.stop()
+
+        async def stop_async_services() -> None:
+            if self.__event_loop is None:
+                raise EventLoopThreadNotStartedInApplicationContextError
+            for service in self.__async_services:
+                await service.stop_async()
+
+        run_coroutine_threadsafe(stop_async_services(), self.__event_loop).result()
+        self.__event_loop.call_soon_threadsafe(self.__event_loop.stop)
+        self.__event_thread.join()
+        self.__event_loop = None
+        self.__event_thread = None
 
     @property
     def pods(self) -> dict[str, Pod]:
@@ -179,16 +260,24 @@ class ApplicationContext(IApplicationContext):
             self.__forward_type_map[base_type.__name__] = base_type
         self.__pods[pod.name] = pod
 
+    def add_service(self, service: IService | IAsyncService) -> None:
+        if isinstance(service, IService):
+            self.__services.append(service)
+        if isinstance(service, IAsyncService):
+            self.__async_services.append(service)
+
     def start(self) -> None:
         if self.__is_started:
             raise ApplicationContextAlreadyStartedError()
+        self.__is_started = True
         self.__register_post_processors()
         self.__initialize_pods()
-        self.__is_started = True
+        self.__start_services()
 
     def stop(self) -> None:
         if not self.__is_started:
             raise ApplicationContextAlreadyStoppedError()
+        self.__stop_services()
         self.__clear_all()
         self.__is_started = False
 

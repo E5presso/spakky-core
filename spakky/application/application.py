@@ -1,12 +1,10 @@
 import sys
 from types import ModuleType
 from typing import Callable
-from logging import Logger
 from importlib.metadata import EntryPoints, entry_points
 
-from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.error import AbstractSpakkyApplicationError
-from spakky.application.interfaces.application_context import IApplicationContext
+from spakky.pod.interfaces.application_context import IApplicationContext
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect
 from spakky.constants import PLUGIN_PATH
@@ -41,14 +39,6 @@ class SpakkyApplication:
     def container(self) -> IContainer:
         return self._application_context
 
-    @property
-    def is_logger_added(self) -> bool:
-        return self._application_context.contains(type_=Logger)
-
-    @property
-    def is_aop_enabled(self) -> bool:
-        return self._application_context.contains(type_=AspectPostProcessor)
-
     def __init__(self, application_context: IApplicationContext) -> None:
         self._application_context = application_context
 
@@ -56,26 +46,12 @@ class SpakkyApplication:
         self._application_context.add(obj)
         return self
 
-    def add_logger(self, logger_factory: Callable[..., Logger]) -> Self:
-        self._application_context.add(logger_factory)
-        return self
-
-    def enable_aop(self) -> Self:
-        if not self.is_logger_added:
-            raise LoggerNotRegisteredError
-        self.add(AspectPostProcessor)
-        return self
-
     def enable_logging_aspect(self) -> Self:
-        if not self.is_aop_enabled:
-            raise AOPNotEnabledError
         self.add(LoggingAspect)
         self.add(AsyncLoggingAspect)
         return self
 
     def enable_transaction_aspect(self) -> Self:
-        if not self.is_aop_enabled:
-            raise AOPNotEnabledError
         self.add(TransactionalAspect)
         self.add(AsyncTransactionalAspect)
         return self
