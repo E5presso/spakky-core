@@ -93,12 +93,9 @@ class AspectPostProcessor(IPostProcessor):
             reverse=True,
         )
 
+        # pylint: disable=line-too-long
         self.__logger.debug(
-            (
-                f"[{type(self).__name__}] "
-                f"{[f"{type(x).__name__}" for x in matched]!r} "
-                f"-> {type(pod).__name__!r}"
-            )
+            f"[{type(self).__name__}] {[f"{type(x).__name__}" for x in matched]!r} -> {type(pod).__name__!r}"
         )
         return self.__set_cache(
             type(pod),
