@@ -2,12 +2,12 @@ from uuid import UUID
 from datetime import datetime
 
 from spakky.core.mutability import immutable
-from spakky.domain.models.event import DomainEvent
+from spakky.domain.models.event import AbstractDomainEvent
 
 
 def test_domain_event_equals() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -22,7 +22,7 @@ def test_domain_event_equals() -> None:
 
 def test_domain_event_not_equals() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -37,10 +37,10 @@ def test_domain_event_not_equals() -> None:
 
 def test_domain_event_not_equals_with_wrong_type() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     @immutable
-    class AnotherEvent(DomainEvent): ...
+    class AnotherEvent(AbstractDomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -55,7 +55,7 @@ def test_domain_event_not_equals_with_wrong_type() -> None:
 
 def test_domain_event_clone() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -67,7 +67,7 @@ def test_domain_event_clone() -> None:
 
 def test_domain_event_hash() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     event1: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -82,7 +82,7 @@ def test_domain_event_hash() -> None:
 
 def test_domain_event_compare() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     events: list[SampleEvent] = [
         SampleEvent(
@@ -154,7 +154,7 @@ def test_domain_event_compare() -> None:
 
 def test_domain_event_name() -> None:
     @immutable
-    class SampleEvent(DomainEvent): ...
+    class SampleEvent(AbstractDomainEvent): ...
 
     event: SampleEvent = SampleEvent(
         event_id=UUID("12345678-1234-5678-1234-567812345678"),

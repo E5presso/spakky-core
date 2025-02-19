@@ -1,15 +1,15 @@
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 
-from spakky.pod.error import SpakkyPodError
+from spakky.pod.error import AbstractSpakkyPodError
 from spakky.pod.interfaces.container import IContainer
 
 
-class ApplicationContextAlreadyStartedError(SpakkyPodError):
+class ApplicationContextAlreadyStartedError(AbstractSpakkyPodError):
     message = "Application context already started"
 
 
-class ApplicationContextAlreadyStoppedError(SpakkyPodError):
+class ApplicationContextAlreadyStoppedError(AbstractSpakkyPodError):
     message = "Application context already stopped"
 
 

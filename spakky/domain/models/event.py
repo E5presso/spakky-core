@@ -17,7 +17,7 @@ else:
 
 
 @immutable
-class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
+class AbstractDomainEvent(IEquatable, IComparable, ICloneable, ABC):
     event_id: UUID = field(default_factory=uuid4)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -50,4 +50,4 @@ class DomainEvent(IEquatable, IComparable, ICloneable, ABC):
 
 
 @immutable
-class IntegrationEvent(DomainEvent, ABC): ...
+class AbstractIntegrationEvent(AbstractDomainEvent, ABC): ...

@@ -1,6 +1,6 @@
 from typing import Any
 
-from spakky.aop.aspect import IAspect, IAsyncAspect
+from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
 from spakky.core.types import AsyncFunc, Func
 
 

@@ -1,4 +1,4 @@
-from spakky.core.error import SpakkyCoreError
+from spakky.core.error import AbstractSpakkyCoreError
 
 
-class SpakkyThreadingError(SpakkyCoreError): ...
+class SpakkyThreadingError(AbstractSpakkyCoreError): ...

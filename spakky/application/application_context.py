@@ -1,4 +1,3 @@
-from abc import ABC
 from copy import deepcopy
 from typing import Callable, cast, overload
 
@@ -25,7 +24,7 @@ from spakky.pod.post_processors.aware_post_processor import (
 )
 
 
-class ApplicationContext(IApplicationContext, ABC):
+class ApplicationContext(IApplicationContext):
     __pods: dict[str, Pod]
     __forward_type_map: dict[str, type]
     __singleton_cache: dict[str, object]

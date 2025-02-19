@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
+from spakky.core.proxy import ProxyFactory, ProxyHandler
 from spakky.core.types import AsyncFunc, Func
 
 
@@ -22,7 +22,7 @@ async def test_proxy() -> None:
         async def call_async(self) -> str:
             return "Hello Async!"
 
-    class MyMethodInterceptor(AbstractProxyHandler):
+    class MyMethodInterceptor(ProxyHandler):
         def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()
@@ -88,7 +88,7 @@ async def test_proxy_with_parameter() -> None:
         async def call_async(self) -> str:
             return f"Hello {self.name}!"
 
-    class MyMethodInterceptor(AbstractProxyHandler):
+    class MyMethodInterceptor(ProxyHandler):
         def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()

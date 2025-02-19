@@ -1,14 +1,14 @@
 from abc import ABC
 
-from spakky.core.error import SpakkyCoreError
+from spakky.core.error import AbstractSpakkyCoreError
 
 
-class SpakkyPodError(SpakkyCoreError, ABC): ...
+class AbstractSpakkyPodError(AbstractSpakkyCoreError, ABC): ...
 
 
-class PodAnnotationFailedError(SpakkyPodError):
+class PodAnnotationFailedError(AbstractSpakkyPodError):
     message = "Pod annotation failed"
 
 
-class PodInstantiationFailedError(SpakkyPodError):
+class PodInstantiationFailedError(AbstractSpakkyPodError):
     message = "Pod instantiation failed"

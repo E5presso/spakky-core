@@ -4,8 +4,8 @@ from uuid import UUID, uuid4
 import pytest
 
 from spakky.core.mutability import mutable
-from spakky.domain.error import DomainValidationError
-from spakky.domain.models.entity import CannotMonkeyPatchEntityError, Entity
+from spakky.domain.error import AbstractDomainValidationError
+from spakky.domain.models.entity import AbstractEntity, CannotMonkeyPatchEntityError
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -15,7 +15,7 @@ else:
 
 def test_entity_equals() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
@@ -37,7 +37,7 @@ def test_entity_equals() -> None:
 
 def test_entity_not_equals_with_wrong_type() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
@@ -52,7 +52,7 @@ def test_entity_not_equals_with_wrong_type() -> None:
             return cls(uid=cls.next_id(), name=name)
 
     @mutable
-    class Class(Entity[UUID]):
+    class Class(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
@@ -74,7 +74,7 @@ def test_entity_not_equals_with_wrong_type() -> None:
 
 def test_entity_not_equals_transient() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
@@ -96,7 +96,7 @@ def test_entity_not_equals_transient() -> None:
 
 def test_entity_not_equals() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
@@ -118,7 +118,7 @@ def test_entity_not_equals() -> None:
 
 def test_entity_hash() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
@@ -138,7 +138,7 @@ def test_entity_hash() -> None:
 
 def test_entity_prevent_monkey_patching() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
@@ -165,15 +165,15 @@ def test_entity_prevent_monkey_patching() -> None:
 
 def test_entity_validation_pass() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
         age: int
 
         def validate(self) -> None:
             if not len(self.name) < 4:
-                raise DomainValidationError
+                raise AbstractDomainValidationError
             if not 0 < self.age and self.age < 100:
-                raise DomainValidationError
+                raise AbstractDomainValidationError
 
         def update_name(self, name: str) -> None:
             self.name = name
@@ -187,12 +187,12 @@ def test_entity_validation_pass() -> None:
             return cls(uid=cls.next_id(), name=name, age=age)
 
     @mutable
-    class Class(Entity[UUID]):
+    class Class(AbstractEntity[UUID]):
         name: str
 
         def validate(self) -> None:
             if not len(self.name) < 10:
-                raise DomainValidationError
+                raise AbstractDomainValidationError
 
         def update_name(self, name: str) -> None:
             self.name = name
@@ -207,28 +207,28 @@ def test_entity_validation_pass() -> None:
 
     user: User = User.create("Sam", 30)
     clazz: Class = Class.create("Astronomy")
-    with pytest.raises(DomainValidationError):
+    with pytest.raises(AbstractDomainValidationError):
         user.update_name("John")
         clazz.update_name("Neuro-Science")
-    with pytest.raises(DomainValidationError):
+    with pytest.raises(AbstractDomainValidationError):
         User.create("Sarah", 10)
-    with pytest.raises(DomainValidationError):
+    with pytest.raises(AbstractDomainValidationError):
         User.create("Jesus", -1)
-    with pytest.raises(DomainValidationError):
+    with pytest.raises(AbstractDomainValidationError):
         User.create("Chris", 101)
 
 
 def test_entity_attribute_will_not_change_if_validation_error_raised() -> None:
     @mutable
-    class User(Entity[UUID]):
+    class User(AbstractEntity[UUID]):
         name: str
         age: int
 
         def validate(self) -> None:
             if not len(self.name) < 4:
-                raise DomainValidationError
+                raise AbstractDomainValidationError
             if not 0 < self.age and self.age < 100:
-                raise DomainValidationError
+                raise AbstractDomainValidationError
 
         def update_name(self, name: str) -> None:
             self.name = name
@@ -242,6 +242,6 @@ def test_entity_attribute_will_not_change_if_validation_error_raised() -> None:
             return cls(uid=cls.next_id(), name=name, age=age)
 
     user: User = User.create("Sam", 30)
-    with pytest.raises(DomainValidationError):
+    with pytest.raises(AbstractDomainValidationError):
         user.update_name("John")
     assert user.name == "Sam"

@@ -5,8 +5,9 @@ from inspect import ismethod, getmembers, iscoroutinefunction
 from logging import Logger
 
 from spakky.aop.advisor import Advisor, AsyncAdvisor
-from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
-from spakky.core.proxy import AbstractProxyHandler, ProxyFactory
+from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
+from spakky.core.proxy import ProxyFactory, ProxyHandler
 from spakky.core.types import AsyncFunc, Func
 from spakky.pod.annotations.order import Order
 from spakky.pod.annotations.pod import Pod
@@ -16,7 +17,7 @@ from spakky.pod.interfaces.container import IContainer
 from spakky.pod.interfaces.post_processor import IPostProcessor
 
 
-class AspectProxyHandler(AbstractProxyHandler):
+class AspectProxyHandler(ProxyHandler):
     __advisor_map: dict[MethodType | Func, MethodType | Advisor]
     __async_advisor_map: dict[MethodType | AsyncFunc, MethodType | AsyncAdvisor]
 

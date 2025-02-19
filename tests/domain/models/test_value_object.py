@@ -1,12 +1,12 @@
 import pytest
 
 from spakky.core.mutability import immutable
-from spakky.domain.models.value_object import ValueObject
+from spakky.domain.models.value_object import AbstractValueObject
 
 
 def test_value_object_equals() -> None:
     @immutable
-    class SampleValueObject(ValueObject):
+    class SampleValueObject(AbstractValueObject):
         name: str
         age: int
 
@@ -20,7 +20,7 @@ def test_value_object_equals() -> None:
 
 def test_value_object_not_equals() -> None:
     @immutable
-    class SampleValueObject(ValueObject):
+    class SampleValueObject(AbstractValueObject):
         name: str
         age: int
 
@@ -34,7 +34,7 @@ def test_value_object_not_equals() -> None:
 
 def test_value_object_not_equals_with_wrong_type() -> None:
     @immutable
-    class SampleValueObject(ValueObject):
+    class SampleValueObject(AbstractValueObject):
         name: str
         age: int
 
@@ -42,7 +42,7 @@ def test_value_object_not_equals_with_wrong_type() -> None:
             return
 
     @immutable
-    class AnotherValueObject(ValueObject):
+    class AnotherValueObject(AbstractValueObject):
         name: str
         age: int
 
@@ -56,7 +56,7 @@ def test_value_object_not_equals_with_wrong_type() -> None:
 
 def test_value_object_clone() -> None:
     @immutable
-    class SampleValueObject(ValueObject):
+    class SampleValueObject(AbstractValueObject):
         name: str
         age: int
 
@@ -70,7 +70,7 @@ def test_value_object_clone() -> None:
 
 def test_value_object_hash() -> None:
     @immutable
-    class SampleValueObject(ValueObject):
+    class SampleValueObject(AbstractValueObject):
         name: str
         age: int
 
@@ -84,7 +84,7 @@ def test_value_object_hash() -> None:
 
 def test_value_object_can_only_composed_by_hashable_objects_expect_success() -> None:
     @immutable
-    class _(ValueObject):
+    class _(AbstractValueObject):
         name: str
         age: int
         jobs: frozenset[str]
@@ -97,7 +97,7 @@ def test_value_object_can_only_composed_by_hashable_objects_expect_error() -> No
     with pytest.raises(TypeError, match="type of 'jobs' is not hashable"):
 
         @immutable
-        class _(ValueObject):
+        class _(AbstractValueObject):
             name: str
             age: int
             jobs: list[str]

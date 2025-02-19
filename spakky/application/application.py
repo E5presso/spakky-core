@@ -5,7 +5,7 @@ from logging import Logger
 from importlib.metadata import EntryPoints, entry_points
 
 from spakky.aop.post_processor import AspectPostProcessor
-from spakky.application.error import SpakkyApplicationError
+from spakky.application.error import AbstractSpakkyApplicationError
 from spakky.application.interfaces.application_context import IApplicationContext
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect
@@ -26,11 +26,11 @@ else:
     from typing_extensions import Self  # pragma: no cover
 
 
-class LoggerNotRegisteredError(SpakkyApplicationError):
+class LoggerNotRegisteredError(AbstractSpakkyApplicationError):
     message = "Logger is not registered"
 
 
-class AOPNotEnabledError(SpakkyApplicationError):
+class AOPNotEnabledError(AbstractSpakkyApplicationError):
     message = "AOP is not enabled"
 
 

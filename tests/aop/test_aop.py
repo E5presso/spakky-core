@@ -6,7 +6,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
+from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
 from spakky.aop.pointcut import After, AfterRaising, AfterReturning, Around, Before
 from spakky.aop.post_processor import AspectPostProcessor
 from spakky.application.application_context import ApplicationContext

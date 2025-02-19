@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Any, Generic, TypeVar, Protocol, Sequence, runtime_checkable
 
 from spakky.core.interfaces.equatable import IEquatable
@@ -8,7 +8,7 @@ ProxyIdT_contra = TypeVar("ProxyIdT_contra", bound=IEquatable, contravariant=Tru
 
 
 @immutable
-class ProxyModel(IEquatable, Generic[ProxyIdT_contra], ABC):
+class ProxyModel(IEquatable, Generic[ProxyIdT_contra]):
     id: ProxyIdT_contra
 
     def __eq__(self, other: object) -> bool:

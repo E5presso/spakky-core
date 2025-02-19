@@ -3,7 +3,8 @@ from inspect import iscoroutinefunction
 from logging import Logger
 from dataclasses import dataclass
 
-from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
+from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
 from spakky.aop.pointcut import Around
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import AsyncFunc, Func

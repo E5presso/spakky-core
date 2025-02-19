@@ -5,14 +5,14 @@ from types import ModuleType, FunctionType
 from typing import Any, Callable, TypeAlias
 from fnmatch import filter
 
-from spakky.core.error import SpakkyCoreError
+from spakky.core.error import AbstractSpakkyCoreError
 
 PATH = "__path__"
 SRC_PREFIX = "src."
 Module: TypeAlias = ModuleType | str
 
 
-class CannotScanNonPackageModuleError(SpakkyCoreError):
+class CannotScanNonPackageModuleError(AbstractSpakkyCoreError):
     message = "Module that you specified is not a package module."
 
 

@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from types import new_class
 from typing import Any, Generic, ClassVar, Iterable, Protocol, runtime_checkable
 from inspect import ismethod, iscoroutinefunction
@@ -25,7 +25,7 @@ class IProxyHandler(Protocol):
     def delete(self, name: str, value: Any) -> Any: ...
 
 
-class AbstractProxyHandler(IProxyHandler, ABC):
+class ProxyHandler(IProxyHandler):
     def call(self, method: Func, *args: Any, **kwargs: Any) -> Any:
         return method(*args, **kwargs)
 

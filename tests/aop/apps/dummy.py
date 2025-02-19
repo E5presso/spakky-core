@@ -1,7 +1,8 @@
 from typing import Any
 from dataclasses import dataclass
 
-from spakky.aop.aspect import Aspect, AsyncAspect, IAspect, IAsyncAspect
+from spakky.aop.aspect import Aspect, AsyncAspect
+from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
 from spakky.aop.pointcut import Around
 from spakky.aspects.logging import Logging
 from spakky.core.annotation import FunctionAnnotation

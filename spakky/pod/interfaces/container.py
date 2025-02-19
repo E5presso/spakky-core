@@ -3,27 +3,27 @@ from typing import Callable, Protocol, overload, runtime_checkable
 
 from spakky.core.types import ObjectT
 from spakky.pod.annotations.pod import Pod, PodType
-from spakky.pod.error import SpakkyPodError
+from spakky.pod.error import AbstractSpakkyPodError
 from spakky.pod.interfaces.post_processor import IPostProcessor
 
 
-class CircularDependencyGraphDetectedError(SpakkyPodError):
+class CircularDependencyGraphDetectedError(AbstractSpakkyPodError):
     message = "Circular dependency detected"
 
 
-class NoSuchPodError(SpakkyPodError):
+class NoSuchPodError(AbstractSpakkyPodError):
     message = "Cannot find pod from context by given condition"
 
 
-class NoUniquePodError(SpakkyPodError):
+class NoUniquePodError(AbstractSpakkyPodError):
     message = "Multiple pod found by given condition"
 
 
-class CannotRegisterNonPodObjectError(SpakkyPodError):
+class CannotRegisterNonPodObjectError(AbstractSpakkyPodError):
     message = "Cannot register a non-pod object"
 
 
-class PodNameAlreadyExistsError(SpakkyPodError):
+class PodNameAlreadyExistsError(AbstractSpakkyPodError):
     message = "Pod name already exists"
 
 
