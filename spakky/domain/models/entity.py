@@ -1,9 +1,9 @@
 import sys
 from abc import ABC, abstractmethod
-from uuid import UUID, uuid4
-from typing import Any, Generic
-from datetime import datetime, timedelta
 from dataclasses import field
+from datetime import datetime, timedelta
+from typing import Any, Generic
+from uuid import UUID, uuid4
 
 from spakky.core.interfaces.equatable import EquatableT, IEquatable
 from spakky.core.mutability import mutable

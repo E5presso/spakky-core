@@ -1,6 +1,6 @@
 import inspect
-from uuid import UUID, uuid4
 from dataclasses import dataclass
+from uuid import UUID, uuid4
 
 import pytest
 

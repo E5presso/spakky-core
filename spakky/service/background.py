@@ -1,6 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
-from threading import Event as ThreadEvent, Thread
+from threading import Event as ThreadEvent
+from threading import Thread
 
 from spakky.service.interfaces.service import IAsyncService, IService
 

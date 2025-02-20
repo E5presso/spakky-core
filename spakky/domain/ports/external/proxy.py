@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Generic, TypeVar, Protocol, Sequence, runtime_checkable
+from typing import Any, Generic, Protocol, Sequence, TypeVar, runtime_checkable
 
 from spakky.core.interfaces.equatable import IEquatable
 from spakky.core.mutability import immutable

@@ -1,5 +1,5 @@
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
 
 from spakky.core.mutability import immutable
 from spakky.domain.models.event import AbstractDomainEvent

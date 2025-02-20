@@ -1,7 +1,7 @@
 import asyncio
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
 from threading import Event
+from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable

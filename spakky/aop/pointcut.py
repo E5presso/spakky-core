@@ -1,6 +1,6 @@
 from abc import ABC
-from typing import Callable
 from dataclasses import dataclass
+from typing import Callable
 
 from spakky.core.annotation import FunctionAnnotation
 from spakky.core.types import Func

@@ -1,7 +1,7 @@
 import sys
+from importlib.metadata import EntryPoints, entry_points
 from types import ModuleType
 from typing import Callable
-from importlib.metadata import EntryPoints, entry_points
 
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect

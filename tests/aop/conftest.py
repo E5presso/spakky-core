@@ -1,6 +1,6 @@
 import logging
+from logging import Formatter, Logger, StreamHandler, getLogger
 from typing import Any, Generator
-from logging import Logger, Formatter, StreamHandler, getLogger
 
 import pytest
 

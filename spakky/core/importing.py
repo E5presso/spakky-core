@@ -1,9 +1,9 @@
+import importlib
 import inspect
 import pkgutil
-import importlib
-from types import ModuleType, FunctionType
-from typing import Any, Callable, TypeAlias
 from fnmatch import filter
+from types import FunctionType, ModuleType
+from typing import Any, Callable, TypeAlias
 
 from spakky.core.error import AbstractSpakkyCoreError
 

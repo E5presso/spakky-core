@@ -1,5 +1,5 @@
-from io import BufferedReader
 from enum import Enum
+from io import BufferedReader
 from typing import final
 
 from Crypto.Hash import MD5, SHA1, SHA224, SHA256, SHA384, SHA512

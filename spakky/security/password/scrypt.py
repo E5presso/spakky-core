@@ -1,5 +1,5 @@
-from typing import ClassVar, overload
 from hashlib import scrypt
+from typing import ClassVar, overload
 
 from spakky.security.encoding import Base64Encoder
 from spakky.security.key import Key

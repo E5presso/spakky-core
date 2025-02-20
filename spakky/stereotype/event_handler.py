@@ -1,5 +1,5 @@
-from typing import Any, Generic, TypeVar, Callable, Awaitable, TypeAlias
 from dataclasses import dataclass
+from typing import Any, Awaitable, Callable, Generic, TypeAlias, TypeVar
 
 from spakky.core.annotation import FunctionAnnotation
 from spakky.domain.models.event import AbstractDomainEvent

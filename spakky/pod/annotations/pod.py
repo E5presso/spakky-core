@@ -1,9 +1,9 @@
 import inspect
+from dataclasses import dataclass, field
 from enum import Enum, auto
-from types import NoneType
-from typing import TypeVar, Annotated, TypeAlias, TypeGuard, get_origin
 from inspect import Parameter, isclass, isfunction
-from dataclasses import field, dataclass
+from types import NoneType
+from typing import Annotated, TypeAlias, TypeGuard, TypeVar, get_origin
 
 from spakky.core.annotation import Annotation
 from spakky.core.interfaces.equatable import IEquatable

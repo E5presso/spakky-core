@@ -1,6 +1,6 @@
 from abc import ABC
-from typing import Annotated, cast, get_args
 from dataclasses import dataclass
+from typing import Annotated, cast, get_args
 
 from spakky.core.types import ClassT
 

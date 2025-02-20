@@ -1,5 +1,5 @@
-from typing import Any
 from dataclasses import dataclass
+from typing import Any
 
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect

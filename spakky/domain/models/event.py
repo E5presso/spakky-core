@@ -1,9 +1,9 @@
 import sys
 from abc import ABC
 from copy import deepcopy
-from uuid import UUID, uuid4
-from datetime import datetime, timezone
 from dataclasses import field
+from datetime import datetime, timezone
+from uuid import UUID, uuid4
 
 from spakky.core.interfaces.cloneable import ICloneable
 from spakky.core.interfaces.comparable import IComparable
