@@ -5,7 +5,9 @@ from spakky.core.interfaces.equatable import IEquatable
 from spakky.domain.error import AbstractSpakkyDomainError
 from spakky.domain.models.aggregate_root import AggregateRootT
 
-AggregateIdT_contra = TypeVar("AggregateIdT_contra", bound=IEquatable, contravariant=True)
+AggregateIdT_contra = TypeVar(
+    "AggregateIdT_contra", bound=IEquatable, contravariant=True
+)
 
 
 class EntityNotFoundError(AbstractSpakkyDomainError):
@@ -18,7 +20,9 @@ class IGenericRepository(Protocol[AggregateRootT, AggregateIdT_contra]):
     def get(self, aggregate_id: AggregateIdT_contra) -> AggregateRootT: ...
 
     @abstractmethod
-    def get_or_none(self, aggregate_id: AggregateIdT_contra) -> AggregateRootT | None: ...
+    def get_or_none(
+        self, aggregate_id: AggregateIdT_contra
+    ) -> AggregateRootT | None: ...
 
     @abstractmethod
     def contains(self, aggregate_id: AggregateIdT_contra) -> bool: ...

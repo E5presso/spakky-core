@@ -160,7 +160,7 @@ def test_entity_prevent_monkey_patching() -> None:
 
     assert user.name == "Sarah"
     with pytest.raises(CannotMonkeyPatchEntityError):
-        user.update_name = lambda name: print(name)  # pylint: disable=unnecessary-lambda
+        user.update_name = lambda name: print(name)
 
 
 def test_entity_validation_pass() -> None:

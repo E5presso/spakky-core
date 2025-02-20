@@ -1,10 +1,7 @@
-# pylint: disable=too-many-lines, line-too-long
-
-
 from abc import abstractmethod
-from uuid import UUID, uuid4
-from typing import Any, Protocol, Annotated, runtime_checkable
 from dataclasses import dataclass
+from typing import Annotated, Any, Protocol, runtime_checkable
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -76,7 +73,9 @@ def test_application_context_get_by_type_singleton_expect_success() -> None:
     context.add(SecondSamplePod)
 
     assert context.get(type_=FirstSamplePod).id == context.get(type_=FirstSamplePod).id
-    assert context.get(type_=SecondSamplePod).id == context.get(type_=SecondSamplePod).id
+    assert (
+        context.get(type_=SecondSamplePod).id == context.get(type_=SecondSamplePod).id
+    )
 
 
 def test_application_context_get_by_type_expect_no_such_error() -> None:
@@ -99,7 +98,8 @@ def test_application_context_get_by_type_expect_no_such_error() -> None:
     assert context.get(type_=FirstSamplePod).id == context.get(type_=FirstSamplePod).id
     with pytest.raises(NoSuchPodError):
         assert (
-            context.get(type_=SecondSamplePod).id == context.get(type_=SecondSamplePod).id
+            context.get(type_=SecondSamplePod).id
+            == context.get(type_=SecondSamplePod).id
         )
 
 

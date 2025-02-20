@@ -1,27 +1,11 @@
-<h1 align="center">Spakky Core</h1>
-<p align="center">
-    <em>Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc...</em>
-</p>
-<p align="center">
-    <a href="https://pypi.org/project/spakky-core">
-        <img src="https://img.shields.io/pypi/v/spakky-core?label=latest&color=blue">
-    </a>
-    <a href="https://github.com/E5presso/spakky-core">
-        <img src="https://img.shields.io/badge/python-3.10_|_3.11_|_3.12_|_3.13-green.svg">
-    </a>
-    <a href="https://github.com/E5presso/spakky-core/actions/workflows/test.yml">
-        <img src="https://github.com/E5presso/spakky-core/actions/workflows/test.yml/badge.svg" alt="Test">
-    </a>
-    <a href="https://codecov.io/gh/E5presso/spakky-core">
-        <img src="https://codecov.io/gh/E5presso/spakky-core/graph/badge.svg?token=5MGPkbqo0V" alt="Coverage">
-    </a>
-    <a href="https://github.com/psf/black">
-        <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
-    </a>
-    <a href="https://github.com/pylint-dev/pylint">
-        <img src="https://img.shields.io/badge/linting-pylint-yellowgreen" alt="Pylint">
-    </a>
-</p>
+# Spakky Core
+*Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc...*
+
+[![image](https://img.shields.io/pypi/v/spakky-core?label=latest&color=blue)](https://pypi.org/project/spakky-core)
+[![image](https://img.shields.io/badge/python-3.10_|_3.11_|_3.12_|_3.13-green.svg)](https://github.com/E5presso/spakky-core)
+[![Test](https://github.com/E5presso/spakky-core/actions/workflows/test.yml/badge.svg)](https://github.com/E5presso/spakky-core/actions/workflows/test.yml)
+[![Coverage](https://codecov.io/gh/E5presso/spakky-core/graph/badge.svg?token=5MGPkbqo0V)](https://codecov.io/gh/E5presso/spakky-core)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 ---
 

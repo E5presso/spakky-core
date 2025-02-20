@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Protocol, runtime_checkable
+from typing import Generic, Protocol, TypeVar, runtime_checkable
 
 import pytest
 
@@ -22,7 +22,7 @@ def test_generic_mro_normal_inheritance() -> None:
 
     class H(E, F): ...
 
-    class I(G): ...
+    class I(G): ...  # noqa: E742
 
     class J: ...
 
@@ -34,7 +34,7 @@ def test_generic_mro_normal_inheritance() -> None:
 
     class N(J, K): ...
 
-    class O(L): ...
+    class O(L): ...  # noqa: E742
 
     assert generic_mro(M) == [M, I, G, D, E, B, A, F, C, object]
     assert generic_mro(N) == [N, J, K, G, D, E, B, A, F, C, object]
@@ -61,7 +61,7 @@ def test_generic_mro_with_generic_inheritance() -> None:
 
     class H(E, F[str]): ...
 
-    class I(G): ...
+    class I(G): ...  # noqa: E742
 
     class J: ...
 
@@ -73,7 +73,7 @@ def test_generic_mro_with_generic_inheritance() -> None:
 
     class N(J, K): ...
 
-    class O(L): ...
+    class O(L): ...  # noqa: E742
 
     assert generic_mro(M) == [
         M,

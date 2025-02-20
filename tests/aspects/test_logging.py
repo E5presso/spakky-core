@@ -1,7 +1,5 @@
-# pylint: disable=line-too-long
-
 import logging
-from logging import Logger, Formatter, LogRecord
+from logging import Formatter, Logger, LogRecord
 
 import pytest
 

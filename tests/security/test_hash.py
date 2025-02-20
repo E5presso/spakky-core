@@ -1,5 +1,3 @@
-# pylint: disable=line-too-long
-
 from spakky.security.hash import Hash, HashType
 
 

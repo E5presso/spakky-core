@@ -66,7 +66,9 @@ class ApplicationContext(IApplicationContext):
         self.task_stop_event = asyncio.locks.Event()
         self.thread_stop_event = threading.Event()
 
-    def __resolve_candidate(self, type_: type, qualifier: Qualifier | None) -> Pod | None:
+    def __resolve_candidate(
+        self, type_: type, qualifier: Qualifier | None
+    ) -> Pod | None:
         pods: set[Pod] = {
             pod for pod in self.__pods.values() if pod.is_family_with(type_)
         }
@@ -76,7 +78,9 @@ class ApplicationContext(IApplicationContext):
             candidates: set[Pod] = {
                 pod
                 for pod in pods
-                if (qualifier.selector(pod) if qualifier is not None else pod.is_primary)
+                if (
+                    qualifier.selector(pod) if qualifier is not None else pod.is_primary
+                )
             }
             if len(candidates) == 1:
                 return candidates.pop()
@@ -85,7 +89,9 @@ class ApplicationContext(IApplicationContext):
 
     def __instantiate_pod(self, pod: Pod, dependency_hierarchy: list[type]) -> object:
         if pod.type_ in dependency_hierarchy:
-            raise CircularDependencyGraphDetectedError(dependency_hierarchy + [pod.type_])
+            raise CircularDependencyGraphDetectedError(
+                dependency_hierarchy + [pod.type_]
+            )
         dependency_hierarchy.append(pod.type_)
         dependencies = {
             name: self.__get_internal(

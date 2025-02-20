@@ -98,7 +98,6 @@ class Argon2PasswordEncoder(IPasswordEncoder):
             )
 
     def encode(self) -> str:
-        # pylint: disable=line-too-long
         return "{algorithm}:{salt}:{time_cost}:{memory_cost}:{parallelism}:{hash_len}:{hash}".format(
             algorithm=self.ALGORITHM_TYPE,
             salt=self.__salt.b64_urlsafe if self.__url_safe else self.__salt.b64,

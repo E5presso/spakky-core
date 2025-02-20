@@ -40,7 +40,9 @@ def is_subpath_of(module: ModuleType, patterns: set[Module]) -> bool:
     return False
 
 
-def list_modules(package: Module, exclude: set[Module] | None = None) -> set[ModuleType]:
+def list_modules(
+    package: Module, exclude: set[Module] | None = None
+) -> set[ModuleType]:
     package = resolve_module(package)
     if not is_package(package):
         raise CannotScanNonPackageModuleError(package)

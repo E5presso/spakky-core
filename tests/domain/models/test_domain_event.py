@@ -140,16 +140,24 @@ def test_domain_event_compare() -> None:
 
     assert SampleEvent(
         timestamp=datetime.fromisoformat("2024-01-01T00:00:10.000000+09:00")
-    ) < SampleEvent(timestamp=datetime.fromisoformat("2024-01-01T00:00:20.000000+09:00"))
+    ) < SampleEvent(
+        timestamp=datetime.fromisoformat("2024-01-01T00:00:20.000000+09:00")
+    )
     assert SampleEvent(
         timestamp=datetime.fromisoformat("2024-01-01T00:00:10.000000+09:00")
-    ) <= SampleEvent(timestamp=datetime.fromisoformat("2024-01-01T00:00:20.000000+09:00"))
+    ) <= SampleEvent(
+        timestamp=datetime.fromisoformat("2024-01-01T00:00:20.000000+09:00")
+    )
     assert SampleEvent(
         timestamp=datetime.fromisoformat("2024-01-01T00:00:20.000000+09:00")
-    ) > SampleEvent(timestamp=datetime.fromisoformat("2024-01-01T00:00:10.000000+09:00"))
+    ) > SampleEvent(
+        timestamp=datetime.fromisoformat("2024-01-01T00:00:10.000000+09:00")
+    )
     assert SampleEvent(
         timestamp=datetime.fromisoformat("2024-01-01T00:00:20.000000+09:00")
-    ) >= SampleEvent(timestamp=datetime.fromisoformat("2024-01-01T00:00:10.000000+09:00"))
+    ) >= SampleEvent(
+        timestamp=datetime.fromisoformat("2024-01-01T00:00:10.000000+09:00")
+    )
 
 
 def test_domain_event_name() -> None:

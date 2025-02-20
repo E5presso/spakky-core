@@ -33,7 +33,9 @@ class DummyAdvisor(IAspect):
 @AsyncAspect()
 class AsyncDummyAdvisor(IAsyncAspect):
     @Around(AsyncDummy.exists)
-    async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+    async def around_async(
+        self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any
+    ) -> Any:
         _annotation = AsyncDummy.get(joinpoint)
         return await joinpoint(*args, **kwargs)
 

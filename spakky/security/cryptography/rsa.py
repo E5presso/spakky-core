@@ -66,7 +66,9 @@ class AsymmetricKey:
                 raise KeySizeError(size)
             self.__key = RSA.generate(size)
         if self.__key.has_private():
-            self.__private_key = Key(binary=self.__key.export_key(passphrase=passphrase))
+            self.__private_key = Key(
+                binary=self.__key.export_key(passphrase=passphrase)
+            )
         self.__public_key = Key(binary=self.__key.public_key().export_key())
 
 
@@ -106,6 +108,4 @@ class Rsa(ICryptor, ISigner):
     ) -> bool:
         signature_bytes: bytes = Base64Encoder.get_bytes(signature, self.url_safe)
         signer = PKCS1_v1_5.new(RSA.import_key(self.__key.public_key.binary))
-        return signer.verify(  # pylint: disable=not-callable
-            Hash(message, hash_type), signature_bytes
-        )
+        return signer.verify(Hash(message, hash_type), signature_bytes)
