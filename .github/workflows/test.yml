@@ -31,7 +31,7 @@ jobs:
     - name: Install Dependencies
       run: poetry install --with ci
     - name: Run Linting
-      run: poetry run ruff check
+      run: poetry run ruff check --output-format=github .
     - name: Run Test Suite
       run: poetry run pytest
     - name: Upload coverage to Codecov
