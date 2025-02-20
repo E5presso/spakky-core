@@ -31,7 +31,9 @@ class AsyncTransactionalAspect(IAsyncAspect):
         self.__logger = logger
 
     @Around(lambda x: Transactional.exists(x) and iscoroutinefunction(x))
-    async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+    async def around_async(
+        self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any
+    ) -> Any:
         self.__logger.info(f"[{type(self).__name__}] BEGIN TRANSACTION")
         try:
             async with self.__transacntion:

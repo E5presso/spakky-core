@@ -68,7 +68,9 @@ class SpakkyApplication:
         my_plugins: EntryPoints = all_entry_points.select(group=PLUGIN_PATH)
 
         for entry_point in my_plugins:
-            entry_point_function: Callable[[SpakkyApplication], None] = entry_point.load()
+            entry_point_function: Callable[[SpakkyApplication], None] = (
+                entry_point.load()
+            )
             entry_point_function(self)
         return self
 

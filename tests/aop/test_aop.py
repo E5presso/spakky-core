@@ -1,8 +1,6 @@
-# pylint: disable=too-many-lines
-
 import logging
-from typing import Any
 from dataclasses import dataclass
+from typing import Any
 
 import pytest
 

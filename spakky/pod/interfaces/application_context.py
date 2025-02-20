@@ -16,7 +16,9 @@ class ApplicationContextAlreadyStoppedError(AbstractSpakkyApplicationError):
     message = "Application context already stopped"
 
 
-class EventLoopThreadNotStartedInApplicationContextError(AbstractSpakkyApplicationError):
+class EventLoopThreadNotStartedInApplicationContextError(
+    AbstractSpakkyApplicationError
+):
     message = "Event loop thread not started in application context"
 
 

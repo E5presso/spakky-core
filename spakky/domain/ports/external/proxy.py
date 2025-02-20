@@ -35,7 +35,9 @@ class IGenericProxy(Protocol[ProxyModelT_co, ProxyIdT_contra]):
     def contains(self, proxy_id: ProxyIdT_contra) -> bool: ...
 
     @abstractmethod
-    def range(self, proxy_ids: Sequence[ProxyIdT_contra]) -> Sequence[ProxyModelT_co]: ...
+    def range(
+        self, proxy_ids: Sequence[ProxyIdT_contra]
+    ) -> Sequence[ProxyModelT_co]: ...
 
 
 @runtime_checkable

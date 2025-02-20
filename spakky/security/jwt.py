@@ -67,7 +67,9 @@ class JWT:
     @property
     def is_expired(self) -> bool:
         exp: int | None = self.__payload.get("exp")
-        return self.__convert_datetime(exp) < datetime.now() if exp is not None else False
+        return (
+            self.__convert_datetime(exp) < datetime.now() if exp is not None else False
+        )
 
     @property
     def is_signed(self) -> bool:
@@ -83,7 +85,9 @@ class JWT:
                 self.__header = json.loads(
                     Base64Encoder.decode(b64=header, url_safe=True)
                 )
-                self.__payload = json.loads(Base64Encoder.decode(b64=body, url_safe=True))
+                self.__payload = json.loads(
+                    Base64Encoder.decode(b64=body, url_safe=True)
+                )
             except Exception as e:
                 raise JWTDecodingError from e
             self.__signature = signature
@@ -101,7 +105,9 @@ class JWT:
             self.__signature = None
 
     def __sign(self) -> None:
-        header: str = Base64Encoder.encode(utf8=json.dumps(self.__header), url_safe=True)
+        header: str = Base64Encoder.encode(
+            utf8=json.dumps(self.__header), url_safe=True
+        )
         payload: str = Base64Encoder.encode(
             utf8=json.dumps(self.__payload), url_safe=True
         )
@@ -172,7 +178,9 @@ class JWT:
 
     def verify(self, key: Key) -> bool:
         self.__key = key
-        header: str = Base64Encoder.encode(utf8=json.dumps(self.__header), url_safe=True)
+        header: str = Base64Encoder.encode(
+            utf8=json.dumps(self.__header), url_safe=True
+        )
         payload: str = Base64Encoder.encode(
             utf8=json.dumps(self.__payload), url_safe=True
         )
@@ -199,6 +207,8 @@ class JWT:
             header: str = Base64Encoder.encode(
                 utf8=json.dumps(self.__header), url_safe=True
             )
-            payload: str = Base64Encoder.encode(json.dumps(self.__payload), url_safe=True)
+            payload: str = Base64Encoder.encode(
+                json.dumps(self.__payload), url_safe=True
+            )
             return f"{header}.{payload}.{self.__signature}"
         raise JWTProcessingError("Token must be signed")

@@ -6,7 +6,6 @@ import toml
 
 
 def get_current_branch() -> str:
-    # pylint: disable=subprocess-run-check
     result = subprocess.run(
         ["git", "rev-parse", "--abbrev-ref", "HEAD"],
         stdout=subprocess.PIPE,
@@ -27,7 +26,6 @@ def validate_version(version: str) -> bool:
 
 
 def add_git_tag(version: str) -> None:
-    # pylint: disable=subprocess-run-check
     result = subprocess.run(
         ["git", "tag", "--list", version],
         stdout=subprocess.PIPE,

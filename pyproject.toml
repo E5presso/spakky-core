@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spakky-core"
-version = "2.1.1"
+version = "2.1.2"
 description = "Highly abstracted Framework core to use DDD & DI/IoC & AOP & Etc..."
 authors = ["Spakky <sejong418@icloud.com>"]
 packages = [{ include = "spakky" }]
@@ -18,59 +18,24 @@ bcrypt = "^4.2.0"
 argon2-cffi = "^23.1.0"
 
 [tool.poetry.group.dev.dependencies]
-pylint = "^3.0.2"
-black = "^24.4.2"
-isort = "^5.12.0"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
 pytest-xdist = "^3.6.1"
 toml = "^0.10.2"
+ruff = "^0.9.6"
+pre-commit = "^4.1.0"
 
 [tool.poetry.group.ci.dependencies]
-pylint = "^3.0.2"
 pytest = "^7.4.3"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
 pytest-xdist = "^3.6.1"
+ruff = "^0.9.6"
 
-[tool.black]
-line-length = 90
-target-version = ["py310"]
-include = '\.pyi?$'
-
-[tool.isort]
-py_version = 310
-src_paths = ["spakky", "tests"]
-skip = [".venv", ".gitignore", ".dockerignore"]
-extend_skip = [".md", ".json", ".txt"]
-profile = "black"
-combine_as_imports = true
-remove_redundant_aliases = true
-length_sort_sections = ["future", "stdlib"]
-
-[tool.pylint]
-ignore-paths = ["tests"]
-
-[tool.pylint.'MESSAGES CONTROL']
-max-line-length = 90
-disable = """
-    no-member,
-    arguments-differ,
-    invalid-field-call,
-    too-many-arguments,
-    missing-module-docstring,
-    missing-class-docstring,
-    missing-function-docstring,
-    too-many-instance-attributes,
-    too-few-public-methods,
-    unnecessary-ellipsis,
-    redefined-builtin,
-    too-many-locals,
-    multiple-statements,
-    consider-using-f-string,
-    duplicate-code,
-"""
+[tool.ruff]
+builtins = ["_"]
+cache-dir = "~/.cache/ruff"
 
 [tool.pytest.ini_options]
 pythonpath = "spakky"

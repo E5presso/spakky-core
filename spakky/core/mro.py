@@ -1,9 +1,9 @@
 # 이 코드는 https://github.com/python/typing/issues/777 에서 제안된 코드를 기반으로 작성되었습니다.
 # type: ignore
-# pylint: disable=wildcard-import, unused-import, unused-wildcard-import, no-name-in-module
 
 import sys
-from typing import *
+from typing import *  # noqa: F403
+from typing import Any, Generic, Protocol, get_args, get_origin
 
 if sys.version_info >= (3, 11):
     from typing import _collect_parameters  # pragma: no cover

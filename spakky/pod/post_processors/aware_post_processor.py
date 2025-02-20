@@ -10,7 +10,9 @@ class ApplicationContextAwareProcessor(IPostProcessor):
     __application_context: IApplicationContext
     __logger: Logger
 
-    def __init__(self, application_context: IApplicationContext, logger: Logger) -> None:
+    def __init__(
+        self, application_context: IApplicationContext, logger: Logger
+    ) -> None:
         self.__application_context = application_context
         self.__logger = logger
 

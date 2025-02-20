@@ -1,8 +1,8 @@
 import sys
+from inspect import getmembers, iscoroutinefunction, ismethod
+from logging import Logger
 from types import MethodType
 from typing import Any, Sequence
-from inspect import ismethod, getmembers, iscoroutinefunction
-from logging import Logger
 
 from spakky.aop.advisor import Advisor, AsyncAdvisor
 from spakky.aop.aspect import Aspect, AsyncAspect
@@ -29,7 +29,8 @@ class AspectProxyHandler(ProxyHandler):
                 for aspect in [
                     x
                     for x in aspects
-                    if isinstance(x, IAsyncAspect) and AsyncAspect.get(x).matches(method)
+                    if isinstance(x, IAsyncAspect)
+                    and AsyncAspect.get(x).matches(method)
                 ]:
                     runnable = AsyncAdvisor(aspect, runnable)
                 self.__async_advisor_map[method] = runnable
@@ -93,7 +94,6 @@ class AspectPostProcessor(IPostProcessor):
             reverse=True,
         )
 
-        # pylint: disable=line-too-long
         self.__logger.debug(
             f"[{type(self).__name__}] {[f'{type(x).__name__}' for x in matched]!r} -> {type(pod).__name__!r}"
         )

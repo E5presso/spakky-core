@@ -8,7 +8,9 @@ class Base64Encoder:
     def encode(utf8: str, url_safe: bool = False) -> str:
         if url_safe:
             return (
-                base64.urlsafe_b64encode(utf8.encode("UTF-8")).decode("UTF-8").rstrip("=")
+                base64.urlsafe_b64encode(utf8.encode("UTF-8"))
+                .decode("UTF-8")
+                .rstrip("=")
             )
         return base64.b64encode(utf8.encode("UTF-8")).decode("UTF-8")
 

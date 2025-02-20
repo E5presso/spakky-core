@@ -11,7 +11,9 @@ class ServicePostProcessor(IPostProcessor):
     __application_context: IApplicationContext
     __logger: Logger
 
-    def __init__(self, application_context: IApplicationContext, logger: Logger) -> None:
+    def __init__(
+        self, application_context: IApplicationContext, logger: Logger
+    ) -> None:
         super().__init__()
         self.__application_context = application_context
         self.__logger = logger

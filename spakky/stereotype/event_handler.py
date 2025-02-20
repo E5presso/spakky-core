@@ -21,7 +21,9 @@ class EventRoute(FunctionAnnotation, Generic[DomainEventT]):
 
 def on_event(
     event_type: type[DomainEventT],
-) -> Callable[[IEventHandlerCallback[DomainEventT]], IEventHandlerCallback[DomainEventT]]:
+) -> Callable[
+    [IEventHandlerCallback[DomainEventT]], IEventHandlerCallback[DomainEventT]
+]:
     def wrapper(
         method: IEventHandlerCallback[DomainEventT],
     ) -> IEventHandlerCallback[DomainEventT]:

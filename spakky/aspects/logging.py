@@ -1,9 +1,9 @@
 import re
-from time import perf_counter
-from typing import Any, ClassVar
+from dataclasses import dataclass, field
 from inspect import iscoroutinefunction
 from logging import Logger
-from dataclasses import field, dataclass
+from time import perf_counter
+from typing import Any, ClassVar
 
 from spakky.aop.aspect import Aspect, AsyncAspect
 from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect
@@ -16,7 +16,9 @@ from spakky.pod.annotations.order import Order
 @dataclass
 class Logging(FunctionAnnotation):
     enable_masking: bool = True
-    masking_keys: list[str] = field(default_factory=lambda: ["secret", "key", "password"])
+    masking_keys: list[str] = field(
+        default_factory=lambda: ["secret", "key", "password"]
+    )
 
 
 @Order(0)
@@ -33,7 +35,9 @@ class AsyncLoggingAspect(IAsyncAspect):
         self.__logger = logger
 
     @Around(lambda x: Logging.exists(x) and iscoroutinefunction(x))
-    async def around_async(self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any) -> Any:
+    async def around_async(
+        self, joinpoint: AsyncFunc, *args: Any, **kwargs: Any
+    ) -> Any:
         start: float = perf_counter()
         annotation: Logging = Logging.get(joinpoint)
         masking_keys: str = "|".join(annotation.masking_keys)
@@ -50,19 +54,15 @@ class AsyncLoggingAspect(IAsyncAspect):
             result = await joinpoint(*args, **kwargs)
         except Exception as e:
             end: float = perf_counter()
-            # pylint: disable=line-too-long
-            error: str = (
-                f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__} ({end - start:.2f}s)"
-            )
+            error: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__} ({end - start:.2f}s)"
             self.__logger.error(
-                mask.sub(self.MASKING_TEXT, error) if annotation.enable_masking else error
+                mask.sub(self.MASKING_TEXT, error)
+                if annotation.enable_masking
+                else error
             )
             raise
         end: float = perf_counter()
-        # pylint: disable=line-too-long
-        after: str = (
-            f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r} ({end - start:.2f}s)"
-        )
+        after: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r} ({end - start:.2f}s)"
         self.__logger.info(
             mask.sub(self.MASKING_TEXT, after) if annotation.enable_masking else after
         )
@@ -100,19 +100,15 @@ class LoggingAspect(IAspect):
             result = joinpoint(*args, **kwargs)
         except Exception as e:
             end: float = perf_counter()
-            # pylint: disable=line-too-long
-            error: str = (
-                f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__} ({end - start:.2f}s)"
-            )
+            error: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) raised {type(e).__name__} ({end - start:.2f}s)"
             self.__logger.error(
-                mask.sub(self.MASKING_TEXT, error) if annotation.enable_masking else error
+                mask.sub(self.MASKING_TEXT, error)
+                if annotation.enable_masking
+                else error
             )
             raise
         end: float = perf_counter()
-        # pylint: disable=line-too-long
-        after: str = (
-            f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r} ({end - start:.2f}s)"
-        )
+        after: str = f"[{type(self).__name__}] {joinpoint.__qualname__}({_args}{_kwargs}) -> {result!r} ({end - start:.2f}s)"
         self.__logger.info(
             mask.sub(self.MASKING_TEXT, after) if annotation.enable_masking else after
         )

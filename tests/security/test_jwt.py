@@ -1,5 +1,3 @@
-# pylint: disable=line-too-long
-
 from datetime import timedelta
 
 import pytest
