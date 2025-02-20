@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING, Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Callable
 
 from spakky.core.metadata import Metadata
 

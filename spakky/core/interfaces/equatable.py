@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TypeVar, Protocol, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
 
 
 @runtime_checkable

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TypeVar, Protocol, Sequence, runtime_checkable
+from typing import Protocol, Sequence, TypeVar, runtime_checkable
 
 from spakky.core.interfaces.equatable import IEquatable
 from spakky.domain.error import AbstractSpakkyDomainError

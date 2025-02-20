@@ -4,8 +4,8 @@ from Crypto.Cipher import AES
 from Crypto.Cipher._mode_cbc import CbcMode
 from Crypto.Util.Padding import pad, unpad
 
-from spakky.security.encoding import Base64Encoder
 from spakky.security.cryptography.interface import ICryptor
+from spakky.security.encoding import Base64Encoder
 from spakky.security.error import DecryptionFailedError, KeySizeError
 from spakky.security.key import Key
 

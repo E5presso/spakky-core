@@ -1,8 +1,8 @@
 from abc import abstractmethod
-from types import new_class
-from typing import Any, Generic, ClassVar, Iterable, Protocol, runtime_checkable
-from inspect import ismethod, iscoroutinefunction
 from functools import wraps
+from inspect import iscoroutinefunction, ismethod
+from types import new_class
+from typing import Any, ClassVar, Generic, Iterable, Protocol, runtime_checkable
 
 from spakky.core.types import AsyncFunc, Func, ObjectT
 

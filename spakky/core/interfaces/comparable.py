@@ -1,6 +1,6 @@
 import sys
 from abc import abstractmethod
-from typing import TypeVar, Protocol, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
 
 if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover

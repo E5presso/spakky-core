@@ -1,7 +1,7 @@
 from abc import ABC
 from copy import deepcopy
-from typing import Any, Generic, TypeVar, Sequence
 from dataclasses import field
+from typing import Any, Generic, Sequence, TypeVar
 
 from spakky.core.interfaces.equatable import EquatableT
 from spakky.core.mutability import mutable

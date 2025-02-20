@@ -1,4 +1,4 @@
-from inspect import FullArgSpec, ismethod, getfullargspec
+from inspect import FullArgSpec, getfullargspec, ismethod
 
 from spakky.core.types import Action, Func
 

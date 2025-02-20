@@ -1,12 +1,12 @@
 from types import UnionType
 from typing import (
     Any,
-    Union,
-    TypeVar,
-    Callable,
     Awaitable,
+    Callable,
     ParamSpec,
     TypeAlias,
+    TypeVar,
+    Union,
     get_args,
     get_origin,
 )

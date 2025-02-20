@@ -1,15 +1,15 @@
 import asyncio
 import threading
-from copy import deepcopy
-from typing import Callable, cast, overload
 from asyncio import (
     AbstractEventLoop,
     new_event_loop,
-    set_event_loop,
     run_coroutine_threadsafe,
+    set_event_loop,
 )
+from copy import deepcopy
 from logging import Logger, getLogger
 from threading import Thread
+from typing import Callable, cast, overload
 
 from spakky.aop.post_processor import AspectPostProcessor
 from spakky.core.mro import generic_mro

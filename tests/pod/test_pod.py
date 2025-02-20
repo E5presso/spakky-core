@@ -1,6 +1,6 @@
 from abc import abstractmethod
-from typing import Any, TypeVar, Protocol, Annotated, cast
 from dataclasses import dataclass
+from typing import Annotated, Any, Protocol, TypeVar, cast
 
 import pytest
 

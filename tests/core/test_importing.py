@@ -1,5 +1,5 @@
-from types import ModuleType
 from itertools import chain
+from types import ModuleType
 
 import pytest
 

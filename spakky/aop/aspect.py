@@ -1,5 +1,5 @@
-from inspect import getmembers
 from dataclasses import dataclass
+from inspect import getmembers
 
 from spakky.aop.error import AspectInheritanceError
 from spakky.aop.interfaces.aspect import IAspect, IAsyncAspect

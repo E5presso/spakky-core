@@ -1,5 +1,5 @@
 import sys
-from dataclasses import field, dataclass
+from dataclasses import dataclass, field
 
 from spakky.core.types import AnyT
 

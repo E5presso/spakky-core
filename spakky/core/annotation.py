@@ -1,6 +1,6 @@
 import sys
-from typing import Any, final
 from dataclasses import dataclass
+from typing import Any, final
 
 from spakky.core.error import AbstractSpakkyCoreError
 from spakky.core.types import AnyT, ClassT, FuncT

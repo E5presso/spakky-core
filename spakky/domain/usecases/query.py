@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, TypeVar, Protocol, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 from spakky.core.mutability import immutable
 

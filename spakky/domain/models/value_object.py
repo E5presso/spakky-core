@@ -1,9 +1,9 @@
 import sys
 from abc import ABC, abstractmethod
-from copy import deepcopy
-from functools import reduce
-from dataclasses import astuple
 from collections.abc import Hashable
+from copy import deepcopy
+from dataclasses import astuple
+from functools import reduce
 
 from spakky.core.interfaces.cloneable import ICloneable
 from spakky.core.interfaces.equatable import IEquatable

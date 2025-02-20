@@ -1,6 +1,6 @@
 import logging
+from logging import Formatter, Handler, Logger, LogRecord
 from typing import Any
-from logging import Logger, Handler, Formatter, LogRecord
 
 import pytest
 

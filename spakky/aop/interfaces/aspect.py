@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Protocol, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 from spakky.core.types import AsyncFunc, Func
 

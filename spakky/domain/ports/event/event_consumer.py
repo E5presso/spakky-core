@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TypeVar, Callable, Protocol, Awaitable, TypeAlias, runtime_checkable
+from typing import Awaitable, Callable, Protocol, TypeAlias, TypeVar, runtime_checkable
 
 from spakky.domain.models.event import AbstractDomainEvent
 

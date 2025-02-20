@@ -1,6 +1,6 @@
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
 from logging import Logger
+from typing import Protocol, runtime_checkable
 
 from spakky.pod.interfaces.aware.aware import IAware
 
