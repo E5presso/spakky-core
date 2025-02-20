@@ -1,5 +1,5 @@
-import asyncio
 from abc import abstractmethod
+from asyncio import locks
 from threading import Event
 from typing import Protocol, runtime_checkable
 
@@ -19,7 +19,7 @@ class IService(Protocol):
 @runtime_checkable
 class IAsyncService(Protocol):
     @abstractmethod
-    def set_stop_event(self, stop_event: asyncio.locks.Event) -> None: ...
+    def set_stop_event(self, stop_event: locks.Event) -> None: ...
 
     @abstractmethod
     async def start_async(self) -> None: ...

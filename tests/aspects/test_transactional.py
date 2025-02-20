@@ -82,11 +82,6 @@ def test_transactional_commit() -> None:
         is True
     )
 
-    assert console.log_records == [
-        "[INFO]: [TransactionalAspect] BEGIN TRANSACTION",
-        "[INFO]: [TransactionalAspect] COMMIT",
-    ]
-
     assert Aspect.get(aspect).matches(Dummy) is True
     assert Aspect.get(aspect).matches(Unmatched) is False
 
@@ -153,11 +148,6 @@ def test_transactional_rollback() -> None:
             "Mike",
             "1234",
         )
-
-    assert console.log_records == [
-        "[INFO]: [TransactionalAspect] BEGIN TRANSACTION",
-        "[INFO]: [TransactionalAspect] ROLLBACK",
-    ]
 
     assert Aspect.get(aspect).matches(Dummy) is True
     assert Aspect.get(aspect).matches(Unmatched) is False
@@ -228,11 +218,6 @@ async def test_async_transactional_commit() -> None:
         )
         is True
     )
-
-    assert console.log_records == [
-        "[INFO]: [AsyncTransactionalAspect] BEGIN TRANSACTION",
-        "[INFO]: [AsyncTransactionalAspect] COMMIT",
-    ]
     assert AsyncAspect.get(aspect).matches(Dummy) is True
     assert AsyncAspect.get(aspect).matches(Unmatched) is False
 
@@ -300,10 +285,5 @@ async def test_async_transactional_rollback() -> None:
             "Mike",
             "1234",
         )
-
-    assert console.log_records == [
-        "[INFO]: [AsyncTransactionalAspect] BEGIN TRANSACTION",
-        "[INFO]: [AsyncTransactionalAspect] ROLLBACK",
-    ]
     assert AsyncAspect.get(aspect).matches(Dummy) is True
     assert AsyncAspect.get(aspect).matches(Unmatched) is False

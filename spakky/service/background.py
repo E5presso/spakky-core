@@ -1,5 +1,5 @@
-import asyncio
 from abc import ABC, abstractmethod
+from asyncio import locks, tasks
 from threading import Event as ThreadEvent
 from threading import Thread
 
@@ -36,18 +36,16 @@ class AbstractBackgroundService(IService, ABC):
 
 
 class AbstractAsyncBackgroundService(IAsyncService, ABC):
-    _task: asyncio.tasks.Task[None] | None
-    _stop_event: asyncio.locks.Event
+    _task: tasks.Task[None] | None
+    _stop_event: locks.Event
 
-    def set_stop_event(self, stop_event: asyncio.Event) -> None:
+    def set_stop_event(self, stop_event: locks.Event) -> None:
         self._stop_event = stop_event
 
     async def start_async(self) -> None:
         self._stop_event.clear()
         await self.initialize_async()
-        self._task = asyncio.tasks.create_task(
-            coro=self.run_async(), name=type(self).__name__
-        )
+        self._task = tasks.create_task(coro=self.run_async(), name=type(self).__name__)
 
     async def stop_async(self) -> None:
         self._stop_event.set()

@@ -4,5 +4,4 @@ from spakky.pod.annotations.pod import Pod
 
 
 @dataclass(eq=False)
-class Controller(Pod):
-    prefix: str
+class Controller(Pod): ...

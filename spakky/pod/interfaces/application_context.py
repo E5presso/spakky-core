@@ -1,5 +1,5 @@
-import asyncio
 from abc import abstractmethod
+from asyncio import locks
 from threading import Event
 from typing import Protocol, runtime_checkable
 
@@ -31,7 +31,7 @@ class EventLoopThreadAlreadyStartedInApplicationContextError(
 @runtime_checkable
 class IApplicationContext(IContainer, Protocol):
     thread_stop_event: Event
-    task_stop_event: asyncio.locks.Event
+    task_stop_event: locks.Event
 
     @property
     @abstractmethod

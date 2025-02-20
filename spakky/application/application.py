@@ -37,13 +37,19 @@ class SpakkyApplication:
         self._application_context.add(obj)
         return self
 
-    def enable_logging_aspect(self) -> Self:
+    def enable_logging(self) -> Self:
         self.add(LoggingAspect)
+        return self
+
+    def enable_async_logging(self) -> Self:
         self.add(AsyncLoggingAspect)
         return self
 
-    def enable_transaction_aspect(self) -> Self:
+    def enable_transactional(self) -> Self:
         self.add(TransactionalAspect)
+        return self
+
+    def enable_async_transactional(self) -> Self:
         self.add(AsyncTransactionalAspect)
         return self
 
@@ -59,7 +65,7 @@ class SpakkyApplication:
 
         for module_item in modules:
             for obj in list_objects(module_item, Pod.exists):
-                self.add(obj)
+                self._application_context.add(obj)
 
         return self
 
