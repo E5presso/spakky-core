@@ -5,7 +5,7 @@ from typing import Callable
 
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect
-from spakky.constants import PLUGIN_PATH
+from spakky.core.constants import PLUGIN_PATH
 from spakky.core.importing import (
     Module,
     is_package,

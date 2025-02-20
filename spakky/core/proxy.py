@@ -4,6 +4,7 @@ from inspect import iscoroutinefunction, ismethod
 from types import new_class
 from typing import Any, ClassVar, Generic, Iterable, Protocol, runtime_checkable
 
+from spakky.core.constants import DYNAMIC_PROXY_CLASS_NAME_SUFFIX
 from spakky.core.types import AsyncFunc, Func, ObjectT
 
 
@@ -43,7 +44,6 @@ class ProxyHandler(IProxyHandler):
 
 
 class ProxyFactory(Generic[ObjectT]):
-    __PROXY_CLASS_NAME_SUFFIX: ClassVar[str] = "@DynamicProxy"
     __ATTRIBUTES_TO_IGNORE: ClassVar[Iterable[str]] = [
         "__dict__",
         "__class__",
@@ -118,7 +118,7 @@ class ProxyFactory(Generic[ObjectT]):
             pass
 
         return new_class(
-            name=self.__superclass.__name__ + self.__PROXY_CLASS_NAME_SUFFIX,
+            name=self.__superclass.__name__ + DYNAMIC_PROXY_CLASS_NAME_SUFFIX,
             bases=(self.__superclass,),
             exec_body=lambda ns: ns.update(
                 __getattribute__=__getattribute__,

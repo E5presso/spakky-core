@@ -1,10 +1,7 @@
 from inspect import FullArgSpec, getfullargspec, ismethod
 
+from spakky.core.constants import INIT, PROTOCOL_INIT, SELF
 from spakky.core.types import Action, Func
-
-SELF = "self"
-INIT = "__init__"
-PROTOCOL_INIT = "_no_init_or_replace_init"
 
 
 def is_instance_method(obj: Func) -> bool:

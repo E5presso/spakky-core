@@ -4,8 +4,6 @@ from typing import Annotated, cast, get_args
 
 from spakky.core.types import ClassT
 
-__METADATA__ = "__metadata__"
-
 
 @dataclass
 class Metadata(ABC): ...
