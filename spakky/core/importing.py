@@ -5,10 +5,9 @@ from fnmatch import filter
 from types import FunctionType, ModuleType
 from typing import Any, Callable, TypeAlias
 
+from spakky.core.constants import PATH, SRC_PREFIX
 from spakky.core.error import AbstractSpakkyCoreError
 
-PATH = "__path__"
-SRC_PREFIX = "src."
 Module: TypeAlias = ModuleType | str
 
 

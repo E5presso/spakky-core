@@ -13,7 +13,7 @@ from spakky.application.application_context import (
 )
 from spakky.core.annotation import ClassAnnotation
 from spakky.core.mutability import immutable
-from spakky.domain.usecases.command import Command, ICommandUseCase
+from spakky.domain.usecases.command import AbstractCommand, ICommandUseCase
 from spakky.pod.annotations.lazy import Lazy
 from spakky.pod.annotations.pod import Pod, PodInstantiationFailedError
 from spakky.pod.annotations.primary import Primary
@@ -486,7 +486,7 @@ def test_application_raise_error_with_circular_dependency() -> None:
 
 def test_application_context_with_generic_interface() -> None:
     @immutable
-    class SignupCommand(Command):
+    class SignupCommand(AbstractCommand):
         username: str
         password: str
 
@@ -494,7 +494,7 @@ def test_application_context_with_generic_interface() -> None:
         pass
 
     @immutable
-    class SigninCommand(Command):
+    class SigninCommand(AbstractCommand):
         username: str
         password: str
 

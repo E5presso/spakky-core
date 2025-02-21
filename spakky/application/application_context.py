@@ -1,11 +1,7 @@
-import asyncio
 import threading
-from asyncio import (
-    AbstractEventLoop,
-    new_event_loop,
-    run_coroutine_threadsafe,
-    set_event_loop,
-)
+from asyncio import locks
+from asyncio.events import AbstractEventLoop, new_event_loop, set_event_loop
+from asyncio.tasks import run_coroutine_threadsafe
 from copy import deepcopy
 from logging import Logger, getLogger
 from threading import Thread
@@ -63,7 +59,7 @@ class ApplicationContext(IApplicationContext):
         self.__event_loop = None
         self.__event_thread = None
         self.__is_started = False
-        self.task_stop_event = asyncio.locks.Event()
+        self.task_stop_event = locks.Event()
         self.thread_stop_event = threading.Event()
 
     def __resolve_candidate(

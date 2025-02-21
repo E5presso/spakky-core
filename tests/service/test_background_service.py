@@ -1,4 +1,4 @@
-import asyncio
+from asyncio.tasks import sleep as sleep_async
 from time import sleep
 
 import pytest
@@ -90,7 +90,7 @@ async def test_multiple_async_background_services_graceful_shutdown() -> None:
         async def run_async(self) -> None:
             while self._stop_event.is_set() is False:
                 self.__messages.append(1)
-                await asyncio.sleep(0.1)
+                await sleep_async(0.1)
 
     @Pod()
     class SecondBackgroundService(AbstractAsyncBackgroundService):
@@ -109,7 +109,7 @@ async def test_multiple_async_background_services_graceful_shutdown() -> None:
         async def run_async(self) -> None:
             while self._stop_event.is_set() is False:
                 self.__messages.append(2)
-                await asyncio.sleep(0.1)
+                await sleep_async(0.1)
 
     @Pod()
     def get_messages() -> list[int]:
@@ -121,7 +121,7 @@ async def test_multiple_async_background_services_graceful_shutdown() -> None:
     context.add(SecondBackgroundService)
 
     context.start()
-    await asyncio.sleep(0.1)
+    await sleep_async(0.1)
     context.stop()
 
     assert 1 in ids

@@ -2,6 +2,7 @@ import sys
 from dataclasses import dataclass
 from typing import Any, final
 
+from spakky.core.constants import ANNOTATION_METADATA
 from spakky.core.error import AbstractSpakkyCoreError
 from spakky.core.types import AnyT, ClassT, FuncT
 
@@ -9,9 +10,6 @@ if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover
 else:
     from typing_extensions import Self  # pragma: no cover
-
-
-__ANNOTATION_METADATA__ = "__spakky_annotation_metadata__"
 
 
 @dataclass
@@ -26,13 +24,13 @@ class Annotation:
             if base_type not in metadata:
                 metadata[base_type] = []
             metadata[base_type].append(self)
-        setattr(obj, __ANNOTATION_METADATA__, metadata)
+        setattr(obj, ANNOTATION_METADATA, metadata)
         return obj
 
     @final
     @classmethod
     def __get_metadata(cls, obj: Any) -> dict[type, list[Self]]:
-        metadata: dict[type, list[Self]] = getattr(obj, __ANNOTATION_METADATA__, {})
+        metadata: dict[type, list[Self]] = getattr(obj, ANNOTATION_METADATA, {})
         return metadata
 
     @final

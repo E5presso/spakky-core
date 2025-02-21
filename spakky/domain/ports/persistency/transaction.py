@@ -1,10 +1,9 @@
 import sys
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Any, final
+from typing import final
 
 from spakky.core.interfaces.disposable import IAsyncDisposable, IDisposable
-from spakky.domain.models.aggregate_root import AbstractAggregateRoot
 
 if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover
@@ -48,12 +47,6 @@ class AbstractTransaction(IDisposable, ABC):
     @abstractmethod
     def rollback(self) -> None: ...
 
-    @abstractmethod
-    def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
-
-    @abstractmethod
-    def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
-
 
 class AbstractAsyncTransaction(IAsyncDisposable, ABC):
     autocommit_enabled: bool
@@ -90,9 +83,3 @@ class AbstractAsyncTransaction(IAsyncDisposable, ABC):
 
     @abstractmethod
     async def rollback(self) -> None: ...
-
-    @abstractmethod
-    async def add(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...
-
-    @abstractmethod
-    async def delete(self, aggregate: AbstractAggregateRoot[Any]) -> None: ...

@@ -5,10 +5,10 @@ from spakky.core.mutability import immutable
 
 
 @immutable
-class Command(ABC): ...
+class AbstractCommand(ABC): ...
 
 
-CommandT_contra = TypeVar("CommandT_contra", bound=Command, contravariant=True)
+CommandT_contra = TypeVar("CommandT_contra", bound=AbstractCommand, contravariant=True)
 ResultT_co = TypeVar("ResultT_co", bound=Any, covariant=True)
 
 

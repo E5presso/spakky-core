@@ -60,12 +60,12 @@ class Hash:
         return Base64Encoder.from_bytes(self.__hash.digest(), url_safe=True)
 
     @property
-    def bytes(self) -> bytes:
+    def binary(self) -> bytes:
         return self.__hash.digest()
 
     @property
     def oid(self) -> str:
         return self.__hash.oid
 
-    def digest(self) -> "bytes":
+    def digest(self) -> bytes:
         return self.__hash.digest()
