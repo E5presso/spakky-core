@@ -2,7 +2,7 @@ from logging import Logger
 
 from spakky.pod.interfaces.application_context import IApplicationContext
 from spakky.pod.interfaces.aware.container_aware import IContainerAware
-from spakky.pod.interfaces.aware.loger_aware import ILoggerAware
+from spakky.pod.interfaces.aware.logger_aware import ILoggerAware
 from spakky.pod.interfaces.post_processor import IPostProcessor
 
 
