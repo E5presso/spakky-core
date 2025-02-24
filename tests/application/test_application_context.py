@@ -604,3 +604,27 @@ def test_application_context_with_multiple_children_dict_not_exists() -> None:
     context.add(SampleService)
     with pytest.raises(PodInstantiationFailedError):
         context.start()
+
+
+def test_application_context_with_optional_dependency() -> None:
+    @runtime_checkable
+    class IDependency(Protocol):
+        @abstractmethod
+        def do(self) -> str: ...
+
+    @Pod()
+    class SampleService:
+        __service: IDependency | None
+
+        def __init__(self, service: IDependency | None) -> None:
+            self.__service = service
+
+        def do(self) -> str:
+            return self.__service.do() if self.__service else "default"
+
+    context = ApplicationContext()
+    context.add(SampleService)
+    context.start()
+
+    service = context.get(type_=SampleService)
+    assert service.do() == "default"
