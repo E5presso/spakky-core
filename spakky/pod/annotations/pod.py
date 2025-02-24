@@ -21,7 +21,7 @@ from spakky.utils.inspection import has_default_constructor, is_instance_method
 class DependencyInfo:
     name: str
     type_: Class
-    has_default: bool
+    has_default: bool = False
     is_optional: bool = False
     qualifier: Qualifier | None = None
 

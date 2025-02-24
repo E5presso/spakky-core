@@ -37,40 +37,32 @@ class IContainer(Protocol):
 
     @overload
     @abstractmethod
-    def get(self, *, name: str) -> object: ...
+    def get(self, type_: type[ObjectT]) -> ObjectT: ...
 
     @overload
     @abstractmethod
-    def get(self, *, type_: type[ObjectT]) -> ObjectT: ...
-
-    @overload
-    @abstractmethod
-    def get(self, *, name: str, type_: type[ObjectT]) -> ObjectT: ...
+    def get(self, type_: type[ObjectT], name: str) -> ObjectT: ...
 
     @abstractmethod
     def get(
         self,
+        type_: type[ObjectT],
         name: str | None = None,
-        type_: type[ObjectT] | None = None,
     ) -> ObjectT | object: ...
 
     @overload
     @abstractmethod
-    def contains(self, *, name: str) -> bool: ...
+    def contains(self, type_: type) -> bool: ...
 
     @overload
     @abstractmethod
-    def contains(self, *, type_: type) -> bool: ...
-
-    @overload
-    @abstractmethod
-    def contains(self, *, name: str, type_: type) -> bool: ...
+    def contains(self, type_: type, name: str) -> bool: ...
 
     @abstractmethod
     def contains(
         self,
+        type_: type,
         name: str | None = None,
-        type_: type | None = None,
     ) -> bool: ...
 
     @abstractmethod

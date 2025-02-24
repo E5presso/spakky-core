@@ -3,9 +3,10 @@
 
 import sys
 from typing import *  # noqa: F403
-from typing import Any, Generic, Protocol, get_args, get_origin
+from typing import Any, Generic, Protocol, TypeGuard, get_args, get_origin
 
 from spakky.core.constants import ORIGIN_BASES, PARAMETERS
+from spakky.core.types import ClassT
 
 if sys.version_info >= (3, 11):
     from typing import _collect_parameters  # pragma: no cover
@@ -50,3 +51,7 @@ def generic_mro(tp: Any) -> list[type]:
     return list(result.get(sub_cls, sub_cls) for sub_cls in cls.__mro__)
     cls = origin if origin is not None else tp
     return list(result.get(sub_cls, sub_cls) for sub_cls in cls.__mro__)
+
+
+def is_family_with(tp: Any, target: ClassT) -> TypeGuard[ClassT]:
+    return target in generic_mro(tp)

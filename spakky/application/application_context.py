@@ -8,7 +8,7 @@ from threading import Thread
 from typing import Callable, cast, overload
 
 from spakky.aop.post_processor import AspectPostProcessor
-from spakky.core.mro import generic_mro
+from spakky.core.mro import is_family_with
 from spakky.core.types import ObjectT
 from spakky.pod.annotations.lazy import Lazy
 from spakky.pod.annotations.order import Order
@@ -63,23 +63,25 @@ class ApplicationContext(IApplicationContext):
         self.thread_stop_event = threading.Event()
 
     def __resolve_candidate(
-        self, type_: type, qualifier: Qualifier | None
+        self,
+        type_: type,
+        name: str | None,
+        qualifier: Qualifier | None,
     ) -> Pod | None:
-        pods: set[Pod] = {
-            pod for pod in self.__pods.values() if pod.is_family_with(type_)
-        }
+        def qualify_pod(pod: Pod) -> bool:
+            if qualifier is not None:
+                return qualifier.selector(pod)
+            if name is not None:
+                return pod.name == name
+            return pod.is_primary
+
+        pods = {pod for pod in self.__pods.values() if pod.is_family_with(type_)}
         if len(pods) < 1:
             return None
         if len(pods) > 1:
-            candidates: set[Pod] = {
-                pod
-                for pod in pods
-                if (
-                    qualifier.selector(pod) if qualifier is not None else pod.is_primary
-                )
-            }
-            if len(candidates) == 1:
-                return candidates.pop()
+            pods = {pod for pod in pods if qualify_pod(pod)}
+            if len(pods) == 1:
+                return pods.pop()
             raise NoUniquePodError(type_)
         return pods.pop()
 
@@ -146,7 +148,7 @@ class ApplicationContext(IApplicationContext):
 
     def __get_internal(
         self,
-        type_: type[ObjectT] | None,
+        type_: type[ObjectT],
         name: str | None,
         dependency_hierarchy: list[type] | None = None,
         qualifier: Qualifier | None = None,
@@ -160,17 +162,9 @@ class ApplicationContext(IApplicationContext):
                 return None
             type_ = self.__forward_type_map[type_]
 
-        pod: Pod | None
-
-        if type_ is not None:
-            if Logger in generic_mro(type_):
-                return cast(ObjectT, self.__logger)
-            pod = self.__resolve_candidate(type_=type_, qualifier=qualifier)
-        elif name is not None:
-            pod = self.__pods.get(name)
-        else:
-            raise ValueError("Either name or type_ must be provided")
-
+        if is_family_with(type_, Logger):
+            return cast(ObjectT, self.__logger)
+        pod = self.__resolve_candidate(type_=type_, name=name, qualifier=qualifier)
         if pod is None:
             return None
 
@@ -284,18 +278,15 @@ class ApplicationContext(IApplicationContext):
         self.__is_started = False
 
     @overload
-    def get(self, *, name: str) -> object: ...
+    def get(self, type_: type[ObjectT]) -> ObjectT: ...
 
     @overload
-    def get(self, *, type_: type[ObjectT]) -> ObjectT: ...
-
-    @overload
-    def get(self, *, name: str, type_: type[ObjectT]) -> ObjectT: ...
+    def get(self, type_: type[ObjectT], name: str) -> ObjectT: ...
 
     def get(
         self,
+        type_: type[ObjectT],
         name: str | None = None,
-        type_: type[ObjectT] | None = None,
     ) -> ObjectT | object:
         instance = self.__get_internal(type_=type_, name=name)
         if instance is None:
@@ -303,17 +294,12 @@ class ApplicationContext(IApplicationContext):
         return instance
 
     @overload
-    def contains(self, *, name: str) -> bool: ...
+    def contains(self, type_: type) -> bool: ...
 
     @overload
-    def contains(self, *, type_: type) -> bool: ...
+    def contains(self, type_: type, name: str) -> bool: ...
 
-    @overload
-    def contains(self, *, name: str, type_: type) -> bool: ...
-
-    def contains(self, name: str | None = None, type_: type | None = None) -> bool:
+    def contains(self, type_: type, name: str | None = None) -> bool:
         if name is not None:
             return name in self.__pods
-        if type_ is not None:
-            return any(pod for pod in self.__pods.values() if pod.is_family_with(type_))
-        raise ValueError("Either name or type_ must be provided")
+        return any(pod for pod in self.__pods.values() if pod.is_family_with(type_))

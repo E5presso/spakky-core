@@ -110,8 +110,8 @@ def test_pod() -> None:
             self.age = age
 
     assert Pod.get(SampleClass).dependencies == {
-        "name": DependencyInfo(name="name", type_=str, has_default=False),
-        "age": DependencyInfo(name="age", type_=int, has_default=False),
+        "name": DependencyInfo(name="name", type_=str),
+        "age": DependencyInfo(name="age", type_=int),
     }
     assert Pod.get(SampleClass).name == "sample_class"
     sample: SampleClass = SampleClass(name="John", age=30)
@@ -243,7 +243,6 @@ def test_pod_with_qualifier() -> None:
         "name": DependencyInfo(
             name="name",
             type_=str,
-            has_default=False,
             qualifier=Qualifier(is_dummy_pod),
         ),
     }
@@ -251,14 +250,12 @@ def test_pod_with_qualifier() -> None:
         "name": DependencyInfo(
             name="name",
             type_=str,
-            has_default=False,
             qualifier=Qualifier(is_primary_pod),
         ),
         "age": DependencyInfo(
             name="age",
             type_=int,
-            has_default=False,
             qualifier=Qualifier(is_primary_pod),
         ),
-        "job": DependencyInfo(name="job", type_=str, has_default=False),
+        "job": DependencyInfo(name="job", type_=str),
     }
