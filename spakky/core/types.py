@@ -60,7 +60,7 @@ def is_optional(type_: Any) -> bool:
 
 def remove_none(type_: Any) -> Any:
     origin = get_origin(type_)
-    if origin is Union:
+    if origin in (UnionType, Union):
         args = get_args(type_)
         non_none_args = tuple(a for a in args if a is not type(None))
         if not non_none_args:
