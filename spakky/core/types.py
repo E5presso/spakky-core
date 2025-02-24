@@ -56,3 +56,16 @@ def is_optional(type_: Any) -> bool:
     includes_none: bool = type(None) in get_args(type_)
     is_union_with_none: bool = is_union_type and includes_none
     return is_union_with_none
+
+
+def remove_none(type_: Any) -> Any:
+    origin = get_origin(type_)
+    if origin is Union:
+        args = get_args(type_)
+        non_none_args = tuple(a for a in args if a is not type(None))
+        if not non_none_args:
+            return type(None)
+        if len(non_none_args) == 1:
+            return non_none_args[0]
+        return Union[non_none_args]
+    return type_

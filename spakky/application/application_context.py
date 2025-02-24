@@ -9,7 +9,7 @@ from typing import Callable, cast, overload
 
 from spakky.aop.post_processor import AspectPostProcessor
 from spakky.core.mro import is_family_with
-from spakky.core.types import ObjectT
+from spakky.core.types import ObjectT, is_optional, remove_none
 from spakky.pod.annotations.lazy import Lazy
 from spakky.pod.annotations.order import Order
 from spakky.pod.annotations.pod import Pod, PodType
@@ -93,7 +93,9 @@ class ApplicationContext(IApplicationContext):
         dependency_hierarchy.append(pod.type_)
         dependencies = {
             name: self.__get_internal(
-                type_=dependency.type_,
+                type_=remove_none(dependency.type_)
+                if is_optional(dependency.type_)
+                else dependency.type_,
                 name=name,
                 dependency_hierarchy=deepcopy(dependency_hierarchy),
                 qualifier=dependency.qualifier,
