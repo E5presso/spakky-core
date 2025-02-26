@@ -43,6 +43,10 @@ class CannotUsePositionalOnlyArgsInPodError(PodAnnotationFailedError):
     message = "Cannot use positional-only arguments in pod"
 
 
+class CannotUseOptionalReturnTypeInPodError(PodAnnotationFailedError):
+    message = "Cannot use optional return type in pod"
+
+
 class CannotUseMultipleQualifiersInDependencyAnnotationError(PodAnnotationFailedError):
     message = "Cannot use multiple qualifiers in dependency annotation"
 
@@ -127,6 +131,8 @@ class Pod(Annotation, IEquatable):
             type_ = obj
         if type_ is None:
             raise CannotDeterminePodTypeError  # pragma: no cover
+        if is_optional(type_):
+            raise CannotUseOptionalReturnTypeInPodError
         if not self.name:
             self.name = pascal_to_snake(obj.__name__)
         self.type_ = type_
@@ -165,7 +171,7 @@ class Pod(Annotation, IEquatable):
         final_dependencies: dict[str, object] = {}
         for name, dependency in dependencies.items():
             if name not in self.dependencies:
-                raise UnexpectedDependencyNameInjectedError(name)
+                raise UnexpectedDependencyNameInjectedError(self.type_, name)
             dependency_info: DependencyInfo = self.dependencies[name]
             if dependency is None:
                 if dependency_info.has_default:
@@ -175,7 +181,12 @@ class Pod(Annotation, IEquatable):
                     continue
                 if not dependency_info.is_optional:
                     raise UnexpectedDependencyTypeInjectedError(
-                        name, dependency_info.type_, NoneType
+                        self.type_,
+                        {
+                            "name": name,
+                            "expected": dependency_info.type_,
+                            "actual": NoneType,
+                        },
                     )
             final_dependencies[name] = dependency
         return self.target(**final_dependencies)
