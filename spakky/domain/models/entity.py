@@ -18,7 +18,7 @@ else:  # pragma: no cover
 
 
 class CannotMonkeyPatchEntityError(AbstractSpakkyDomainError):
-    message: str = "Cannot monkey patch an entity."
+    message = "Cannot monkey patch an entity."
 
 
 @mutable
