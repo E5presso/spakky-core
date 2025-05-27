@@ -68,9 +68,9 @@ class Pod(Annotation, IEquatable):
     name: str = field(kw_only=True, default="")
     scope: Scope = field(kw_only=True, default=Scope.SINGLETON)
     type_: type = field(init=False)
-    base_types: set[type] = field(init=False, default_factory=set)
+    base_types: set[type] = field(init=False, default_factory=set[type])
     target: PodType = field(init=False)
-    dependencies: DependencyMap = field(init=False, default_factory=dict)
+    dependencies: DependencyMap = field(init=False, default_factory=DependencyMap)
 
     def __get_dependencies(self, obj: PodType) -> DependencyMap:
         if isclass(obj):
