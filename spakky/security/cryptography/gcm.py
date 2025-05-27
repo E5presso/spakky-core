@@ -1,7 +1,6 @@
 from typing import ClassVar, final
 
 from Crypto.Cipher import AES
-from Crypto.Cipher._mode_gcm import GcmMode
 from Crypto.Util.Padding import pad, unpad
 
 from spakky.security.cryptography.interface import ICryptor
@@ -26,7 +25,7 @@ class Gcm(ICryptor):
         plain_bytes: bytes = pad(message.encode(), AES.block_size)
         aad: Key = Key(size=16)
         iv: Key = Key(size=12)
-        cryptor: GcmMode = AES.new(  # type: ignore
+        cryptor = AES.new(  # type: ignore
             key=self.__key.binary,
             mode=AES.MODE_GCM,
             nonce=iv.binary,
@@ -47,7 +46,7 @@ class Gcm(ICryptor):
             tag_bytes: bytes = Base64Encoder.get_bytes(tag, self.url_safe)
             iv_bytes: bytes = Base64Encoder.get_bytes(iv, self.url_safe)
             cipher_bytes: bytes = Base64Encoder.get_bytes(cipher, self.url_safe)
-            cryptor: GcmMode = AES.new(  # type: ignore
+            cryptor = AES.new(  # type: ignore
                 key=self.__key.binary,
                 mode=AES.MODE_GCM,
                 nonce=iv_bytes,

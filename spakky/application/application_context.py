@@ -66,11 +66,11 @@ class ApplicationContext(IApplicationContext):
         self,
         type_: type,
         name: str | None,
-        qualifier: Qualifier | None,
+        qualifiers: list[Qualifier],
     ) -> Pod | None:
         def qualify_pod(pod: Pod) -> bool:
-            if qualifier is not None:
-                return qualifier.selector(pod)
+            if any(qualifiers):
+                return all(qualifier.selector(pod) for qualifier in qualifiers)
             if name is not None:
                 return pod.name == name
             return pod.is_primary
@@ -98,7 +98,7 @@ class ApplicationContext(IApplicationContext):
                 else dependency.type_,
                 name=name,
                 dependency_hierarchy=deepcopy(dependency_hierarchy),
-                qualifier=dependency.qualifier,
+                qualifiers=dependency.qualifiers,
             )
             for name, dependency in pod.dependencies.items()
         }
@@ -153,12 +153,15 @@ class ApplicationContext(IApplicationContext):
         type_: type[ObjectT],
         name: str | None,
         dependency_hierarchy: list[type] | None = None,
-        qualifier: Qualifier | None = None,
+        qualifiers: list[Qualifier] | None = None,
     ) -> ObjectT | None:
         if dependency_hierarchy is None:
             # If dependency_hierarchy is None
             # it means that this is the first call on recursive cycle
             dependency_hierarchy = []
+        if qualifiers is None:
+            # If qualifiers is None, it means that no qualifier is specified
+            qualifiers = []
         if isinstance(type_, str):  # To support forward references
             if type_ not in self.__forward_type_map:
                 return None
@@ -166,7 +169,7 @@ class ApplicationContext(IApplicationContext):
 
         if is_family_with(type_, Logger):
             return cast(ObjectT, self.__logger)
-        pod = self.__resolve_candidate(type_=type_, name=name, qualifier=qualifier)
+        pod = self.__resolve_candidate(type_=type_, name=name, qualifiers=qualifiers)
         if pod is None:
             return None
 

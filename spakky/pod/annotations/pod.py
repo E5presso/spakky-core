@@ -23,7 +23,7 @@ class DependencyInfo:
     type_: Class
     has_default: bool = False
     is_optional: bool = False
-    qualifier: Qualifier | None = None
+    qualifiers: list[Qualifier] = field(default_factory=list[Qualifier])
 
 
 DependencyMap: TypeAlias = dict[str, DependencyInfo]
@@ -47,10 +47,6 @@ class CannotUseOptionalReturnTypeInPodError(PodAnnotationFailedError):
     message = "Cannot use optional return type in pod"
 
 
-class CannotUseMultipleQualifiersInDependencyAnnotationError(PodAnnotationFailedError):
-    message = "Cannot use multiple qualifiers in dependency annotation"
-
-
 class UnexpectedDependencyNameInjectedError(PodInstantiationFailedError):
     message = "Unexpected dependency name injected"
 
@@ -68,9 +64,9 @@ class Pod(Annotation, IEquatable):
     name: str = field(kw_only=True, default="")
     scope: Scope = field(kw_only=True, default=Scope.SINGLETON)
     type_: type = field(init=False)
-    base_types: set[type] = field(init=False, default_factory=set)
+    base_types: set[type] = field(init=False, default_factory=set[type])
     target: PodType = field(init=False)
-    dependencies: DependencyMap = field(init=False, default_factory=dict)
+    dependencies: DependencyMap = field(init=False, default_factory=DependencyMap)
 
     def __get_dependencies(self, obj: PodType) -> DependencyMap:
         if isclass(obj):
@@ -95,16 +91,12 @@ class Pod(Annotation, IEquatable):
             if get_origin(parameter.annotation) is Annotated:
                 type_, metadata = get_metadata(parameter.annotation)
                 qualifiers = [data for data in metadata if isinstance(data, Qualifier)]
-                if len(qualifiers) > 1:
-                    raise CannotUseMultipleQualifiersInDependencyAnnotationError(
-                        obj, parameter.name
-                    )
                 dependencies[parameter.name] = DependencyInfo(
                     name=parameter.name,
                     type_=type_,
                     has_default=parameter.default != Parameter.empty,
                     is_optional=is_optional(parameter.annotation),
-                    qualifier=qualifiers[0] if qualifiers else None,
+                    qualifiers=qualifiers,
                 )
             else:
                 dependencies[parameter.name] = DependencyInfo(
@@ -159,9 +151,10 @@ class Pod(Annotation, IEquatable):
         return Primary.exists(self.target)
 
     @property
-    def dependency_qualifiers(self) -> dict[str, Qualifier | None]:
+    def dependency_qualifiers(self) -> dict[str, list[Qualifier]]:
         return {
-            name: dependency.qualifier for name, dependency in self.dependencies.items()
+            name: dependency.qualifiers
+            for name, dependency in self.dependencies.items()
         }
 
     def is_family_with(self, type_: type) -> bool:

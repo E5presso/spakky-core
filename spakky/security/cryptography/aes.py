@@ -1,7 +1,6 @@
 from typing import ClassVar, final
 
 from Crypto.Cipher import AES
-from Crypto.Cipher._mode_cbc import CbcMode
 from Crypto.Util.Padding import pad, unpad
 
 from spakky.security.cryptography.interface import ICryptor
@@ -25,7 +24,7 @@ class Aes(ICryptor):
     def encrypt(self, message: str) -> str:
         plain_bytes: bytes = pad(message.encode(), AES.block_size)
         iv: Key = Key(size=16)
-        cryptor: CbcMode = AES.new(  # type: ignore
+        cryptor = AES.new(  # type: ignore
             key=self.__key.binary,
             mode=AES.MODE_CBC,
             iv=iv.binary,
@@ -41,7 +40,7 @@ class Aes(ICryptor):
             [iv, cipher] = cipher.split(":")
             iv_bytes: bytes = Base64Encoder.get_bytes(iv, self.url_safe)
             cipher_bytes: bytes = Base64Encoder.get_bytes(cipher, self.url_safe)
-            cryptor: CbcMode = AES.new(  # type: ignore
+            cryptor = AES.new(  # type: ignore
                 key=self.__key.binary,
                 mode=AES.MODE_CBC,
                 iv=iv_bytes,

@@ -12,7 +12,7 @@ from spakky.domain.models.event import AbstractIntegrationEvent
 @mutable
 class AbstractAggregateRoot(AbstractEntity[EquatableT], Generic[EquatableT], ABC):
     __events: list[AbstractIntegrationEvent] = field(
-        init=False, repr=False, default_factory=list
+        init=False, repr=False, default_factory=list[AbstractIntegrationEvent]
     )
 
     @property

@@ -243,19 +243,19 @@ def test_pod_with_qualifier() -> None:
         "name": DependencyInfo(
             name="name",
             type_=str,
-            qualifier=Qualifier(is_dummy_pod),
+            qualifiers=[Qualifier(is_dummy_pod)],
         ),
     }
     assert Pod.get(B).dependencies == {
         "name": DependencyInfo(
             name="name",
             type_=str,
-            qualifier=Qualifier(is_primary_pod),
+            qualifiers=[Qualifier(is_primary_pod)],
         ),
         "age": DependencyInfo(
             name="age",
             type_=int,
-            qualifier=Qualifier(is_primary_pod),
+            qualifiers=[Qualifier(is_primary_pod)],
         ),
         "job": DependencyInfo(name="job", type_=str),
     }

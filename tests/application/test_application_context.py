@@ -628,3 +628,46 @@ def test_application_context_with_optional_dependency() -> None:
 
     service = context.get(type_=SampleService)
     assert service.do() == "default"
+
+
+def test_application_context_with_multiple_qualifiers() -> None:
+    @runtime_checkable
+    class IRepository(Protocol):
+        @abstractmethod
+        def get(self, id: str) -> dict[str, Any]: ...
+
+    @Pod()
+    class FirstRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id, "name": "First"}
+
+    @Pod()
+    class SecondRepository(IRepository):
+        def get(self, id: str) -> dict[str, Any]:
+            return {"id": id, "name": "Second"}
+
+    @Pod()
+    class SampleService:
+        repository: IRepository
+
+        def __init__(
+            self,
+            repository: Annotated[
+                IRepository,
+                Qualifier(lambda repo: repo.is_family_with(IRepository)),
+                Qualifier(lambda repo: repo.type_ == FirstRepository),
+            ],
+        ) -> None:
+            self.repository = repository
+
+        def get(self, id: str) -> dict[str, Any]:
+            return self.repository.get(id)
+
+    context: ApplicationContext = ApplicationContext()
+    context.add(FirstRepository)
+    context.add(SecondRepository)
+    context.add(SampleService)
+    context.start()
+
+    service = context.get(type_=SampleService)
+    assert isinstance(service.repository, FirstRepository)
