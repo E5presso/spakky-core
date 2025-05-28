@@ -29,6 +29,8 @@ jobs:
         poetry-version: ${{ env.POETRY }}
     - name: Install Dependencies
       run: poetry install
+    - name: Run Test Suite
+      run: poetry run pytest --no-cov
     - name: Build package
       run: poetry build
     - name: Publish package distributions to PyPI
