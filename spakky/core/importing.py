@@ -5,7 +5,7 @@ from fnmatch import filter
 from types import FunctionType, ModuleType
 from typing import Any, Callable, TypeAlias
 
-from spakky.core.constants import PATH, SRC_PREFIX
+from spakky.core.constants import PATH
 from spakky.core.error import AbstractSpakkyCoreError
 
 Module: TypeAlias = ModuleType | str
@@ -17,7 +17,10 @@ class CannotScanNonPackageModuleError(AbstractSpakkyCoreError):
 
 def resolve_module(module: Module) -> ModuleType:
     if isinstance(module, str):
-        return importlib.import_module(module)
+        try:
+            return importlib.import_module(module)
+        except ImportError as e:
+            raise ImportError(f"Failed to import module '{module}': {e}") from e
     return module
 
 
@@ -49,9 +52,10 @@ def list_modules(
         exclude = set()
     modules: set[ModuleType] = set()
     for _, name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
-        if name.startswith(SRC_PREFIX):
-            name = name.removeprefix(SRC_PREFIX)  # pragma: no cover
-        module = importlib.import_module(name)
+        try:
+            module = importlib.import_module(name)
+        except ImportError:
+            continue
         if is_subpath_of(module, exclude):
             continue
         modules.add(module)

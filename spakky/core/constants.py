@@ -1,7 +1,6 @@
 PLUGIN_PATH = "spakky.plugins"
 ANNOTATION_METADATA = "__spakky_annotation_metadata__"
 PATH = "__path__"
-SRC_PREFIX = "src."
 ORIGIN_BASES = "__orig_bases__"
 PARAMETERS = "__parameters__"
 DYNAMIC_PROXY_CLASS_NAME_SUFFIX = "@DynamicProxy"
