@@ -29,6 +29,11 @@ class Aspect(Pod):
             After: self.target.after,
             Around: self.target.around,
         }
+        if callable(pod):
+            for annotation, target_method in pointcuts.items():
+                if (advice := annotation.get_or_none(target_method)) is not None:
+                    if advice.matches(pod):
+                        return True
         for _, method in getmembers(pod, callable):
             for annotation, target_method in pointcuts.items():
                 if (advice := annotation.get_or_none(target_method)) is not None:
@@ -51,6 +56,11 @@ class AsyncAspect(Pod):
             After: self.target.after_async,
             Around: self.target.around_async,
         }
+        if callable(pod):
+            for annotation, target_method in pointcuts.items():
+                if (advice := annotation.get_or_none(target_method)) is not None:
+                    if advice.matches(pod):
+                        return True
         for _, method in getmembers(pod, callable):
             for annotation, target_method in pointcuts.items():
                 if (advice := annotation.get_or_none(target_method)) is not None:
