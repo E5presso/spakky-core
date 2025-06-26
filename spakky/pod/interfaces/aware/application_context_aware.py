@@ -8,4 +8,6 @@ from spakky.pod.interfaces.aware.aware import IAware
 @runtime_checkable
 class IApplicationContextAware(IAware, Protocol):
     @abstractmethod
-    def set_container(self, container: IApplicationContext) -> None: ...
+    def set_application_context(
+        self, application_context: IApplicationContext
+    ) -> None: ...
