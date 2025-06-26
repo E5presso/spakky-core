@@ -13,8 +13,10 @@ from spakky.security.error import (
 )
 from spakky.security.hash import HashType
 
+KEY_SIZES = [1024]
 
-@pytest.mark.parametrize("size", [1024])
+
+@pytest.mark.parametrize("size", KEY_SIZES)
 def test_rsa_encryption_with_generated_key(size: int) -> None:
     cryptor: ICryptor = Rsa(key=AsymmetricKey(size=size))
     cipher: str = cryptor.encrypt("Hello World!")
@@ -25,7 +27,7 @@ def test_rsa_encryption_with_generated_key(size: int) -> None:
         plain = cryptor.decrypt(tempered)
 
 
-@pytest.mark.parametrize("size", [1024])
+@pytest.mark.parametrize("size", KEY_SIZES)
 def test_rsa_decrypt_without_private_key_expect_error(size: int) -> None:
     cryptor: ICryptor = Rsa(
         key=AsymmetricKey(key=AsymmetricKey(size=size).public_key.binary)
@@ -65,7 +67,7 @@ def test_rsa_encryption_with_existing_key(key: bytes) -> None:
         plain = cryptor.decrypt(tempered)
 
 
-@pytest.mark.parametrize("size", [1024])
+@pytest.mark.parametrize("size", KEY_SIZES)
 def test_rsa_signing_with_generated_key(size: int) -> None:
     private_key: AsymmetricKey = AsymmetricKey(size=size)
     public_key: AsymmetricKey = AsymmetricKey(key=private_key.public_key.binary)
@@ -80,7 +82,7 @@ def test_rsa_signing_with_generated_key(size: int) -> None:
     assert wrong_verifier.verify("Hello World!", signature) is False
 
 
-@pytest.mark.parametrize("size", [1024])
+@pytest.mark.parametrize("size", KEY_SIZES)
 def test_rsa_sign_without_private_key_expect_error(size: int) -> None:
     signer: ISigner = Rsa(
         key=AsymmetricKey(key=AsymmetricKey(size=size).public_key.binary)
@@ -89,7 +91,7 @@ def test_rsa_sign_without_private_key_expect_error(size: int) -> None:
         signer.sign("Hello World!")
 
 
-@pytest.mark.parametrize("size", [1024])
+@pytest.mark.parametrize("size", KEY_SIZES)
 def test_rsa_verify_forged_signature_expect_failure(size: int) -> None:
     signer: ISigner = Rsa(key=AsymmetricKey(size=size))
     signature: str = signer.sign("Hello World!")
@@ -101,7 +103,7 @@ def test_rsa_verify_forged_signature_expect_failure(size: int) -> None:
     assert signer.verify("Hello World!", forged_siganture) is False
 
 
-@pytest.mark.parametrize("size", [1024])
+@pytest.mark.parametrize("size", KEY_SIZES)
 def test_rsa_verify_with_wrong_hash_expect_failure(size: int) -> None:
     signer: ISigner = Rsa(key=AsymmetricKey(size=size))
     signature: str = signer.sign("Hello World!")
@@ -162,7 +164,7 @@ def test_asymmetric_key_expect_invalid_key_error() -> None:
         Rsa(key=AsymmetricKey(key=b"invalid key format"))
 
 
-@pytest.mark.parametrize("size", [1024])
+@pytest.mark.parametrize("size", KEY_SIZES)
 def test_asymmetric_key_is_private_or_public(size: int) -> None:
     private_key: AsymmetricKey = AsymmetricKey(size=size)
     public_key: AsymmetricKey = AsymmetricKey(key=private_key.public_key.binary)
