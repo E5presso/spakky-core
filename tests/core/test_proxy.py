@@ -25,13 +25,14 @@ async def test_proxy() -> None:
     class MyMethodInterceptor(AbstractProxyHandler):
         def call(
             self,
-            func: Func,
+            target: object,
+            method: Func,
             *args: Any,
             **kwargs: Any,
         ) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()
-            result: Any = super().call(func, *args, **kwargs)
+            result: Any = super().call(target, method, *args, **kwargs)
             end_time = perf_counter_ns()
             result_time = end_time - start_time
             print(f"TimeProxy 종료 result_time = {result_time}ns")
@@ -39,34 +40,35 @@ async def test_proxy() -> None:
 
         async def call_async(
             self,
-            func: AsyncFunc,
+            target: object,
+            method: AsyncFunc,
             *args: Any,
             **kwargs: Any,
         ) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()
-            result: Any = await super().call_async(func, *args, **kwargs)
+            result: Any = await super().call_async(target, method, *args, **kwargs)
             end_time = perf_counter_ns()
             result_time = end_time - start_time
             print(f"TimeProxy 종료 result_time = {result_time}ns")
             return result
 
-        def get(self, name: str) -> Any:
+        def get(self, target: object, name: str) -> Any:
             nonlocal get_count
             get_count += 1
-            return super().get(name)
+            return super().get(target, name)
 
-        def set(self, name: str, value: Any) -> Any:
+        def set(self, target: object, name: str, value: Any) -> Any:
             nonlocal set_count
             set_count += 1
-            return super().set(name, value)
+            return super().set(target, name, value)
 
-        def delete(self, name: str) -> Any:
+        def delete(self, target: object, name: str) -> Any:
             nonlocal deleted
             deleted.add(name)
-            return super().delete(name)
+            return super().delete(target, name)
 
-    proxy: Subject = ProxyFactory(Subject, MyMethodInterceptor(Subject())).create()
+    proxy: Subject = ProxyFactory(Subject(), MyMethodInterceptor()).create()
     assert proxy.call() == "Hello World!"
     assert await proxy.call_async() == "Hello Async!"
     assert proxy.name == "John"
@@ -101,13 +103,14 @@ async def test_proxy_with_parameter() -> None:
     class MyMethodInterceptor(AbstractProxyHandler):
         def call(
             self,
-            func: Func,
+            target: object,
+            method: Func,
             *args: Any,
             **kwargs: Any,
         ) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()
-            result: Any = super().call(func, *args, **kwargs)
+            result: Any = super().call(target, method, *args, **kwargs)
             end_time = perf_counter_ns()
             result_time = end_time - start_time
             print(f"TimeProxy 종료 result_time = {result_time}ns")
@@ -115,37 +118,35 @@ async def test_proxy_with_parameter() -> None:
 
         async def call_async(
             self,
-            func: AsyncFunc,
+            target: object,
+            method: AsyncFunc,
             *args: Any,
             **kwargs: Any,
         ) -> Any:
             print("TimeProxy 실행")
             start_time = perf_counter_ns()
-            result: Any = await super().call_async(func, *args, **kwargs)
+            result: Any = await super().call_async(target, method, *args, **kwargs)
             end_time = perf_counter_ns()
             result_time = end_time - start_time
             print(f"TimeProxy 종료 result_time = {result_time}ns")
             return result
 
-        def get(self, name: str) -> Any:
+        def get(self, target: object, name: str) -> Any:
             nonlocal get_count
             get_count += 1
-            return super().get(name)
+            return super().get(target, name)
 
-        def set(self, name: str, value: Any) -> Any:
+        def set(self, target: object, name: str, value: Any) -> Any:
             nonlocal set_count
             set_count += 1
-            return super().set(name, value)
+            return super().set(target, name, value)
 
-        def delete(self, name: str) -> Any:
+        def delete(self, target: object, name: str) -> Any:
             nonlocal deleted
             deleted.add(name)
-            return super().delete(name)
+            return super().delete(target, name)
 
-    proxy: Subject = ProxyFactory(
-        Subject,
-        MyMethodInterceptor(Subject(name="John")),
-    ).create()
+    proxy: Subject = ProxyFactory(Subject(name="John"), MyMethodInterceptor()).create()
     assert proxy.call() == "Hello John!"
     assert await proxy.call_async() == "Hello John!"
     assert proxy.name == "John"

@@ -1,6 +1,5 @@
 import sys
 from logging import Logger
-from types import MethodType
 from typing import Any, Sequence
 
 from spakky.aop.advisor import Advisor, AsyncAdvisor
@@ -19,47 +18,48 @@ class AspectProxyHandler(AbstractProxyHandler):
     __async_advisors_cache: dict[AsyncFunc, AsyncFunc | AsyncAdvisor]
     __aspects: Sequence[object]
 
-    def __init__(self, target: object, aspects: Sequence[object]) -> None:
-        super().__init__(target)
+    def __init__(self, aspects: Sequence[object]) -> None:
         self.__advisors_cache = {}
         self.__async_advisors_cache = {}
         self.__aspects = aspects
 
     def call(
         self,
-        func: Func,
+        target: object,
+        method: Func,
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        if func not in self.__advisors_cache:
-            runnable = MethodType(func, self._target)
+        if method not in self.__advisors_cache:
+            runnable = method
             candidates = [
                 x
                 for x in self.__aspects
-                if isinstance(x, IAspect) and Aspect.get(x).matches(func)
+                if isinstance(x, IAspect) and Aspect.get(x).matches(method)
             ]
             for candidate in candidates:
                 runnable = Advisor(candidate, runnable)
-            self.__advisors_cache[func] = runnable
-        return self.__advisors_cache[func](*args, **kwargs)
+            self.__advisors_cache[method] = runnable
+        return self.__advisors_cache[method](*args, **kwargs)
 
     async def call_async(
         self,
-        func: AsyncFunc,
+        target: object,
+        method: AsyncFunc,
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        if func not in self.__async_advisors_cache:
-            runnable = MethodType(func, self._target)
+        if method not in self.__async_advisors_cache:
+            runnable = method
             candidates = [
                 x
                 for x in self.__aspects
-                if isinstance(x, IAsyncAspect) and AsyncAspect.get(x).matches(func)
+                if isinstance(x, IAsyncAspect) and AsyncAspect.get(x).matches(method)
             ]
             for candidate in candidates:
                 runnable = AsyncAdvisor(candidate, runnable)
-            self.__async_advisors_cache[func] = runnable
-        return await self.__async_advisors_cache[func](*args, **kwargs)
+            self.__async_advisors_cache[method] = runnable
+        return await self.__async_advisors_cache[method](*args, **kwargs)
 
 
 @Pod()
@@ -115,10 +115,7 @@ class AspectPostProcessor(IPostProcessor):
         return self.__set_cache(
             type(pod),
             ProxyFactory(
-                type_=type(pod),
-                handler=AspectProxyHandler(
-                    pod,
-                    matched_aspects,
-                ),
+                target=pod,
+                handler=AspectProxyHandler(matched_aspects),
             ).create(),
         )
