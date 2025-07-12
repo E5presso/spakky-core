@@ -144,7 +144,7 @@ class ProxyFactory(Generic[ObjectT]):
         return self._handler.delete(target=self._target, name=name)
 
     def __proxy_dir__(self) -> Iterable[str]:
-        return sorted(set(dir(self._target) + list(self._type.__dict__.keys())))
+        return dir(self._target)
 
     def __proxy_init__(self) -> None:
         return
