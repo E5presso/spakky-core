@@ -2,12 +2,14 @@ import threading
 from asyncio import locks
 from asyncio.events import AbstractEventLoop, new_event_loop, set_event_loop
 from asyncio.tasks import run_coroutine_threadsafe
+from contextvars import ContextVar
 from copy import deepcopy
 from logging import Logger, getLogger
 from threading import Thread
 from typing import Callable, cast, overload
 
 from spakky.aop.post_processor import AspectPostProcessor
+from spakky.core.constants import CONTEXT_SCOPE_CACHE
 from spakky.core.mro import is_family_with
 from spakky.core.types import ObjectT, is_optional, remove_none
 from spakky.pod.annotations.lazy import Lazy
@@ -41,6 +43,7 @@ class ApplicationContext(IApplicationContext):
     __pods: dict[str, Pod]
     __forward_type_map: dict[str, type]
     __singleton_cache: dict[str, object]
+    __context_cache: ContextVar[dict[str, object]]
     __post_processors: list[IPostProcessor]
     __services: list[IService]
     __async_services: list[IAsyncService]
@@ -53,6 +56,7 @@ class ApplicationContext(IApplicationContext):
         self.__forward_type_map = {}
         self.__pods = {}
         self.__singleton_cache = {}
+        self.__context_cache = ContextVar(CONTEXT_SCOPE_CACHE)
         self.__post_processors = []
         self.__services = []
         self.__async_services = []
@@ -148,6 +152,16 @@ class ApplicationContext(IApplicationContext):
     def __get_singleton_cache(self, pod: Pod) -> object | None:
         return self.__singleton_cache.get(pod.name)
 
+    def __set_context_cache(self, pod: Pod, instance: object) -> None:
+        cache = self.__context_cache.get({})
+        cache[pod.name] = instance
+        self.__context_cache.set(cache)
+
+    def __get_context_cache(self, pod: Pod) -> object | None:
+        cache = self.__context_cache.get({})
+        cached = cache.get(pod.name)
+        return cached
+
     def __get_internal(
         self,
         type_: type[ObjectT],
@@ -173,13 +187,31 @@ class ApplicationContext(IApplicationContext):
         if pod is None:
             return None
 
-        if (cached := self.__get_singleton_cache(pod)) is not None:
-            return cast(ObjectT, cached)
+        # Try to hit the cache by scope type of pod
+        match pod.scope:
+            case Pod.Scope.SINGLETON:
+                if (cached := self.__get_singleton_cache(pod)) is not None:
+                    return cast(ObjectT, cached)
+            case Pod.Scope.CONTEXT:
+                if (cached := self.__get_context_cache(pod)) is not None:
+                    return cast(ObjectT, cached)
+            case Pod.Scope.PROTOTYPE:
+                pass
+
         instance: object = self.__instantiate_pod(
             pod,
             dependency_hierarchy,
         )
-        self.__set_singleton_cache(pod, instance)
+
+        # Cache the instance based on pod scope
+        match pod.scope:
+            case Pod.Scope.SINGLETON:
+                self.__set_singleton_cache(pod, instance)
+            case Pod.Scope.CONTEXT:
+                self.__set_context_cache(pod, instance)
+            case Pod.Scope.PROTOTYPE:
+                pass
+
         return cast(ObjectT, instance)
 
     def __add_post_processor(self, post_processor: IPostProcessor) -> None:
@@ -308,3 +340,6 @@ class ApplicationContext(IApplicationContext):
         if name is not None:
             return name in self.__pods
         return any(pod for pod in self.__pods.values() if pod.is_family_with(type_))
+
+    def clear_context(self) -> None:
+        self.__context_cache.set({})
