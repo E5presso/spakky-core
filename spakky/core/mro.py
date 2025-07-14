@@ -1,4 +1,4 @@
-# 이 코드는 https://github.com/python/typing/issues/777 에서 제안된 코드를 기반으로 작성되었습니다.
+# This module is based on proposal by https://github.com/python/typing/issues/777
 # type: ignore
 
 import sys

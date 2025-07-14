@@ -65,30 +65,14 @@ class AspectProxyHandler(AbstractProxyHandler):
 @Pod()
 class AspectPostProcessor(IPostProcessor):
     __logger: Logger
-    __cache: dict[type, object]
     __container: IContainer
 
     def __init__(self, container: IContainer, logger: Logger) -> None:
         super().__init__()
-        self.__cache = {}
         self.__container = container
         self.__logger = logger
 
-    def __set_cache(self, type_: type, obj: object) -> object:
-        self.__cache[type_] = obj
-        return obj
-
-    def __get_cache(self, type_: type) -> object | None:
-        return self.__cache.get(type_, None)
-
     def post_process(self, pod: object) -> object:
-        if (cached := self.__get_cache(type(pod))) is not None:
-            return cached
-        if Aspect.exists(pod) or AsyncAspect.exists(pod):
-            return self.__set_cache(type(pod), pod)
-        if not Pod.exists(pod):
-            return self.__set_cache(type(pod), pod)
-
         def selector(x: Pod) -> bool:
             return (
                 Aspect.exists(x.target)
@@ -100,7 +84,7 @@ class AspectPostProcessor(IPostProcessor):
         matched_aspects: Sequence[object] = list(self.__container.find(selector))
         if not any(matched_aspects):
             # No matching aspects found, return the pod as is
-            return self.__set_cache(type(pod), pod)
+            return pod
 
         matched_aspects.sort(
             key=lambda x: Order.get_or_default(
@@ -112,10 +96,7 @@ class AspectPostProcessor(IPostProcessor):
         self.__logger.debug(
             f"[{type(self).__name__}] {[f'{type(x).__name__}' for x in matched_aspects]!r} -> {type(pod).__name__!r}"
         )
-        return self.__set_cache(
-            type(pod),
-            ProxyFactory(
-                target=pod,
-                handler=AspectProxyHandler(matched_aspects),
-            ).create(),
-        )
+        return ProxyFactory(
+            target=pod,
+            handler=AspectProxyHandler(matched_aspects),
+        ).create()

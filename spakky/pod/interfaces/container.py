@@ -67,3 +67,6 @@ class IContainer(Protocol):
 
     @abstractmethod
     def find(self, selector: Callable[[Pod], bool]) -> set[object]: ...
+
+    @abstractmethod
+    def clear_context(self) -> None: ...

@@ -60,6 +60,7 @@ class Pod(Annotation, IEquatable):
     class Scope(Enum):
         SINGLETON = auto()
         PROTOTYPE = auto()
+        CONTEXT = auto()
 
     name: str = field(kw_only=True, default="")
     scope: Scope = field(kw_only=True, default=Scope.SINGLETON)
