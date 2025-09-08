@@ -54,11 +54,11 @@ def list_modules(
         exclude = set()
     modules: set[ModuleType] = set()
     for _, name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        if is_subpath_of(name, exclude):
+            continue
         try:
             module = importlib.import_module(name)
         except ImportError:
-            continue
-        if is_subpath_of(module, exclude):
             continue
         modules.add(module)
     return modules
