@@ -289,6 +289,8 @@ class ApplicationContext(IApplicationContext):
             raise CannotRegisterNonPodObjectError(obj)
         pod: Pod = Pod.get(obj)
         if pod.name in self.__pods:
+            if self.__pods[pod.name].id == pod.id:
+                return
             raise PodNameAlreadyExistsError(pod.name)
         for base_type in pod.base_types:
             self.__forward_type_map[base_type.__name__] = base_type
