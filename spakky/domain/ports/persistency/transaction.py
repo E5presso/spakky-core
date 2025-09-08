@@ -31,9 +31,16 @@ class AbstractTransaction(IDisposable, ABC):
     ) -> bool | None:
         if __exc_value is not None:
             self.rollback()
-        elif self.autocommit_enabled:
-            self.commit()
-        self.dispose()
+            self.dispose()
+            return
+        try:
+            if self.autocommit_enabled:
+                self.commit()
+        except:
+            self.rollback()
+            raise
+        finally:
+            self.dispose()
 
     @abstractmethod
     def initialize(self) -> None: ...
@@ -68,9 +75,16 @@ class AbstractAsyncTransaction(IAsyncDisposable, ABC):
     ) -> bool | None:
         if __exc_value is not None:
             await self.rollback()
-        elif self.autocommit_enabled:
-            await self.commit()
-        await self.dispose()
+            await self.dispose()
+            return
+        try:
+            if self.autocommit_enabled:
+                await self.commit()
+        except:
+            await self.rollback()
+            raise
+        finally:
+            await self.dispose()
 
     @abstractmethod
     async def initialize(self) -> None: ...
