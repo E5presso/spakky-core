@@ -4,6 +4,7 @@ from enum import Enum, auto
 from inspect import Parameter, isclass, isfunction
 from types import NoneType
 from typing import Annotated, TypeAlias, TypeGuard, TypeVar, get_origin
+from uuid import UUID, uuid4
 
 from spakky.core.annotation import Annotation
 from spakky.core.interfaces.equatable import IEquatable
@@ -62,6 +63,7 @@ class Pod(Annotation, IEquatable):
         PROTOTYPE = auto()
         CONTEXT = auto()
 
+    id: UUID = field(init=False, default_factory=uuid4)
     name: str = field(kw_only=True, default="")
     scope: Scope = field(kw_only=True, default=Scope.SINGLETON)
     type_: type = field(init=False)
