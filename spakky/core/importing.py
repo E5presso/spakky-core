@@ -29,15 +29,17 @@ def is_package(module: Module) -> bool:
     return hasattr(module, PATH)
 
 
-def is_subpath_of(module: ModuleType, patterns: set[Module]) -> bool:
+def is_subpath_of(module: Module, patterns: set[Module]) -> bool:
+    if isinstance(module, ModuleType):
+        module = module.__name__
     for pattern in patterns:
-        if isinstance(pattern, str):
-            if module.__name__ == pattern:
-                return True
-            if any(filter([module.__name__], pattern)):
-                return True
-            continue
-        if module.__name__.startswith(pattern.__name__):
+        if isinstance(pattern, ModuleType):
+            pattern = pattern.__name__
+        if module == pattern:
+            return True
+        if any(filter([module], pattern)):
+            return True
+        if module.startswith(pattern):
             return True
     return False
 

@@ -1,8 +1,10 @@
+import inspect
 import sys
 from importlib.metadata import EntryPoints, entry_points
 from types import ModuleType
 from typing import Callable
 
+from spakky.application.error import AbstractSpakkyApplicationError
 from spakky.aspects.logging import AsyncLoggingAspect, LoggingAspect
 from spakky.aspects.transactional import AsyncTransactionalAspect, TransactionalAspect
 from spakky.core.constants import PLUGIN_PATH
@@ -16,11 +18,16 @@ from spakky.core.importing import (
 from spakky.pod.annotations.pod import Pod, PodType
 from spakky.pod.interfaces.application_context import IApplicationContext
 from spakky.pod.interfaces.container import IContainer
+from pathlib import Path
 
 if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover
 else:
     from typing_extensions import Self  # pragma: no cover
+
+
+class CannotDetermineScanPathError(AbstractSpakkyApplicationError):
+    message = "Cannot determine scan path. Please specify the path explicitly."
 
 
 class SpakkyApplication:
@@ -53,10 +60,26 @@ class SpakkyApplication:
         self.add(AsyncTransactionalAspect)
         return self
 
-    def scan(self, path: Module, exclude: set[Module] | None = None) -> Self:
+    def scan(
+        self,
+        path: Module | None = None,
+        exclude: set[Module] | None = None,
+    ) -> Self:
+        caller_frame = inspect.stack()[1]
+        caller_module = inspect.getmodule(caller_frame[0])
+        file_path = getattr(caller_module, "__file__", None)
+        caller_package = (
+            resolve_module(Path(file_path).parent.name) if file_path else None
+        )
+
         modules: set[ModuleType]
+        if path is None:
+            if caller_package is None:
+                raise CannotDetermineScanPathError
+            path = caller_package
+
         if exclude is None:
-            exclude = set()
+            exclude = {caller_module} if caller_module else set()
 
         if is_package(path):
             modules = list_modules(path, exclude)
