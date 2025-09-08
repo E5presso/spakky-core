@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from typing import Callable, Protocol, overload, runtime_checkable
+from uuid import UUID
 
 from spakky.core.types import ObjectT
 from spakky.pod.annotations.pod import Pod, PodType
@@ -67,6 +68,9 @@ class IContainer(Protocol):
 
     @abstractmethod
     def find(self, selector: Callable[[Pod], bool]) -> set[object]: ...
+
+    @abstractmethod
+    def get_context_id(self) -> UUID: ...
 
     @abstractmethod
     def clear_context(self) -> None: ...

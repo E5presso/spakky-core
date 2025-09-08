@@ -1,3 +1,4 @@
+import asyncio
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Annotated, Any, Protocol, runtime_checkable
@@ -671,3 +672,22 @@ def test_application_context_with_multiple_qualifiers() -> None:
 
     service = context.get(type_=SampleService)
     assert isinstance(service.repository, FirstRepository)
+
+
+@pytest.mark.asyncio
+async def test_application_context_get_context_id() -> None:
+    context = ApplicationContext()
+    context.start()
+
+    results: list[UUID] = []
+
+    async def task_logic() -> None:
+        context.clear_context()
+        id1 = context.get_context_id()
+        await asyncio.sleep(0.01)
+        id2 = context.get_context_id()
+        assert id1 == id2
+        results.append(id1)
+
+    await asyncio.gather(*(task_logic() for _ in range(5)))
+    assert len(set(results)) == 5
