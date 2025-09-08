@@ -7,9 +7,10 @@ from copy import deepcopy
 from logging import Logger, getLogger
 from threading import Thread
 from typing import Callable, cast, overload
+from uuid import UUID, uuid4
 
 from spakky.aop.post_processor import AspectPostProcessor
-from spakky.core.constants import CONTEXT_SCOPE_CACHE
+from spakky.core.constants import CONTEXT_ID, CONTEXT_SCOPE_CACHE
 from spakky.core.mro import is_family_with
 from spakky.core.types import ObjectT, is_optional, remove_none
 from spakky.pod.annotations.lazy import Lazy
@@ -340,6 +341,13 @@ class ApplicationContext(IApplicationContext):
         if name is not None:
             return name in self.__pods
         return any(pod for pod in self.__pods.values() if pod.is_family_with(type_))
+
+    def get_context_id(self) -> UUID:
+        context = self.__context_cache.get({})
+        if CONTEXT_ID not in context:
+            context[CONTEXT_ID] = uuid4()
+            self.__context_cache.set(context)
+        return cast(UUID, context[CONTEXT_ID])
 
     def clear_context(self) -> None:
         self.__context_cache.set({})
