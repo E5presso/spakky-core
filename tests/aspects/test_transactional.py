@@ -72,7 +72,7 @@ def test_transactional_commit() -> None:
         def none(self) -> None:
             pass
 
-    aspect = TransactionalAspect(InMemoryTransaction(), logger)
+    aspect = TransactionalAspect(InMemoryTransaction())
     assert (
         aspect.around(
             Dummy().authenticate,
@@ -141,7 +141,7 @@ def test_transactional_rollback() -> None:
         def none(self) -> None:
             pass
 
-    aspect = TransactionalAspect(InMemoryTransaction(), logger)
+    aspect = TransactionalAspect(InMemoryTransaction())
     with pytest.raises(ValueError, match="Mike?"):
         assert aspect.around(
             Dummy().authenticate,
@@ -209,7 +209,7 @@ async def test_async_transactional_commit() -> None:
         async def none(self) -> None:
             pass
 
-    aspect = AsyncTransactionalAspect(InMemoryTransaction(), logger)
+    aspect = AsyncTransactionalAspect(InMemoryTransaction())
     assert (
         await aspect.around_async(
             Dummy().authenticate,
@@ -278,7 +278,7 @@ async def test_async_transactional_rollback() -> None:
         async def none(self) -> None:
             pass
 
-    aspect = AsyncTransactionalAspect(InMemoryTransaction(), logger)
+    aspect = AsyncTransactionalAspect(InMemoryTransaction())
     with pytest.raises(ValueError, match="Mike?"):
         assert await aspect.around_async(
             Dummy().authenticate,
