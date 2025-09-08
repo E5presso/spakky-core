@@ -1,7 +1,9 @@
 import importlib
 import inspect
 import pkgutil
+import sys
 from fnmatch import filter
+from pathlib import Path
 from types import FunctionType, ModuleType
 from typing import Any, Callable, TypeAlias
 
@@ -44,6 +46,17 @@ def is_subpath_of(module: Module, patterns: set[Module]) -> bool:
     return False
 
 
+def is_root_package(module: ModuleType) -> bool:
+    if not hasattr(module, "__path__"):
+        return False
+    for path in map(Path, module.__path__):
+        for sys_entry in map(Path, sys.path):
+            # sys.path에 직접 포함된 경로 아래면 루트
+            if path == sys_entry:
+                return True
+    return False
+
+
 def list_modules(
     package: Module, exclude: set[Module] | None = None
 ) -> set[ModuleType]:
@@ -53,7 +66,8 @@ def list_modules(
     if exclude is None:
         exclude = set()
     modules: set[ModuleType] = set()
-    for _, name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+    prefix: str = package.__name__ + "." if not is_root_package(package) else ""
+    for _, name, _ in pkgutil.walk_packages(package.__path__, prefix=prefix):
         if is_subpath_of(name, exclude):
             continue
         try:
