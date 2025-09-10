@@ -118,8 +118,8 @@ class ProxyFactory(Generic[ObjectT]):
 
     def __proxy_call__(self, method: Func, *args: Any, **kwargs: Any) -> Any:
         return self._handler.call(
-            target=self._target,
-            method=method,
+            self._target,
+            method,
             *args,
             **kwargs,
         )
@@ -128,8 +128,8 @@ class ProxyFactory(Generic[ObjectT]):
         self, method: AsyncFunc, *args: Any, **kwargs: Any
     ) -> Any:
         return await self._handler.call_async(
-            target=self._target,
-            method=method,
+            self._target,
+            method,
             *args,
             **kwargs,
         )
