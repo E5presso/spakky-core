@@ -5,10 +5,10 @@ from spakky.core.mutability import immutable
 
 
 @immutable
-class Query(ABC): ...
+class AbstractQuery(ABC): ...
 
 
-QueryT_contra = TypeVar("QueryT_contra", bound=Query, contravariant=True)
+QueryT_contra = TypeVar("QueryT_contra", bound=AbstractQuery, contravariant=True)
 ResultT_co = TypeVar("ResultT_co", bound=Any, covariant=True)
 
 
