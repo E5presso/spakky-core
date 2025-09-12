@@ -1,6 +1,7 @@
 import inspect
 import sys
 from importlib.metadata import EntryPoints, entry_points
+from pathlib import Path
 from types import ModuleType
 from typing import Callable
 
@@ -18,7 +19,6 @@ from spakky.core.importing import (
 from spakky.pod.annotations.pod import Pod, PodType
 from spakky.pod.interfaces.application_context import IApplicationContext
 from spakky.pod.interfaces.container import IContainer
-from pathlib import Path
 
 if sys.version_info >= (3, 11):
     from typing import Self  # pragma: no cover
@@ -65,22 +65,21 @@ class SpakkyApplication:
         path: Module | None = None,
         exclude: set[Module] | None = None,
     ) -> Self:
-        caller_frame = inspect.stack()[1]
-        caller_module = inspect.getmodule(caller_frame[0])
-        file_path = getattr(caller_module, "__file__", None)
-        caller_package = (
-            resolve_module(Path(file_path).parent.name) if file_path else None
-        )
-
         modules: set[ModuleType]
+        caller_module: ModuleType | None = None
         if path is None:
+            caller_frame = inspect.stack()[1]
+            caller_module = inspect.getmodule(caller_frame[0])
+            file_path = getattr(caller_module, "__file__", None)
+            caller_package = (
+                resolve_module(Path(file_path).parent.name) if file_path else None
+            )
             if caller_package is None:
                 raise CannotDetermineScanPathError
             path = caller_package
 
         if exclude is None:
             exclude = {caller_module} if caller_module else set()
-
         if is_package(path):
             modules = list_modules(path, exclude)
         else:
